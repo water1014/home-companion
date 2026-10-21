@@ -297,6 +297,21 @@
 
   /* ---------------- App 网格 / Dock ---------------- */
 
+  function openApp(app) {
+    if (!app) return;
+    if (app.page) { openPage(app.page); return; }
+    // 占位：把这个功能的设想写在页面上，之后照着填
+    $('todoTitle').textContent = app.name;
+    $('todoName').textContent = app.name;
+    $('todoDesc').textContent = app.desc || '位置已经留好了。';
+    $('todoIcon').setAttribute('href', '#' + app.icon);
+    openPage('todo');
+  }
+
+  function findApp(id) {
+    return APPS.concat(DOCK).filter((a) => a.id === id)[0];
+  }
+
   function makeTile(app) {
     const b = document.createElement('button');
     b.type = 'button';
@@ -305,15 +320,7 @@
     b.innerHTML =
       '<span class="tile-ic"><svg><use href="#' + app.icon + '"/></svg><i class="badge"></i></span>' +
       '<span class="tile-name">' + app.name + '</span>';
-    b.addEventListener('click', () => {
-      if (app.page) { openPage(app.page); return; }
-      // 占位：把这个功能的设想写在页面上，之后照着填
-      $('todoTitle').textContent = app.name;
-      $('todoName').textContent = app.name;
-      $('todoDesc').textContent = app.desc || '位置已经留好了。';
-      $('todoIcon').setAttribute('href', '#' + app.icon);
-      openPage('todo');
-    });
+    b.addEventListener('click', () => openApp(app));
     return b;
   }
 
@@ -1450,6 +1457,13 @@
       heroCard.addEventListener('click', () => openPage('mood'));
       heroCard.style.cursor = 'pointer';
     }
+
+    document.querySelectorAll('.mini-tile[data-app]').forEach((b) => {
+      b.addEventListener('click', () => openApp(findApp(b.dataset.app)));
+    });
+
+    const musicBar = $('musicBar');
+    if (musicBar) musicBar.addEventListener('click', () => openApp(findApp('music')));
 
     const quoteCard = $('quoteCard');
     if (quoteCard) {
