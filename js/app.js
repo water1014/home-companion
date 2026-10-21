@@ -30,7 +30,7 @@
     return TINTS[h % TINTS.length];
   }
 
-  const APPS = [
+  const APPS_DEFAULT = [
     /* 第一页 · 日常 */
     { id: 'chat',     name: '聊天',     icon: 'i-chat',    page: 'chat' },
     { id: 'mood',     name: '心情',     icon: 'i-face',    page: 'mood' },
@@ -61,12 +61,25 @@
     { id: 'travel',   name: '旅行',     icon: 'i-plane',   desc: '想去哪、什么时候去、要带什么。攒够了就出发。' },
   ];
 
-  const DOCK = [
+  const DOCK_DEFAULT = [
     { id: 'chat',     name: '说', icon: 'i-chat',  page: 'chat' },
     { id: 'mood',     name: '他', icon: 'i-face',  page: 'mood' },
     { id: 'memory',   name: '记', icon: 'i-brain', page: 'memory' },
     { id: 'settings', name: '我', icon: 'i-gear',  page: 'settings' },
   ];
+
+  /* 应用/dock 顺序可拖动换位，存本地；读出来时按注册表校准，缺的补默认 */
+  function loadOrder(k, def) {
+    const ids = load(k, def.map((a) => a.id));
+    const known = {};
+    def.forEach((a) => { known[a.id] = a; });
+    const out = [];
+    (Array.isArray(ids) ? ids : []).forEach((id) => {
+      if (known[id] && !out.some((o) => o.id === id)) out.push(known[id]);
+    });
+    def.forEach((a) => { if (!out.some((o) => o.id === a.id)) out.push(a); });
+    return out;
+  }
 
   /* ---------------- 存储 ---------------- */
 
@@ -77,6 +90,8 @@
     settings: 'hc.v1.settings',
     mood: 'hc.v1.mood',
     layout: 'hc.v1.layout',
+    apps: 'hc.v1.apps',
+    dock: 'hc.v1.dock',
   };
 
   const load = (k, fb) => {
@@ -86,6 +101,9 @@
   const save = (k, v) => {
     try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {}
   };
+
+  let APPS = loadOrder(KEY.apps, APPS_DEFAULT);
+  let DOCK = loadOrder(KEY.dock, DOCK_DEFAULT);
 
   const pad = (n) => String(n).padStart(2, '0');
   const todayStr = () => {
@@ -345,7 +363,7 @@
       '<span class="tile-ic" style="--c1:' + t[0] + ';--c2:' + t[1] + ';--inkc:' + t[2] + '">' +
       '<svg><use href="#' + app.icon + '"/></svg><i class="badge"></i></span>' +
       '<span class="tile-name">' + app.name + '</span>';
-    b.addEventListener('click', () => openApp(app));
+    b.addEventListener('click', () => { if (editing) return; openApp(app); });
     return b;
   }
 
@@ -441,47 +459,8 @@
       raf = requestAnimationFrame(() => { raf = 0; syncDots(); });
     }, { passive: true });
     window.addEventListener('resize', renderDots);
-
-    /* 手机上翻页交给原生滑动（有惯性、有吸附）；
-       桌面鼠标拖拽不会产生原生滚动，这里补一套 */
-    let mdrag = null;
-    let dragged = false;
-
-    pager.addEventListener('pointerdown', (e) => {
-      if (e.pointerType !== 'mouse') return;
-      mdrag = { x0: e.clientX, sl: pager.scrollLeft };
-      dragged = false;
-    });
-
-    window.addEventListener('pointermove', (e) => {
-      if (!mdrag) return;
-      const dx = e.clientX - mdrag.x0;
-      if (!dragged && Math.abs(dx) > 6) {
-        dragged = true;
-        pager.style.scrollSnapType = 'none';
-        pager.classList.add('dragging');
-      }
-      if (!dragged) return;
-      pager.scrollLeft = mdrag.sl - dx;
-    });
-
-    window.addEventListener('pointerup', () => {
-      if (!mdrag) return;
-      const moved = dragged;
-      mdrag = null;
-      if (!moved) return;
-      pager.style.scrollSnapType = '';
-      pager.classList.remove('dragging');
-      const w = pager.clientWidth || 1;
-      const i = Math.round(pager.scrollLeft / w);
-      pager.scrollTo({ left: i * w, behavior: 'smooth' });
-      setTimeout(() => { dragged = false; }, 80);
-    });
-
-    // 拖完那一下别误触发图标
-    pager.addEventListener('click', (e) => {
-      if (dragged) { e.stopPropagation(); e.preventDefault(); }
-    }, true);
+    /* 翻页手势（含从组件/图标上开始的滑动）在下面的统一手势系统里；
+       触摸从空白处开始仍走原生 pan-x，有惯性和吸附。 */
   }
 
   /* 下一个纪念日 */
@@ -732,102 +711,288 @@
     setTxt('diaryFrom', last ? 'From ' + herName() : '');
   }
 
-  /* ---- 长按进入编辑，拖动换位 ---- */
+  /* ================= 长按拖拽换位（组件 + 应用 + dock） =================
+     手感对齐真机：
+     · 按住不动 0.42s → 进编辑态，手指不用抬起来，直接挪就是拖动
+     · 在那之前横滑 → 翻页（从组件/图标上开始也能翻，JS 跟手）
+     · 拖动过程中绝不重建 DOM（浏览器会因此发 pointercancel，拖拽当场断掉），
+       只挪一个跟手 ghost；松手才提交新顺序，并用 FLIP 动画滑到位          */
+  const LONGPRESS_MS = 420;
+  const SWIPE_SLOP = 10;   // 超过这个位移就算翻页手势
+
   let editing = false;
-  let dragId = null;
+  let ges = null;          // 当前手势
   let pressTimer = 0;
-  let press = null;
+  let ghost = null;
+  let suppressClick = 0;   // 拖拽/翻页结束后一小段时间内吞掉残余 click
+
+  function saveLayouts() {
+    save(KEY.layout, layout);
+    save(KEY.apps, APPS.map((a) => a.id));
+    save(KEY.dock, DOCK.map((a) => a.id));
+  }
 
   function setEdit(on) {
     editing = on;
-    const box = $('bento');
-    if (box) box.classList.toggle('editing', on);
+    ['bento', 'appGrid', 'dock'].forEach((id) => {
+      const el = $(id);
+      if (el) el.classList.toggle('editing', on);
+    });
     document.body.classList.toggle('widget-editing', on);
     const btn = $('editDone');
     if (btn) btn.hidden = !on;
     const hint = $('editHint');
     if (hint) hint.hidden = !on;
     if (!on) {
-      dragId = null;
-      document.querySelectorAll('.w.dragging').forEach((w) => w.classList.remove('dragging'));
-      save(KEY.layout, layout);
+      killGhost();
+      saveLayouts();
     }
   }
 
-  function startDrag(id) {
-    const el = document.querySelector('.w[data-id="' + id + '"]');
-    if (!el) return;
-    dragId = id;
-    el.classList.add('dragging');
+  /* ---- ghost：跟着手指跑的浮层 ---- */
+  function makeGhost(el) {
+    killGhost();
+    const r = el.getBoundingClientRect();
+    const c = el.cloneNode(true);
+    c.classList.add('drag-ghost');
+    c.classList.remove('drag-src', 'drop-on');
+    c.removeAttribute('id');
+    c.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
+    c.style.cssText =
+      'position:fixed;left:' + r.left + 'px;top:' + r.top + 'px;' +
+      'width:' + r.width + 'px;height:' + r.height + 'px;margin:0;' +
+      'pointer-events:none;z-index:900;visibility:visible;will-change:transform;';
+    document.body.appendChild(c);
+    ghost = c;
+  }
+  function killGhost() {
+    if (ghost) { ghost.remove(); ghost = null; }
+  }
+  function ghostRect() { return ghost ? ghost.getBoundingClientRect() : null; }
+  function moveGhost(g, x, y) {
+    if (!ghost) return;
+    const dx = x - g.x0, dy = y - g.y0;
+    ghost.style.transform = 'translate3d(' + dx + 'px,' + dy + 'px,0) scale(1.05)';
   }
 
-  function swapTo(targetId) {
-    if (!dragId || !targetId || targetId === dragId) return;
-    const a = layout.indexOf(dragId);
-    const b = layout.indexOf(targetId);
-    if (a < 0 || b < 0) return;
-
-    layout.splice(a, 1);
-    layout.splice(b, 0, dragId);
-    renderBento();
-    startDrag(dragId);
-    save(KEY.layout, layout);
+  /* ---- 开始拖 ---- */
+  function beginDrag(g) {
+    if (!g || !g.dragEl) return;
+    if (!editing) setEdit(true);
+    g.mode = 'drag';
+    g.dropEl = null;
+    g.dragMoved = false;
+    makeGhost(g.dragEl);                 // 先克隆，再给原位置打隐藏标记
+    g.dragEl.classList.add('drag-src');
+    moveGhost(g, g.cx || g.x0, g.cy || g.y0);   // 半空中启动时直接跟到手指下
+    if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} }
   }
 
-  /* 用 document 级事件：手指滑出格子也不会断 */
+  function clearDrop(g) {
+    if (g && g.dropEl) g.dropEl.classList.remove('drop-on');
+    if (g) g.dropEl = null;
+  }
+
+  function abortDrag(g) {
+    killGhost();
+    if (g && g.dragEl) g.dragEl.classList.remove('drag-src');
+    clearDrop(g);
+  }
+
+  /* 手指下面是什么：只认同一容器里的同类元素（组件↔组件，图标↔图标） */
+  function updateDrop(g, x, y) {
+    const el = g.dragEl;
+    const sel = el.classList.contains('w') ? '.w' : '.tile';
+    const under = document.elementFromPoint(x, y);
+    let t = under && under.closest ? under.closest(sel) : null;
+    if (t && (t === el || t.parentElement !== el.parentElement)) t = null;
+    if (t !== g.dropEl) {
+      if (g.dropEl) g.dropEl.classList.remove('drop-on');
+      g.dropEl = t;
+      if (t) t.classList.add('drop-on');
+    }
+  }
+
+  /* ---- 松手提交：换数组顺序 + 挪 DOM（appendChild 不销毁节点）+ FLIP ---- */
+  function flipReorder(box, ids, from) {
+    if (!box) return;
+    const first = {};
+    Array.prototype.forEach.call(box.children, (el) => {
+      const k = el.dataset.id || el.dataset.app;
+      if (k) first[k] = el.getBoundingClientRect();
+    });
+    ids.forEach((id) => {
+      const el = box.querySelector('.w[data-id="' + id + '"], .tile[data-app="' + id + '"]');
+      if (el) box.appendChild(el);
+    });
+    Array.prototype.forEach.call(box.children, (el) => {
+      const k = el.dataset.id || el.dataset.app;
+      const f = from && k === from.id ? from.r : first[k];
+      if (!f) return;
+      const l = el.getBoundingClientRect();
+      const dx = f.left - l.left, dy = f.top - l.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      el.animate([
+        { transform: 'translate3d(' + dx + 'px,' + dy + 'px,0)' },
+        { transform: 'translate3d(0,0,0)' }
+      ], { duration: 280, easing: 'cubic-bezier(0.32,0.72,0,1)' });
+    });
+  }
+
+  function commitDrag(g, fromRect) {
+    const src = g.dragEl, dst = g.dropEl;
+    if (!dst) return false;
+    const isW = src.classList.contains('w');
+    const idA = isW ? src.dataset.id : src.dataset.app;
+    const idB = isW ? dst.dataset.id : dst.dataset.app;
+    const box = src.parentElement;
+    if (isW) {
+      const a = layout.indexOf(idA), b = layout.indexOf(idB);
+      if (a < 0 || b < 0) return false;
+      layout.splice(a, 1);
+      layout.splice(b, 0, idA);
+      flipReorder(box, layout, fromRect ? { id: idA, r: fromRect } : null);
+    } else {
+      const arr = box === $('appGrid') ? APPS : DOCK;
+      const a = arr.findIndex((x) => x.id === idA);
+      const b = arr.findIndex((x) => x.id === idB);
+      if (a < 0 || b < 0) return false;
+      const item = arr.splice(a, 1)[0];
+      arr.splice(b, 0, item);
+      flipReorder(box, arr.map((x) => x.id), fromRect ? { id: idA, r: fromRect } : null);
+    }
+    saveLayouts();
+    return true;
+  }
+
+  /* ---- 哪些东西能拖 ---- */
+  function draggableAt(e) {
+    const t = e.target;
+    if (!t || !t.closest) return null;
+    const w = t.closest('#bento .w');                       // 桌面组件（含四格里的，算整个组件）
+    if (w) return w;
+    return t.closest('#appGrid .tile, #dock .tile');        // 应用 / 常驻
+  }
+
+  /* ---- 手势入口 ---- */
   document.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('#editDone')) return;
-    const w = e.target.closest('.w');
-    if (!w) return;
-    const id = w.dataset.id;
+    if (e.button > 0) return;
+    if (e.target.closest && e.target.closest('#editDone')) return;
+    clearTimeout(pressTimer);
 
-    if (editing) {
-      e.preventDefault();
-      startDrag(id);
+    const de = draggableAt(e);
+    const inHome = home.contains(e.target);
+
+    if (editing && !de) {           // 编辑态点空白处 → 收工
+      if (inHome) setEdit(false);
       return;
     }
+    if (!inHome) return;
+    if (!de && e.pointerType !== 'mouse') return;   // 触摸从空白开始 → 交给原生翻页
 
-    press = { x: e.clientX, y: e.clientY, id };
-    clearTimeout(pressTimer);
-    pressTimer = setTimeout(() => {
-      if (!press) return;
-      setEdit(true);
-      startDrag(press.id);
-      if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} }
-      press = null;
-    }, 420);
+    ges = {
+      pid: e.pointerId, type: e.pointerType,
+      x0: e.clientX, y0: e.clientY, cx: e.clientX, cy: e.clientY,
+      mode: null, dragEl: de, moved: 0, sl0: 0, dragMoved: false,
+    };
+
+    if (editing && de) {            // 编辑态：按住立刻拖，不用再等
+      e.preventDefault();
+      beginDrag(ges);
+      return;
+    }
+    if (de) {
+      pressTimer = setTimeout(() => {
+        // 只有已经变成翻页手势才放弃；否则到点就拖——
+        // 慢速地"按住开始挪"也是拖，不会被误判成翻页
+        if (!ges || ges.mode === 'swipe') return;
+        beginDrag(ges);
+      }, LONGPRESS_MS);
+    }
   }, { passive: false });
 
   document.addEventListener('pointermove', (e) => {
-    // 还没进入编辑：手一动就取消长按（避免误触）
-    if (press && !editing) {
-      if (Math.abs(e.clientX - press.x) > 10 || Math.abs(e.clientY - press.y) > 10) {
-        clearTimeout(pressTimer);
-        press = null;
-      }
+    if (!ges || e.pointerId !== ges.pid) return;
+    ges.cx = e.clientX;
+    ges.cy = e.clientY;
+    const dx = e.clientX - ges.x0, dy = e.clientY - ges.y0;
+    ges.moved = Math.max(ges.moved, Math.sqrt(dx * dx + dy * dy));
+
+    if (ges.mode === 'drag') {
+      if (e.cancelable) e.preventDefault();
+      if (ges.moved > 6) ges.dragMoved = true;
+      moveGhost(ges, e.clientX, e.clientY);
+      updateDrop(ges, e.clientX, e.clientY);
+      return;
     }
 
-    if (!dragId) return;
-    if (e.cancelable) e.preventDefault();
+    if (!ges.mode && (Math.abs(dx) > SWIPE_SLOP || Math.abs(dy) > SWIPE_SLOP)) {
+      if (editing || !pager) { ges = null; return; }
+      if (Math.abs(dx) <= Math.abs(dy)) return;     // 竖向：主屏没得滚，继续等长按
+      ges.mode = 'swipe';
+      ges.sl0 = pager.scrollLeft;
+      pager.style.scrollSnapType = 'none';
+      pager.classList.add('dragging');
+      try { pager.setPointerCapture(ges.pid); } catch (_) {}
+    }
 
-    const under = document.elementFromPoint(e.clientX, e.clientY);
-    const target = under && under.closest ? under.closest('.w') : null;
-    if (target) swapTo(target.dataset.id);
+    if (ges.mode === 'swipe') {
+      if (e.cancelable) e.preventDefault();
+      pager.scrollLeft = ges.sl0 - dx;
+    }
   }, { passive: false });
 
-  function stopDrag() {
-    clearTimeout(pressTimer);
-    press = null;
-    dragId = null;
-    document.querySelectorAll('.w.dragging').forEach((w) => w.classList.remove('dragging'));
+  function snapPager() {
+    if (!pager) return;
+    pager.style.scrollSnapType = '';
+    pager.classList.remove('dragging');
+    const w = pager.clientWidth || 1;
+    const i = Math.round(pager.scrollLeft / w);
+    pager.scrollTo({ left: i * w, behavior: 'smooth' });
   }
-  document.addEventListener('pointerup', stopDrag);
-  document.addEventListener('pointercancel', stopDrag);
 
-  // 长按不要弹系统菜单
-  document.addEventListener('contextmenu', (e) => {
-    if (e.target.closest('.w')) e.preventDefault();
+  function endGesture(e) {
+    clearTimeout(pressTimer);
+    if (!ges) return;
+    const g = ges;
+    ges = null;
+    if (e && e.pointerId !== g.pid) return;
+
+    if (g.mode === 'drag') {
+      const gr = ghostRect();               // 先量 ghost 落点，再撤
+      killGhost();
+      if (g.dragEl) g.dragEl.classList.remove('drag-src');
+      commitDrag(g, gr);
+      clearDrop(g);
+      suppressClick = performance.now() + 260;
+      /* 编辑态留着：可以接着拖下一个；想结束就点「完成」或空白处 */
+      return;
+    }
+
+    if (g.mode === 'swipe') {
+      snapPager();
+      suppressClick = performance.now() + 260;
+    }
+  }
+  document.addEventListener('pointerup', endGesture);
+  document.addEventListener('pointercancel', (e) => {
+    if (!ges || e.pointerId !== ges.pid) return;
+    const g = ges;
+    ges = null;
+    if (g.mode === 'drag') abortDrag(g);
+    else if (g.mode === 'swipe') snapPager();
   });
+
+  /* 长按不弹系统菜单；拖完那一瞬间的残余 click 吞掉 */
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest && e.target.closest('.w, .tile')) e.preventDefault();
+  });
+  document.addEventListener('click', (e) => {
+    if (performance.now() < suppressClick && e.target.closest && e.target.closest('#home')) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }, true);
 
   function renderCards() {
     const me = S.memory.userName ? S.memory.userName.slice(0, 1) : '我';
@@ -1719,6 +1884,26 @@
       editEntry.addEventListener('click', () => {
         closePage();
         setTimeout(() => setEdit(true), 380);
+      });
+    }
+
+    const done = $('editDone');
+    if (done) done.addEventListener('click', () => setEdit(false));
+
+    const resetLayout = $('btnResetLayout');
+    if (resetLayout) {
+      resetLayout.addEventListener('click', () => {
+        if (!confirm('把组件和应用都放回默认位置？')) return;
+        [KEY.layout, KEY.apps, KEY.dock].forEach((k) => {
+          try { localStorage.removeItem(k); } catch (_) {}
+        });
+        layout = LAYOUT_DEFAULT.slice();
+        APPS = loadOrder(KEY.apps, APPS_DEFAULT);
+        DOCK = loadOrder(KEY.dock, DOCK_DEFAULT);
+        setEdit(false);
+        renderBento();
+        renderApps();
+        toast('布局恢复默认了');
       });
     }
 

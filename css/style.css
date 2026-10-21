@@ -1671,18 +1671,18 @@ button.row { cursor: pointer; }
   to   { opacity: 1; transform: none; }
 }
 
-/* 首屏：三块在剩余空间里垂直居中，像排版而不是没做完 */
+/* 首屏：状态栏在流内，组件区吃满剩余高度 */
 .home-page:first-of-type {
-  position: relative;
-  justify-content: center;
-  gap: 16px;
-  padding-top: 0;
+  justify-content: start;
+  gap: 10px;
+  padding-top: calc(14px + var(--safe-t));
+  grid-template-rows: auto minmax(0, 1fr);
 }
 .home-page:first-of-type > .statusbar {
-  position: absolute;
-  top: calc(14px + var(--safe-t));
-  left: 18px;
-  right: 18px;
+  position: static;
+  left: auto;
+  right: auto;
+  top: auto;
 }
 
 /* 矮屏最终覆盖（放在最后，确保生效）：21 个格子必须一屏装下 */
@@ -1763,6 +1763,7 @@ button.row { cursor: pointer; }
   justify-content: start;
   gap: 10px;
   padding-top: calc(14px + var(--safe-t));
+  grid-template-rows: auto minmax(0, 1fr);
 }
 .home-page:first-of-type > .statusbar {
   position: static;
@@ -2056,34 +2057,22 @@ button.row { cursor: pointer; }
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* 组件网格 */
+/* 组件网格：行高在剩余空间里均分——重排后行数变化也不会溢出藏内容 */
 .bento {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: 86px;
+  grid-auto-rows: minmax(44px, 1fr);
   gap: 10px;
   grid-column: span 4;
+  min-height: 0;
 }
 .w {
   position: relative;
   border-radius: 22px;
   overflow: hidden;
   transition: transform 0.28s var(--ease-ios), box-shadow 0.28s, opacity 0.2s;
-  touch-action: pan-y;
 }
-.w.dragging {
-  transform: scale(1.04);
-  z-index: 20;
-  box-shadow: 0 18px 40px rgba(90, 80, 105, 0.22);
-  opacity: 0.94;
-}
-.bento.editing .w { animation: jiggle 0.34s ease-in-out infinite alternate; }
-.bento.editing .w:nth-child(even) { animation-delay: 0.12s; }
-@keyframes jiggle {
-  from { transform: rotate(-0.5deg); }
-  to   { transform: rotate(0.5deg); }
-}
-.bento.editing .w.dragging { animation: none; }
+.bento.editing .w { animation: none; }
 
 .edit-done {
   position: absolute;
@@ -2449,22 +2438,68 @@ button.row { cursor: pointer; }
 }
 .lock-line { font-weight: 300; }
 
-/* 编辑态：禁止滚动与选中 */
-.w { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+/* 手势全部交给 JS：组件/图标上不设 touch-action，浏览器就不会抢手势、
+   也不会在拖动途中把指针事件取消掉 */
+.w, .tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none; }
 body.widget-editing { overflow: hidden; }
 body.widget-editing .home-pager { overflow: hidden; touch-action: none; }
-body.widget-editing .w { touch-action: none; }
-body.widget-editing .dock { pointer-events: none; opacity: 0.6; }
 
-/* 编辑时组件只是轻微抬起，不晃动 */
-.bento.editing .w {
+/* 编辑态：一圈细线，不晃动 */
+.bento.editing .w,
+.app-grid.editing .tile,
+.dock.editing .tile {
   animation: none;
   box-shadow: 0 0 0 1.5px rgba(120, 125, 140, 0.35);
 }
-.bento.editing .w.dragging {
-  box-shadow: 0 10px 24px rgba(30, 35, 45, 0.14), 0 0 0 1.5px rgba(120, 125, 140, 0.5);
-  transform: scale(1.03);
+
+/* 被拖的那一个：原位留空（visibility 保留栅格位），ghost 跟手跑 */
+.w.drag-src, .tile.drag-src { visibility: hidden; }
+.drag-ghost {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 40px rgba(20, 24, 33, 0.22);
+  border-radius: 22px;
 }
+.tile.drag-ghost { border-radius: 18px; }
+
+/* 落点高亮 */
+.w.drop-on, .tile.drop-on { box-shadow: 0 0 0 2px rgba(31, 35, 43, 0.55); }
+
+/* 编辑提示与完成按钮：浮在手机层，翻到哪页都在 */
+#editHint {
+  position: absolute;
+  left: 50%;
+  top: calc(10px + var(--safe-t));
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(17, 20, 28, 0.06);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: #6f7480;
+  white-space: nowrap;
+  pointer-events: none;
+}
+#editHint[hidden] { display: none; }
+#editDone {
+  position: absolute;
+  right: 14px;
+  top: calc(9px + var(--safe-t));
+  bottom: auto;
+  left: auto;
+  z-index: 40;
+  padding: 6px 15px;
+  border: none;
+  border-radius: 999px;
+  background: #1f232b;
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  box-shadow: 0 6px 16px rgba(17, 20, 28, 0.18);
+}
+#editDone[hidden] { display: none; }
+body.widget-editing .sb-right { opacity: 0; }
 
 /* 头像与封面也回到极淡 */
 .pa.me { background: #edf1f7 !important; color: #64748b !important; }
