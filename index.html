@@ -87,13 +87,23 @@
       <div class="bento" id="bento"></div>
     </section>
 
-    <!-- ===== 第二页 · 应用 ===== -->
+    <!-- ===== 第二页 · 组件（续）+ 应用 ===== -->
     <section class="home-page" aria-label="应用">
       <div class="statusbar">
         <span class="sb-date-mini">10月21日 星期三</span>
         <span class="page-label">应用</span>
       </div>
+      <div class="bento" id="bento2"></div>
       <nav class="app-grid app-grid-all" id="appGrid" aria-label="全部应用"></nav>
+    </section>
+
+    <!-- ===== 第三页 · 应用（续） ===== -->
+    <section class="home-page" aria-label="应用续">
+      <div class="statusbar">
+        <span class="sb-date-mini">10月21日 星期三</span>
+        <span class="page-label">应用 · 剩下的</span>
+      </div>
+      <nav class="app-grid app-grid-all" id="appGrid2" aria-label="剩下的应用"></nav>
     </section>
 
     <!-- ===== 第三页 · 我们的 ===== -->
@@ -461,6 +471,72 @@
     <section class="glass list-card" id="deviceList"></section>
     <section class="glass">
       <p class="hint" id="deviceLine">—</p>
+    </section>
+  </div>
+</section>
+
+<!-- ============ 美化 ============ -->
+<section class="screen page" id="theme" aria-label="美化">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">美化</p>
+    <span class="head-spacer"></span>
+  </header>
+  <div class="page-scroll">
+    <p class="hint">桌面太满就关掉几个组件。顺序在桌面长按拖动。</p>
+
+    <section class="glass list-card">
+      <p class="list-head">桌面组件</p>
+      <div id="widgetToggles"></div>
+    </section>
+
+    <section class="glass list-card">
+      <p class="list-head">怎么排</p>
+      <div class="form-row">
+        <label>交替</label>
+        <select id="setMix">
+          <option value="on">组件之间插应用</option>
+          <option value="off">组件和应用分开</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>插几行</label>
+        <select id="setRows">
+          <option value="0">不插</option>
+          <option value="1">1 行</option>
+          <option value="2">2 行</option>
+          <option value="3">3 行</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>隔几个</label>
+        <select id="setEvery">
+          <option value="1">每 1 个组件</option>
+          <option value="2">每 2 个组件</option>
+          <option value="3">每 3 个组件</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>疏密</label>
+        <select id="setGap">
+          <option value="tight">紧凑</option>
+          <option value="comfy">舒服</option>
+          <option value="loose">宽松</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="glass list-card">
+      <button class="row" id="btnThemeReset" type="button">
+        <svg class="row-ic"><use href="#i-star"/></svg><span class="row-name">恢复默认布局</span><span class="row-side">组件与应用都回原位</span>
+      </button>
+    </section>
+
+    <section class="glass">
+      <p class="hint">
+        想换壁纸：改 <code>css/style.css</code> 里的 <code>--wall</code>。<br>
+        配色、图标边框这些也都在同一个文件里，各自独立，换一个不影响别的。
+      </p>
     </section>
   </div>
 </section>

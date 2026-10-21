@@ -51,7 +51,7 @@
     { id: 'memory',   name: '记忆库',   icon: 'i-brain',   page: 'memory' },
     { id: 'image',    name: '生图',     icon: 'i-magic',   desc: '打字出图。他的样子、你们想去的地方、今天的心情。\n需要一个画图的 API Key，接在哪由你定。' },
     { id: 'voice',    name: '声音',     icon: 'i-wave',    desc: '让他读出来，或者发一条语音。先在本地合成，不联网也能响。' },
-    { id: 'theme',    name: '美化',     icon: 'i-palette', desc: '换壁纸、换主题、换他说话的风格。同一个房间，不同的光。' },
+    { id: 'theme',    name: '美化',     icon: 'i-palette', page: 'theme' },
     { id: 'wake',     name: '自主唤醒', icon: 'i-bell',    desc: '不只被叫才说话。定时或随机地，主动找你一次。\n纯前端只能在页面打开时生效；要做到真提醒得走通知 + 服务端。' },
     { id: 'wish',     name: '心愿',     icon: 'i-spark',   desc: '想一起做的事。做掉一件，划掉一件。' },
 
@@ -235,6 +235,7 @@
     memory: $('memory'),
     settings: $('settings'),
     todo: $('todo'),
+    theme: $('theme'),
     courses: $('courses'),
     countdown: $('countdown'),
     cards: $('cards'),
@@ -298,6 +299,7 @@
     if (id === 'cards') renderCoupons();
     if (id === 'herday') renderHerDay();
     if (id === 'device') renderDevice();
+    if (id === 'theme') renderTheme();
   }
 
   function closePage() {
@@ -435,13 +437,39 @@
     return b;
   }
 
+  const APP_PER_PAGE = 12;   // 第二页放几个，剩下的去第三页
+
   function renderApps() {
     const grid = $('appGrid');
+    const grid2 = $('appGrid2');
     const dock = $('dock');
-    grid.innerHTML = '';
-    dock.innerHTML = '';
-    APPS.forEach((a) => grid.appendChild(makeTile(a)));
-    DOCK.forEach((a) => dock.appendChild(makeTile(a)));
+    const start = appSliceStart();
+    const rest = APPS.slice(start);
+    if (grid) { grid.innerHTML = ''; rest.slice(0, APP_PER_PAGE).forEach((a) => grid.appendChild(makeTile(a))); }
+    if (grid2) { grid2.innerHTML = ''; rest.slice(APP_PER_PAGE).forEach((a) => grid2.appendChild(makeTile(a))); }
+    // 第三页没东西就别留一屏空白
+    const page3 = grid2 ? grid2.closest('.home-page') : null;
+    if (page3) page3.hidden = !grid2 || grid2.children.length === 0;
+    if (dock) { dock.innerHTML = ''; DOCK.forEach((a) => dock.appendChild(makeTile(a))); }
+  }
+
+  /** 通用：重建前后各量一次，让元素从旧位置滑到新位置（FLIP） */
+  function flipAll(sel, keyAttr, rebuild, fromRect) {
+    const first = {};
+    document.querySelectorAll(sel).forEach((el) => { first[el.dataset[keyAttr]] = el.getBoundingClientRect(); });
+    rebuild();
+    document.querySelectorAll(sel).forEach((el) => {
+      const k = el.dataset[keyAttr];
+      const f = fromRect && k === fromRect.id ? fromRect.r : first[k];
+      if (!f) return;
+      const l = el.getBoundingClientRect();
+      const dx = f.left - l.left, dy = f.top - l.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      el.animate([
+        { transform: 'translate3d(' + dx + 'px,' + dy + 'px,0)' },
+        { transform: 'translate3d(0,0,0)' }
+      ], { duration: 280, easing: 'cubic-bezier(0.32,0.72,0,1)' });
+    });
   }
 
   /* ---------------- 时钟 / 日期 ---------------- */
@@ -743,34 +771,129 @@
   }
   let layout = mergeLayout(load(KEY.layout, LAYOUT_DEFAULT.slice()));
 
+  /* 桌面布局：组件与应用交替 + 密度；美化页里可调 */
+  const HOME_DEFAULT = { mix: true, rows: 2, every: 2, gap: 'comfy' };
+  function homeCfg() {
+    return Object.assign({}, HOME_DEFAULT, S.settings.home || {});
+  }
+  function patchHome(patch) {
+    S.settings.home = Object.assign(homeCfg(), patch);
+    save(KEY.settings, S.settings);
+  }
+
+  /* 哪些组件不出现在桌面（美化页里关掉的） */
+  function widgetCfg() {
+    const w = S.settings.widgets || {};
+    return { hidden: Array.isArray(w.hidden) ? w.hidden : [] };
+  }
+  function patchWidgets(hidden) {
+    S.settings.widgets = { hidden: hidden };
+    save(KEY.settings, S.settings);
+  }
+
+  /* 组件归属：p1 里的放首页，其余放第二页（美化页可调） */
+  const WIDGET_CN = {
+    pair: '两个人',
+    days: '在一起多少天',
+    clock: '现在几点',
+    quad: '四个常用入口',
+    music: '音乐条',
+    diary: '他最近一句',
+    said: '他今天想对你说',
+  };
+
+  function widgetCfg() {
+    const w = S.settings.widgets || {};
+    return {
+      hidden: Array.isArray(w.hidden) ? w.hidden : [],
+      p1: Array.isArray(w.p1) ? w.p1 : ['pair', 'days', 'clock', 'quad', 'said'],
+    };
+  }
+  function patchWidgets(cfg) {
+    S.settings.widgets = { hidden: cfg.hidden || [], p1: cfg.p1 || [] };
+    save(KEY.settings, S.settings);
+  }
+
+  /** page 1 或 2 上该显示哪些组件（按 layout 顺序） */
+  function widgetIds(page) {
+    const cfg = widgetCfg();
+    const visible = layout.filter((id) => WIDGETS[id] && cfg.hidden.indexOf(id) < 0);
+    return page === 1
+      ? visible.filter((id) => cfg.p1.indexOf(id) >= 0)
+      : visible.filter((id) => cfg.p1.indexOf(id) < 0);
+  }
+
+  function makeWidgetEl(id) {
+    const w = WIDGETS[id];
+    const el = document.createElement('div');
+    el.className = 'w glass w-' + id;
+    el.dataset.id = id;
+    el.style.gridColumn = 'span ' + w.col;
+    el.style.gridRow = 'span ' + w.row;
+    el.innerHTML = w.html();
+
+    if (id === 'clock' || id === 'pair' || id === 'days') {
+      el.addEventListener('click', () => { if (!editing) openPage('mood'); });
+    } else if (id === 'diary') {
+      el.addEventListener('click', () => { if (!editing) openPage('chat'); });
+    } else if (id === 'music') {
+      el.addEventListener('click', () => { if (!editing) toast('一起听还没接上'); });
+    } else if (id === 'said') {
+      el.addEventListener('click', () => { if (!editing) openPage('herday'); });
+    }
+    return el;
+  }
+
   function renderBento() {
     const box = $('bento');
     if (!box) return;
+    const cfg = homeCfg();
+    const ids = widgetIds(1);
+    const rowCount = cfg.mix ? Math.max(0, Math.min(3, cfg.rows | 0)) : 0;
+    const every = Math.max(1, cfg.every | 0);
     box.innerHTML = '';
 
-    layout.forEach((id) => {
-      const w = WIDGETS[id];
-      if (!w) return;
-      const el = document.createElement('div');
-      el.className = 'w glass w-' + id;
-      el.dataset.id = id;
-      el.style.gridColumn = 'span ' + w.col;
-      el.style.gridRow = 'span ' + w.row;
-      el.innerHTML = w.html();
-      box.appendChild(el);
-
-      if (id === 'clock' || id === 'pair' || id === 'days') {
-        el.addEventListener('click', () => { if (!editing) openPage('mood'); });
-      } else if (id === 'diary') {
-        el.addEventListener('click', () => { if (!editing) openPage('chat'); });
-      } else if (id === 'music') {
-        el.addEventListener('click', () => { if (!editing) toast('一起听还没接上'); });
+    let placed = 0;
+    ids.forEach((id, i) => {
+      box.appendChild(makeWidgetEl(id));
+      // 组件之间插一行应用，让眼睛有地方歇一下
+      if (placed < rowCount && (i + 1) % every === 0) {
+        box.appendChild(makeAppRow(placed));
+        placed += 1;
       }
     });
+    while (placed < rowCount) { box.appendChild(makeAppRow(placed)); placed += 1; }
 
     renderQuad();
     bindMusic();
     updateWidgets();
+  }
+
+  /** 第二页：没放进首页的组件 */
+  function renderBento2() {
+    const box = $('bento2');
+    if (!box) return;
+    box.innerHTML = '';
+    widgetIds(2).forEach((id) => box.appendChild(makeWidgetEl(id)));
+    renderQuad();
+    bindMusic();
+    updateWidgets();
+  }
+
+  /** 首页里的一行应用（4 个，跟着 APPS 顺序走） */
+  function makeAppRow(k) {
+    const row = document.createElement('div');
+    row.className = 'app-row';
+    row.dataset.row = String(k);
+    const slice = APPS.slice(k * 4, k * 4 + 4);
+    slice.forEach((a) => row.appendChild(makeTile(a)));
+    return row;
+  }
+
+  /** 首页用掉前 rows*4 个，剩下的都放第二页 */
+  function appSliceStart() {
+    const cfg = homeCfg();
+    return cfg.mix ? Math.max(0, Math.min(3, cfg.rows | 0)) * 4 : 0;
   }
 
   function renderQuad() {
@@ -892,7 +1015,7 @@
 
   function setEdit(on) {
     editing = on;
-    ['bento', 'appGrid', 'dock'].forEach((id) => {
+    ['bento', 'bento2', 'appGrid', 'appGrid2', 'dock'].forEach((id) => {
       const el = $(id);
       if (el) el.classList.toggle('editing', on);
     });
@@ -957,13 +1080,24 @@
     clearDrop(g);
   }
 
-  /* 手指下面是什么：只认同一容器里的同类元素（组件↔组件，图标↔图标） */
+  /* 手指下面是什么：
+     组件只能在组件之间换；应用图标可以在首页的应用行和第二页之间换；
+     底部常驻只在常驻里换 —— 三者互不串味 */
   function updateDrop(g, x, y) {
     const el = g.dragEl;
-    const sel = el.classList.contains('w') ? '.w' : '.tile';
+    const isW = el.classList.contains('w');
     const under = document.elementFromPoint(x, y);
-    let t = under && under.closest ? under.closest(sel) : null;
-    if (t && (t === el || t.parentElement !== el.parentElement)) t = null;
+    if (!under || !under.closest) return;
+    let t = isW ? under.closest('.w') : under.closest('.tile');
+    if (!t || t === el) t = null;
+    if (t && !isW) {
+      const cs = el.closest('#dock');
+      const ct = t.closest('#dock');
+      // 一个是常驻、一个不是 → 不许换
+      if (!!cs !== !!ct) t = null;
+      // 四格组件里的图标不算落点
+      else if (!cs && !t.closest('.app-row') && !t.closest('#appGrid') && !t.closest('#appGrid2')) t = null;
+    }
     if (t !== g.dropEl) {
       if (g.dropEl) g.dropEl.classList.remove('drop-on');
       g.dropEl = t;
@@ -1009,17 +1143,23 @@
       if (a < 0 || b < 0) return false;
       layout.splice(a, 1);
       layout.splice(b, 0, idA);
-      flipReorder(box, layout, fromRect ? { id: idA, r: fromRect } : null);
+      save(KEY.layout, layout);
+      flipAll('.bento .w', 'id', () => { renderBento(); renderBento2(); }, fromRect ? { id: idA, r: fromRect } : null);
     } else {
-      const arr = box === $('appGrid') ? APPS : DOCK;
+      const inDock = !!src.closest('#dock');
+      const arr = inDock ? DOCK : APPS;
       const a = arr.findIndex((x) => x.id === idA);
       const b = arr.findIndex((x) => x.id === idB);
       if (a < 0 || b < 0) return false;
       const item = arr.splice(a, 1)[0];
       arr.splice(b, 0, item);
-      flipReorder(box, arr.map((x) => x.id), fromRect ? { id: idA, r: fromRect } : null);
+      save(KEY.apps, APPS.map((x) => x.id));
+      save(KEY.dock, DOCK.map((x) => x.id));
+      const sel = inDock ? '#dock .tile' : '.app-row .tile, #appGrid .tile, #appGrid2 .tile';
+      flipAll(sel, 'app', () => {
+        if (inDock) renderApps(); else { renderBento(); renderApps(); }
+      }, fromRect ? { id: idA, r: fromRect } : null);
     }
-    saveLayouts();
     return true;
   }
 
@@ -1027,9 +1167,9 @@
   function draggableAt(e) {
     const t = e.target;
     if (!t || !t.closest) return null;
-    const w = t.closest('#bento .w');                       // 桌面组件（含四格里的，算整个组件）
+    const w = t.closest('.bento .w');                              // 桌面组件（含四格里的，算整个组件）
     if (w) return w;
-    return t.closest('#appGrid .tile, #dock .tile');        // 应用 / 常驻
+    return t.closest('.app-row .tile, #appGrid .tile, #appGrid2 .tile, #dock .tile');
   }
 
   /* ---- 手势入口 ---- */
@@ -1807,6 +1947,92 @@
     return bits.join('，');
   }
 
+  /* ================= 美化：桌面组件与排布 ================= */
+
+  function renderTheme() {
+    const box = $('widgetToggles');
+    const cfg = widgetCfg();
+    if (box) {
+      box.innerHTML = '';
+      layout.forEach((id) => {
+        if (!WIDGETS[id]) return;
+        const on = cfg.hidden.indexOf(id) < 0;
+        const row = document.createElement('div');
+        row.className = 'row widget-row';
+        row.innerHTML =
+          '<span class="row-name">' + (WIDGET_CN[id] || id) + '</span>' +
+          '<select class="row-side" data-where="' + id + '">' +
+            '<option value="1"' + (cfg.p1.indexOf(id) >= 0 ? ' selected' : '') + '>首页</option>' +
+            '<option value="2"' + (cfg.p1.indexOf(id) < 0 ? ' selected' : '') + '>第二页</option>' +
+            '<option value="0"' + (!on ? ' selected' : '') + '>不显示</option>' +
+          '</select>';
+        row.querySelector('select').addEventListener('change', (e) => {
+          const v = e.target.value;
+          const hidden = widgetCfg().hidden.slice();
+          const p1 = widgetCfg().p1.slice();
+          const hi = hidden.indexOf(id), pi = p1.indexOf(id);
+          if (v === '0') {
+            if (hi < 0) hidden.push(id);
+          } else {
+            if (hi >= 0) hidden.splice(hi, 1);
+            if (v === '1' && pi < 0) p1.push(id);
+            if (v === '2' && pi >= 0) p1.splice(pi, 1);
+          }
+          patchWidgets({ hidden: hidden, p1: p1 });
+          renderBento();
+          renderBento2();
+          toast(v === '0' ? '收起来了' : v === '1' ? '挪到首页了' : '挪到第二页了');
+        });
+        box.appendChild(row);
+      });
+    }
+
+    const hcfg = homeCfg();
+    const setVal = (id, v) => { const el = $(id); if (el) el.value = v; };
+    setVal('setMix', hcfg.mix ? 'on' : 'off');
+    setVal('setRows', String(hcfg.rows));
+    setVal('setEvery', String(hcfg.every));
+    setVal('setGap', hcfg.gap);
+  }
+
+  function bindThemeControls() {
+    const bind = (id, fn) => {
+      const el = $(id);
+      if (el) el.addEventListener('change', () => { fn(el.value); renderBento(); renderBento2(); renderApps(); });
+    };
+    bind('setMix', (v) => patchHome({ mix: v === 'on' }));
+    bind('setRows', (v) => patchHome({ rows: Number(v) | 0 }));
+    bind('setEvery', (v) => patchHome({ every: Number(v) | 0 }));
+    bind('setGap', (v) => { patchHome({ gap: v }); applyGap(v); });
+
+    const reset = $('btnThemeReset');
+    if (reset) {
+      reset.addEventListener('click', () => {
+        if (!confirm('组件和应用都回到默认位置？')) return;
+        [KEY.layout, KEY.apps, KEY.dock].forEach((k) => { try { localStorage.removeItem(k); } catch (_) {} });
+        layout = LAYOUT_DEFAULT.slice();
+        APPS = loadOrder(KEY.apps, APPS_DEFAULT);
+        DOCK = loadOrder(KEY.dock, DOCK_DEFAULT);
+        patchWidgets([]);
+        patchHome(Object.assign({}, HOME_DEFAULT));
+        applyGap(HOME_DEFAULT.gap);
+        renderBento();
+        renderBento2();
+        renderApps();
+        renderTheme();
+        toast('回到默认了');
+      });
+    }
+  }
+
+  /** 疏密：只改 bento 的间距和首页内边距 */
+  function applyGap(v) {
+    const box = $('bento');
+    if (!box) return;
+    box.classList.remove('gap-tight', 'gap-comfy', 'gap-loose');
+    box.classList.add('gap-' + (v || 'comfy'));
+  }
+
   /* ---------------- 机的一天 ----------------
      页面开着时记真实发生的事；关掉的那段靠状态演化推演（会标出来）。 */
 
@@ -2540,6 +2766,7 @@
         migrate();
         persistAll();
         renderBento();
+        renderBento2();
         renderHistory();
         renderCards();
         renderMood();
@@ -2647,6 +2874,7 @@
 
   function boot() {
     renderBento();
+    renderBento2();
     renderApps();
     renderCards();
     renderMood();
@@ -2822,6 +3050,8 @@
     restoreTimers();
     collectDevice();
     renderCoupons();
+    bindThemeControls();
+    applyGap(homeCfg().gap);
 
     setInterval(() => {
       S.persona = P.evolve(S.persona, Date.now());

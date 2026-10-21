@@ -2659,3 +2659,41 @@ body.widget-editing .sb-right { opacity: 0; }
   border-radius: 50%;
   background: #6b6280;
 }
+
+/* ============================================================
+   桌面交替布局：组件之间插应用行
+   ============================================================ */
+.app-row {
+  grid-column: span 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 4px;
+  padding: 2px 0;
+}
+.app-row .tile { flex: 1 1 0; min-width: 0; }
+.app-row .tile-ic { width: 46px; height: 46px; border-radius: 15px; margin: 0 auto; }
+.app-row .tile-ic svg { width: 19px; height: 19px; }
+
+/* 疏密 */
+.bento.gap-tight { gap: 6px; }
+.bento.gap-comfy { gap: 12px; }
+.bento.gap-loose { gap: 18px; }
+.bento.gap-loose .w-pair,
+.bento.gap-loose .w-days,
+.bento.gap-loose .w-said { padding-top: 4px; padding-bottom: 4px; }
+
+/* 美化页 */
+.switch-row input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  accent-color: #1f232b;
+}
+.switch-row .row-ic { display: none; }
+code {
+  padding: 1px 5px;
+  font-size: 11px;
+  background: rgba(17, 20, 28, 0.06);
+  border-radius: 4px;
+}
