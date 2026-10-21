@@ -1,4 +1,4 @@
-const CACHE = 'xiaoman-v2';
+const CACHE = 'xiaoman-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -24,25 +24,21 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
+
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
 
+  // 网络优先：这个应用一直在改，宁可慢一点也要看到最新的
+  // 断网时退回缓存，仍然能打开
   e.respondWith(
-    caches.match(req).then((hit) => {
-      if (hit) {
-        // 后台静默更新
-        fetch(req).then((res) => {
-          if (res && res.ok) caches.open(CACHE).then((c) => c.put(req, res.clone()));
-        }).catch(() => {});
-        return hit;
-      }
-      return fetch(req).then((res) => {
+    fetch(req)
+      .then((res) => {
         if (res && res.ok) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copy));
         }
         return res;
-      }).catch(() => caches.match('./index.html'));
-    })
+      })
+      .catch(() => caches.match(req).then((hit) => hit || caches.match('./index.html')))
   );
 });
