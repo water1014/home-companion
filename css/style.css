@@ -90,6 +90,64 @@ button { font-family: inherit; }
 
 .phone { position: fixed; inset: 0; z-index: 1; }
 
+
+/* 分页标签 */
+.page-label {
+  padding: 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: var(--ink-3);
+  text-align: right;
+}
+
+/* 本月小结 */
+.stat-card {
+  display: flex;
+  padding: 16px 8px;
+}
+.stat { flex: 1; text-align: center; }
+.stat b {
+  display: block;
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.stat span { font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.08em; }
+.stat + .stat { border-left: 1px solid rgba(60, 55, 70, 0.06); }
+
+/* 占位页说明 */
+.todo-desc {
+  margin: 12px 26px 0;
+  max-width: 30ch;
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--ink-2);
+}
+.todo-flag {
+  margin-top: 20px;
+  padding: 5px 14px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--ink-3);
+  border: 1px solid rgba(60, 55, 70, 0.1);
+  border-radius: 999px;
+}
+
+/* 记忆库 */
+.mem-hero { padding: 24px 22px; text-align: center; }
+.mem-count { margin: 0; font-size: 13px; color: var(--ink-2); letter-spacing: 0.05em; }
+.mem-count b {
+  font-size: 42px;
+  font-weight: 300;
+  color: var(--pink-deep);
+  margin-right: 7px;
+  font-variant-numeric: tabular-nums;
+}
+.mem-sub { margin: 8px 0 0; font-size: 12px; color: var(--ink-3); }
+.mem-note { padding: 14px 18px; }
+
 @media (min-width: 820px) {
   .phone {
     inset: 0;
@@ -330,6 +388,7 @@ button { font-family: inherit; }
 
 /* 这一周（有没有说话） */
 .week-card { padding: 15px 18px 16px; }
+.home-page .week-card { margin-top: auto; }
 .home-page .mem-card { margin-top: auto; }
 .week-sub { font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em; }
 .week-row {
@@ -1262,3 +1321,22 @@ button.row { cursor: pointer; }
     transition-duration: 0.001ms !important;
   }
 }
+
+/* 纪念日 */
+.anniv-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+}
+.anniv-label { margin: 0; font-size: 9.5px; letter-spacing: 0.18em; color: var(--ink-3); }
+.anniv-name { margin: 6px 0 0; font-size: 14px; color: var(--ink); letter-spacing: 0.02em; }
+.anniv-num { display: flex; align-items: baseline; gap: 4px; }
+.anniv-num b {
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--pink-deep);
+  font-variant-numeric: tabular-nums;
+}
+.anniv-num span { font-size: 11px; color: var(--ink-3); }
+.statusbar .page-label { text-align: right; }

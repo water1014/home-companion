@@ -26,6 +26,13 @@
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><path d="M5 7.5h14M5 12h14M5 16.5h14"/><circle cx="9.5" cy="7.5" r="1.9"/><circle cx="15" cy="12" r="1.9"/><circle cx="8" cy="16.5" r="1.9"/></symbol>
   <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.2 17.5a4.2 4.2 0 0 1 .3-8.4 5.6 5.6 0 0 1 10.9 1.6 3.9 3.9 0 0 1-.7 6.8Z"/></symbol>
+  <symbol id="i-moments" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><circle cx="16.5" cy="11.2" r="2.3"/><path d="M3.6 19.4c.6-2.9 2.8-4.6 5.4-4.6s4.8 1.7 5.4 4.6"/><path d="M15.4 15.2c2 .4 3.4 1.9 3.9 4.2"/></symbol>
+  <symbol id="i-album" viewBox="0 0 24 24"><rect x="3" y="6.5" width="13.5" height="12" rx="2.2"/><path d="M7.5 6.5V5.2A1.7 1.7 0 0 1 9.2 3.5h9.1a1.7 1.7 0 0 1 1.7 1.7v9"/><circle cx="7.2" cy="10.6" r="1.3"/><path d="M3.4 16.2l3.8-3.4 3.4 3.2 2.4-2.2 3.4 3"/></symbol>
+  <symbol id="i-health" viewBox="0 0 24 24"><path d="M12 20s-6.6-4.2-8.4-8.3C2.3 8.4 4.5 5.4 7.6 5.4c1.9 0 3.4 1 4.4 2.6 1-1.6 2.5-2.6 4.4-2.6 3.1 0 5.3 3 4 6.3C18.6 15.8 12 20 12 20Z"/><path d="M4.6 12h3.6l1.4-2.4 2 4.2 1.6-2.8 1.3 1h4.9"/></symbol>
+  <symbol id="i-ledger" viewBox="0 0 24 24"><rect x="4.5" y="3.5" width="15" height="17" rx="2.3"/><path d="M8.5 3.5v17M11.6 8.2h4.6M11.6 12h4.6M11.6 15.8h2.8"/></symbol>
+  <symbol id="i-quota" viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="6.5" ry="2.6"/><path d="M5.5 7v4.2c0 1.4 2.9 2.6 6.5 2.6s6.5-1.2 6.5-2.6V7"/><path d="M5.5 11.4v4.2c0 1.4 2.9 2.6 6.5 2.6s6.5-1.2 6.5-2.6v-4.2"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="14" height="14" rx="3"/><path d="M7 21h10.5a3.5 3.5 0 0 0 3.5-3.5V7"/><path d="M8.2 8h5.6M8.2 11.2h3.6"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9Z"/><path d="M18.4 15.6l.8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8Z"/></symbol>
 </svg>
 
 <div class="bg" aria-hidden="true">
@@ -101,12 +108,27 @@
       </section>
     </section>
 
-    <!-- ===== 第二页 ===== -->
+    <!-- ===== 第二页 · 生活 ===== -->
     <section class="home-page" aria-label="第二页">
+      <div class="statusbar"><span class="sb-date-mini">10月21日 星期三</span><span class="page-label">生活</span></div>
+
+      <nav class="app-grid" id="appGrid2" aria-label="生活应用"></nav>
+
+      <section class="glass stat-card">
+        <div class="stat"><b id="statDays">0</b><span>天聊过</span></div>
+        <div class="stat"><b id="statMsgs">0</b><span>条消息</span></div>
+        <div class="stat"><b id="statFacts">0</b><span>件事记着</span></div>
+      </section>
+
       <section class="glass week-card">
         <header class="card-head"><h3>这一周</h3><span class="week-sub" id="weekSub">还没说话</span></header>
         <div class="week-row" id="weekRow"></div>
       </section>
+    </section>
+
+    <!-- ===== 第三页 · 我们的 ===== -->
+    <section class="home-page" aria-label="第三页">
+      <div class="statusbar"><span class="sb-date-mini">10月21日 星期三</span><span class="page-label">我们的</span></div>
 
       <section class="cal-card glass" id="calCard">
         <header class="cal-head">
@@ -115,6 +137,14 @@
         </header>
         <div class="cal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span class="wk">六</span><span class="wk">日</span></div>
         <div class="cal-grid" id="calGrid"></div>
+      </section>
+
+      <section class="glass anniv-card">
+        <div>
+          <p class="anniv-label">下一个纪念日</p>
+          <p class="anniv-name" id="annivName">第 1 个纪念日</p>
+        </div>
+        <div class="anniv-num"><b id="annivDays">0</b><span>天</span></div>
       </section>
 
       <section class="glass mem-card">
@@ -254,6 +284,36 @@
   </div>
 </section>
 
+<!-- ============ 记忆库 ============ -->
+<section class="screen page memory-page" id="memory" aria-label="记忆库">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">记忆库</p>
+    <span class="head-spacer"></span>
+  </header>
+
+  <div class="page-scroll">
+    <section class="glass mem-hero">
+      <p class="mem-count"><b id="memCount">0</b><span>条记忆</span></p>
+      <p class="mem-sub">跟着她一起，跨对话保留。</p>
+    </section>
+
+    <section class="glass mem-card">
+      <header class="card-head"><h3>全部</h3><button class="text-btn" id="btnAddMemory2">添加</button></header>
+      <ul class="memories" id="allMemories"></ul>
+      <p class="hint" id="allMemoryHint" hidden>还没有。她会在聊天里自己记，你也可以手动加。</p>
+    </section>
+
+    <section class="glass mem-note">
+      <p class="hint">
+        现在存在这台设备的浏览器里。<br>
+        以后接跨窗口 / 跨平台的记忆同步时，这里是入口 ——
+        每条记忆都带来源和时间，才能被别的会话认出来。
+      </p>
+    </section>
+  </div>
+</section>
+
 <!-- ============ 占位页（之后自己盖） ============ -->
 <section class="screen page todo-page" id="todo" aria-label="施工中">
   <header class="page-head">
@@ -263,8 +323,9 @@
   </header>
   <div class="page-scroll todo-body">
     <div class="todo-ic glass"><svg><use id="todoIcon" href="#i-photo"/></svg></div>
-    <p class="todo-word">还没盖好</p>
-    <p class="hint">这个抽屉空着，等你决定放什么。<br>在 app.js 顶部的 APPS 里注册，就能点亮。</p>
+    <p class="todo-word" id="todoName">还没盖好</p>
+    <p class="todo-desc" id="todoDesc">位置已经留好了。</p>
+    <p class="todo-flag">位置已预留</p>
   </div>
 </section>
 

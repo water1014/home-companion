@@ -11,22 +11,28 @@
 
   /* ============================================================
      应用注册表 —— 之后加功能就在这里加一条
-     page: 'chat' | 'mood' | 'settings'（已有页面）
-     page 留空 = 占位抽屉（点开是"还没盖好"）
+     page: 'chat' | 'mood' | 'memory' | 'settings'
+     page 留空 = 占位页（点开会显示 desc 里写好的设想）
      ============================================================ */
   const APPS = [
-    { id: 'chat',  name: '聊天', icon: 'i-chat',  page: 'chat' },
-    { id: 'mood',  name: '心情', icon: 'i-face',  page: 'mood' },
-    { id: 'music', name: '音乐', icon: 'i-music' },
-    { id: 'memo',  name: '回忆', icon: 'i-photo' },
-    { id: 'wish',  name: '心愿', icon: 'i-star' },
-    { id: 'mail',  name: '信箱', icon: 'i-mail' },
+    { id: 'chat',     name: '聊天',   icon: 'i-chat',    page: 'chat' },
+    { id: 'mood',     name: '心情',   icon: 'i-face',    page: 'mood' },
+    { id: 'notes',    name: '碎碎念', icon: 'i-note',    desc: '她随口说的话、你随手记下的碎片，按时间堆在这里。不整理，也不删。' },
+    { id: 'moments',  name: '朋友圈', icon: 'i-moments', desc: '只有你们两个人的时间线。发一张图，配一句话，她在下面回你。' },
+    { id: 'album',    name: '相册',   icon: 'i-album',   desc: '照片按天排。翻到某一张，能看见那天你们说过什么。' },
+    { id: 'music',    name: '音乐',   icon: 'i-music',   desc: '想做成「一起听」：同一个进度条，两边同时听到同一秒。' },
+    { id: 'health',   name: '健康',   icon: 'i-health',  desc: '睡眠、喝水、久坐。先手动记，以后想从手机健康数据里读。' },
+    { id: 'ledger',   name: '记账本', icon: 'i-ledger',  desc: '一起花的钱，一笔一笔。她也可以记下自己「想要」的东西。' },
+    { id: 'quota',    name: '额度',   icon: 'i-quota',   desc: '这个月还能花多少。给她留一点，也给自己留一点。' },
+    { id: 'calendar', name: '日历',   icon: 'i-cal',     desc: '纪念日、约定、她的作息。点某一天，能看见那天发生了什么。' },
+    { id: 'memory',   name: '记忆库', icon: 'i-brain',   page: 'memory' },
+    { id: 'wish',     name: '心愿',   icon: 'i-spark',   desc: '想一起做的事。做掉一件，划掉一件。' },
   ];
 
   const DOCK = [
     { id: 'chat',     name: '聊天', icon: 'i-chat',  page: 'chat' },
-    { id: 'mail',     name: '信箱', icon: 'i-mail' },
-    { id: 'memo',     name: '回忆', icon: 'i-photo' },
+    { id: 'memory',   name: '记忆', icon: 'i-brain', page: 'memory' },
+    { id: 'album',    name: '相册', icon: 'i-album' },
     { id: 'settings', name: '我的', icon: 'i-gear',  page: 'settings' },
   ];
 
@@ -105,7 +111,13 @@
   const phone = $('phone');
   const home = $('home');
   const dim = document.querySelector('.home-dim');
-  const pages = { chat: $('chat'), mood: $('mood'), settings: $('settings'), todo: $('todo') };
+  const pages = {
+    chat: $('chat'),
+    mood: $('mood'),
+    memory: $('memory'),
+    settings: $('settings'),
+    todo: $('todo'),
+  };
 
   let currentPage = null;
   let movingTimer = 0;
@@ -156,6 +168,7 @@
       scrollDown(true);
     }
     if (id === 'mood') renderMood();
+    if (id === 'memory') renderMemoryPage();
     if (id === 'settings') syncSettingsForm();
   }
 
@@ -274,22 +287,25 @@
       '<span class="tile-ic"><svg><use href="#' + app.icon + '"/></svg><i class="badge"></i></span>' +
       '<span class="tile-name">' + app.name + '</span>';
     b.addEventListener('click', () => {
-      if (app.page) openPage(app.page);
-      else {
-        $('todoTitle').textContent = app.name;
-        $('todoIcon').setAttribute('href', '#' + app.icon);
-        openPage('todo');
-      }
+      if (app.page) { openPage(app.page); return; }
+      // 占位：把这个功能的设想写在页面上，之后照着填
+      $('todoTitle').textContent = app.name;
+      $('todoName').textContent = app.name;
+      $('todoDesc').textContent = app.desc || '位置已经留好了。';
+      $('todoIcon').setAttribute('href', '#' + app.icon);
+      openPage('todo');
     });
     return b;
   }
 
   function renderApps() {
-    const grid = $('appGrid');
+    const g1 = $('appGrid');
+    const g2 = $('appGrid2');
     const dock = $('dock');
-    grid.innerHTML = '';
+    g1.innerHTML = '';
+    g2.innerHTML = '';
     dock.innerHTML = '';
-    APPS.forEach((a) => grid.appendChild(makeTile(a)));
+    APPS.forEach((a, i) => (i < 6 ? g1 : g2).appendChild(makeTile(a)));
     DOCK.forEach((a) => dock.appendChild(makeTile(a)));
   }
 
@@ -306,6 +322,9 @@
     $('sbEnergy').textContent = Math.round(S.persona.energy);
     $('clockStatus').textContent = P.statusLine(S.persona, Date.now());
     $('chatStatus').textContent = P.statusLine(S.persona, Date.now());
+    document.querySelectorAll('.sb-date-mini').forEach((el) => {
+      el.textContent = dateLabel(now);
+    });
   }
 
   /* ---------------- 日历 ---------------- */
@@ -418,6 +437,42 @@
     }, true);
   }
 
+  /* 下一个纪念日 */
+  function renderAnniv() {
+    const nameEl = $('annivName');
+    if (!nameEl) return;
+
+    const start = new Date((S.memory.startDate || todayStr()) + 'T00:00:00');
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    let next = new Date(now.getFullYear(), start.getMonth(), start.getDate());
+    if (next < today) next = new Date(now.getFullYear() + 1, start.getMonth(), start.getDate());
+
+    const n = Math.max(1, next.getFullYear() - start.getFullYear());
+    const days = Math.round((next - today) / 86400000);
+
+    $('annivDays').textContent = days;
+    nameEl.textContent = days === 0
+      ? '第 ' + n + ' 个纪念日 · 就是今天'
+      : '第 ' + n + ' 个纪念日';
+  }
+
+  /* 本月小结 */
+  function renderMonthStats() {
+    const bD = $('statDays');
+    if (!bD) return;
+    const now = new Date();
+    const monthMsgs = S.chat.filter((m) => {
+      const d = new Date(m.ts);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    });
+    const days = new Set(monthMsgs.map((m) => new Date(m.ts).toDateString())).size;
+    $('statDays').textContent = days;
+    $('statMsgs').textContent = monthMsgs.length;
+    $('statFacts').textContent = (S.memory.facts || []).length;
+  }
+
   /* 这一周：哪几天说过话 */
   function renderWeek() {
     const row = $('weekRow');
@@ -498,6 +553,8 @@
     $('setMoodLine').textContent = P.moodSub(S.persona);
     renderCalendar();
     renderWeek();
+    renderMonthStats();
+    renderAnniv();
     renderQuote();
     renderHomeMemories();
   }
@@ -926,20 +983,59 @@
     else if (S.settings.enabled) toast('已接入，她换一种方式说话');
   });
 
-  $('btnAddMemory').addEventListener('click', () => {
+  /* ---------------- 记忆 ---------------- */
+
+  function renderMemoryPage() {
+    const ul = $('allMemories');
+    if (!ul) return;
+    const facts = S.memory.facts || [];
+
+    $('memCount').textContent = facts.length;
+    $('allMemoryHint').hidden = facts.length > 0;
+
+    ul.innerHTML = '';
+    facts.slice().reverse().forEach((f, revIdx) => {
+      const idx = facts.length - 1 - revIdx;
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.textContent = f;
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.setAttribute('aria-label', '删掉这条记忆');
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        S.memory.facts.splice(idx, 1);
+        save(KEY.memory, S.memory);
+        renderMemoryPage();
+        renderHomeMemories();
+        renderMood();
+      });
+
+      li.appendChild(span);
+      li.appendChild(del);
+      ul.appendChild(li);
+    });
+  }
+
+  /* 内联添加（心情页和记忆库页共用） */
+  function inlineAddMemory(listEl, done) {
     if ($('memInput')) return;
     const wrap = document.createElement('div');
     wrap.className = 'mem-add';
+
     const inp = document.createElement('input');
     inp.id = 'memInput';
     inp.type = 'text';
     inp.placeholder = '例如：对芒果过敏';
     inp.maxLength = 60;
     inp.className = 'mem-input';
+
     const ok = document.createElement('button');
     ok.type = 'button';
     ok.textContent = '存';
     ok.className = 'text-btn';
+
     const commit = () => {
       const v = inp.value.trim();
       if (v) {
@@ -947,18 +1043,33 @@
         save(KEY.memory, S.memory);
       }
       wrap.remove();
-      renderMood();
+      done();
     };
+
     ok.addEventListener('click', commit);
     inp.addEventListener('keydown', (ev) => {
       if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
       if (ev.key === 'Escape') wrap.remove();
     });
+
     wrap.appendChild(inp);
     wrap.appendChild(ok);
-    $('memories').before(wrap);
+    listEl.before(wrap);
     inp.focus();
-  });
+  }
+
+  $('btnAddMemory').addEventListener('click', () => inlineAddMemory($('memories'), () => {
+    renderMood();
+    renderHomeMemories();
+    renderMonthStats();
+  }));
+
+  $('btnAddMemory2').addEventListener('click', () => inlineAddMemory($('allMemories'), () => {
+    renderMemoryPage();
+    renderHomeMemories();
+    renderMood();
+    renderMonthStats();
+  }));
 
   /* ---------------- 导入 / 导出 / 清空 ---------------- */
 
@@ -1127,7 +1238,7 @@
       });
     }
     const moreMem = $('btnHomeMemories');
-    if (moreMem) moreMem.addEventListener('click', () => openPage('mood'));
+    if (moreMem) moreMem.addEventListener('click', () => openPage('memory'));
 
     renderDots();
     // 字体加载完/旋转屏幕后重新量一次宽度
