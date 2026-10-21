@@ -1,0 +1,115 @@
+# 小满 · 同居日志
+
+一个只属于两个人的房间。纯前端，无后端，数据只存在你自己的浏览器里。
+
+---
+
+## 这是什么
+
+不是一个"会聊天的输入框"，而是有**状态、作息、记忆**的伴侣界面。
+
+- **她在什么时间就是什么状态**：清晨刚醒、深夜反而清醒、凌晨几乎待机。问候语、语气、主动说话的内容都跟着真实时间走。
+- **她会记住你**：说"我最近喜欢喝冰茶"，她会记下来；下次问"你还记得吗"，她真的答得出来。
+- **三段状态在动**：心情 / 精力 / 亲密度。聊久了会累，被夸会高兴，很久不联系会慢慢淡下来（但不会惩罚你）。
+- **她会先开口**：你安静一阵子，她可能会说一句"这么晚了。你是睡不着，还是不想睡。"
+- **可选的模型接入**：不接也能用（本地人格引擎，离线可用）；接了之后换成大模型生成，失败自动退回本地。
+
+## 三层结构
+
+| 层 | 在哪 | 作用 |
+|---|---|---|
+| 人格引擎 | `js/persona.js` | 意图识别、回复生成、状态演化、记忆抽取。纯本地 |
+| 记忆层 | `localStorage` | 称呼、喜好、纪念日、聊过的记录 |
+| 模型层（可选） | `js/llm.js` | 前端直连 OpenAI 兼容接口，流式输出 |
+
+## 目录
+
+```
+index.html              页面骨架
+css/style.css           全部样式
+js/persona.js           人格引擎（想改她的说话方式，改这里）
+js/llm.js               可选的模型接入
+js/app.js               渲染 / 交互 / 存储
+manifest.webmanifest    PWA 配置（可"添加到主屏幕"）
+sw.js                   离线缓存
+icons/                  图标
+```
+
+---
+
+## 部署到 GitHub Pages
+
+### 方式一：网页上传（不用命令行）
+
+1. 新建一个仓库，名字随意，比如 `home-companion`，**选 Public**（免费账号的 Pages 需要公开仓库）。
+2. 进入仓库 → `Add file` → `Upload files`，把本项目里**所有文件**拖进去（包括 `css/`、`js/`、`icons/` 这几个文件夹）。
+3. `Commit changes`。
+4. 仓库 → `Settings` → `Pages` → Source 选 **Deploy from a branch**，Branch 选 `main`、目录选 `/ (root)`，保存。
+5. 等一两分钟，访问 `https://你的用户名.github.io/home-companion/`。
+
+### 方式二：命令行
+
+```bash
+cd home-companion
+git init
+git add .
+git commit -m "init"
+git branch -M main
+git remote add origin https://github.com/你的用户名/home-companion.git
+git push -u origin main
+```
+
+然后按上面第 4 步开 Pages。
+
+### 方式三：gh CLI
+
+```bash
+gh repo create home-companion --public --source=. --push
+gh api -X POST repos/你的用户名/home-companion/pages \
+  -f source[branch]=main -f source[path]=/
+```
+
+### 手机上用
+
+打开 Pages 地址 → Safari「分享」→「添加到主屏幕」/ Chrome「安装应用」。
+之后就是一个独立图标，全屏，断网也能打开（Service Worker 缓存）。
+
+> ⚠️ 用 `file://` 直接双击打开会有两个限制：Service Worker 不生效、部分浏览器不给 localStorage。建议起个本地服务：`python3 -m http.server 8000`。
+
+---
+
+## 接入大模型（可选）
+
+设置面板里打开开关，填三样：
+
+| 字段 | 例子 |
+|---|---|
+| 接口地址 | `https://api.openai.com/v1` 或 `https://api.deepseek.com/v1` |
+| 模型 | `gpt-4o-mini` / `deepseek-chat` |
+| API Key | `sk-...` |
+
+要求接口兼容 `POST /v1/chat/completions` 且支持 `stream: true`。
+
+**关于密钥**：它只存在这台设备的 localStorage，不上传任何地方。但前端直连意味着密钥对浏览器可见——所以这套东西适合**自己给自己用**，不适合做成给别人用的产品（那需要后端代理）。
+
+---
+
+## 数据与备份
+
+- 全部数据在浏览器 localStorage：`hc.v1.chat` / `hc.v1.persona` / `hc.v1.memory` / `hc.v1.settings`
+- 设置里可以**导出 JSON**（不含密钥），换设备/换浏览器时导入
+- 清缓存会清掉数据，重要的话定期导出
+
+## 想改她
+
+`js/persona.js` 里三处最关键：
+
+1. `LINES` — 每个意图 × 三种心情档位的台词。加一条就是加一个可能的反应。
+2. `ACTIVITY` — 各时段她在做什么（顶栏那行状态文字）。
+3. `INITIATIVE` — 她主动开口说的话。
+
+改完刷新即可，不需要构建。
+
+---
+
+本地优先 · 无服务器 · 数据只在你手里
