@@ -1299,6 +1299,15 @@ button.row { cursor: pointer; }
 
 @media (max-height: 780px) {
   .home-page { gap: 11px; padding-top: calc(10px + var(--safe-t)); }
+  .home-page:first-of-type { gap: 12px; padding-top: 0; }
+  .app-grid-all { gap: 10px 4px; }
+  .app-grid-all .tile-ic { width: 45px; height: 45px; border-radius: 14px; }
+  .app-grid-all .tile-ic svg { width: 19px; height: 19px; }
+  .app-grid-all .tile-name { font-size: 9px; }
+  .stat-card { display: none; }
+  .hero-card { padding: 24px 22px 20px; }
+  .hero-ava { width: 66px; height: 66px; font-size: 19px; }
+  .hero-ring { width: 112px; height: 112px; margin-left: -56px; top: 18px; }
   .clock-card { padding: 14px 20px 12px; }
   .big-clock { font-size: 50px; }
   .days-card { padding: 13px 18px; }
@@ -1375,4 +1384,329 @@ button.row { cursor: pointer; }
   border: 1px solid rgba(60, 55, 70, 0.09);
   border-radius: 999px;
   padding: 4px 11px;
+}
+
+/* ============================================================
+   首屏重构：人 / 今天 / 一句话
+   ============================================================ */
+
+/* 锁屏：只留一句会变的话 */
+.lock-inner {
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+  padding: calc(96px + var(--safe-t)) 32px calc(40px + var(--safe-b));
+}
+.lock-date {
+  margin: 0 0 20px;
+  font-size: 11.5px;
+  letter-spacing: 0.18em;
+  color: var(--ink-3);
+}
+.lock-line {
+  margin: 0;
+  max-width: 15ch;
+  font-size: clamp(24px, 7.6vw, 31px);
+  font-weight: 300;
+  line-height: 1.65;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  animation: fadeUp 0.9s var(--ease-ios) both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+.lock-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(34px + var(--safe-b));
+  margin: 0 auto;
+}
+
+/* 人 */
+.hero-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 30px 24px 24px;
+  overflow: hidden;
+}
+.hero-ring {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  width: 128px;
+  height: 128px;
+  margin-left: -64px;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 140, 162, 0.25);
+  animation: heroPulse 5.2s ease-in-out infinite;
+  pointer-events: none;
+}
+.hero-ring::after {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(143, 166, 196, 0.18);
+}
+@keyframes heroPulse {
+  0%, 100% { transform: scale(0.94); opacity: 0.45; }
+  50%      { transform: scale(1.07); opacity: 0.95; }
+}
+.hero-ava {
+  position: relative;
+  z-index: 1;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 21px;
+  font-weight: 500;
+  background: linear-gradient(145deg, #fbe4e9, #f0c4d1);
+  color: #b36b80;
+  box-shadow: 0 10px 26px rgba(224, 127, 151, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+.hero-name {
+  margin: 14px 0 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.hero-status {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
+}
+.hero-meta {
+  margin: 15px 0 0;
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+.hero-meta b {
+  color: var(--pink-deep);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 今天 */
+.today-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+}
+.today-label {
+  margin: 0;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  color: var(--ink-3);
+}
+.today-date {
+  margin: 6px 0 0;
+  font-size: 16.5px;
+  color: var(--ink);
+  letter-spacing: 0.03em;
+}
+.today-right { text-align: right; }
+.today-num {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 3px;
+  margin: 0;
+}
+.today-num b {
+  font-size: 30px;
+  font-weight: 300;
+  color: var(--pink-deep);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.today-num span { font-size: 11px; color: var(--ink-3); }
+.today-sub {
+  margin: 3px 0 0;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+}
+
+/* 应用页：一屏装下 */
+.app-grid-all {
+  gap: 17px 8px;
+  padding: 6px 4px 0;
+  align-content: start;
+}
+.app-grid-all .tile-ic {
+  width: 54px;
+  height: 54px;
+  border-radius: 17px;
+}
+.app-grid-all .tile-name { font-size: 10.5px; }
+
+/* 情绪一键选词 */
+.mood-picker {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 18px;
+}
+.mood-picker button {
+  padding: 7px 14px;
+  border: 1px solid rgba(60, 55, 70, 0.09);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: all 0.22s var(--ease);
+}
+.mood-picker button:active { transform: scale(0.94); }
+.mood-picker button.on {
+  border-color: transparent;
+  background: linear-gradient(145deg, #f7cdd8, #e9a0b4);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(224, 127, 151, 0.32);
+}
+.mood-echo {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--pink-deep);
+  animation: fadeUp 0.4s var(--ease-ios) both;
+}
+
+/* 今天她说过 */
+.talk-card { padding: 18px 20px; }
+.talk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.talk-list li {
+  padding-left: 12px;
+  border-left: 2px solid rgba(232, 140, 162, 0.28);
+  font-size: 13px;
+  line-height: 1.72;
+  color: var(--ink-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 设置里的下拉与时间段 */
+.mini-select {
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink-2);
+  text-align: right;
+  outline: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2px;
+}
+.time-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.time-range input {
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink-2);
+  text-align: right;
+  outline: 0;
+  width: 74px;
+}
+
+/* 首屏入场：三块依次浮起 */
+.home-page > * { animation: homeIn 0.62s var(--ease-ios) both; }
+.home-page > *:nth-child(1) { animation-delay: 0.02s; }
+.home-page > *:nth-child(2) { animation-delay: 0.08s; }
+.home-page > *:nth-child(3) { animation-delay: 0.14s; }
+.home-page > *:nth-child(4) { animation-delay: 0.2s; }
+.home-page > *:nth-child(5) { animation-delay: 0.24s; }
+.home-page > *:nth-child(n + 6) { animation-delay: 0.28s; }
+@keyframes homeIn {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 在线点呼吸 */
+.sb-dot { animation: dotBlink 2.8s ease-in-out infinite; }
+@keyframes dotBlink {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 3px rgba(127, 199, 154, 0.18); }
+  50%      { opacity: 0.55; box-shadow: 0 0 0 5px rgba(127, 199, 154, 0.06); }
+}
+
+/* 引号轻轻浮动 */
+.quote-card::before { animation: quoteFloat 7s ease-in-out infinite; }
+@keyframes quoteFloat {
+  0%, 100% { transform: translateY(0); opacity: 0.28; }
+  50%      { transform: translateY(-3px); opacity: 0.45; }
+}
+
+/* 解锁后她先开口的那一条 */
+.msg.first-pop { animation: popIn 0.6s var(--ease-ios) both; }
+@keyframes popIn {
+  from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 首屏：三块在剩余空间里垂直居中，像排版而不是没做完 */
+.home-page:first-of-type {
+  position: relative;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 0;
+}
+.home-page:first-of-type > .statusbar {
+  position: absolute;
+  top: calc(14px + var(--safe-t));
+  left: 18px;
+  right: 18px;
+}
+
+/* 矮屏最终覆盖（放在最后，确保生效）：21 个格子必须一屏装下 */
+@media (max-height: 780px) {
+  .home-page { gap: 10px; }
+  .home-page:first-of-type { gap: 12px; }
+  .app-grid-all { gap: 8px 4px; padding: 4px 2px 0; }
+  .app-grid-all .tile-ic { width: 44px; height: 44px; border-radius: 14px; }
+  .app-grid-all .tile-ic svg { width: 19px; height: 19px; }
+  .app-grid-all .tile-name { font-size: 9px; line-height: 1.3; }
+  .stat-card { display: none; }
+  .cal-card { padding: 12px 16px 10px; }
+  .cal-grid span { line-height: 25px; height: 25px; }
+}
+
+/* 极矮屏（≤660）：再收一档 */
+@media (max-height: 660px) {
+  .home-page { gap: 8px; }
+  .app-grid-all { gap: 6px 2px; }
+  .app-grid-all .tile-ic { width: 41px; height: 41px; border-radius: 13px; }
+  .app-grid-all .tile-name { font-size: 8.5px; }
+  .hero-card { padding: 18px 20px 16px; }
+  .hero-ava { width: 60px; height: 60px; font-size: 18px; }
+  .hero-ring { width: 102px; height: 102px; margin-left: -51px; top: 14px; }
+  .today-card { padding: 12px 20px; }
+  .quote-card { padding: 12px 16px 10px; }
 }

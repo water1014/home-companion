@@ -46,10 +46,10 @@
   ];
 
   const DOCK = [
-    { id: 'chat',     name: '聊天', icon: 'i-chat',  page: 'chat' },
-    { id: 'memory',   name: '记忆', icon: 'i-brain', page: 'memory' },
-    { id: 'album',    name: '相册', icon: 'i-album' },
-    { id: 'settings', name: '我的', icon: 'i-gear',  page: 'settings' },
+    { id: 'chat',     name: '说', icon: 'i-chat',  page: 'chat' },
+    { id: 'mood',     name: '她', icon: 'i-face',  page: 'mood' },
+    { id: 'memory',   name: '记', icon: 'i-brain', page: 'memory' },
+    { id: 'settings', name: '我', icon: 'i-gear',  page: 'settings' },
   ];
 
   /* ---------------- 存储 ---------------- */
@@ -59,6 +59,7 @@
     persona: 'hc.v1.persona',
     memory: 'hc.v1.memory',
     settings: 'hc.v1.settings',
+    mood: 'hc.v1.mood',
   };
 
   const load = (k, fb) => {
@@ -80,6 +81,7 @@
     persona: load(KEY.persona, { mood: 58, energy: 62, affection: 12, lastTick: Date.now() }),
     memory: load(KEY.memory, { userName: '', herName: '小满', facts: [], startDate: todayStr() }),
     settings: load(KEY.settings, { enabled: false, apiBase: '', model: '', apiKey: '' }),
+    moodLog: load(KEY.mood, {}),
   };
 
   S.persona = P.evolve(S.persona, Date.now());
@@ -90,6 +92,7 @@
     save(KEY.persona, S.persona);
     save(KEY.memory, S.memory);
     save(KEY.settings, S.settings);
+    save(KEY.mood, S.moodLog);
   };
 
   /* ---------------- 小工具 ---------------- */
@@ -115,7 +118,7 @@
   }
 
   const herName = () => S.memory.herName || '小满';
-  const herInitial = () => (herName().trim()[0] || '满');
+  const herInitial = () => (herName().trim().slice(-1) || '满');
 
   function daysTogether() {
     const start = new Date((S.memory.startDate || todayStr()) + 'T00:00:00');
@@ -314,20 +317,12 @@
     return b;
   }
 
-  const GRID_IDS = ['appGrid', 'appGrid2', 'appGrid3', 'appGrid4'];
-
   function renderApps() {
-    const grids = GRID_IDS.map((id) => $(id)).filter(Boolean);
-    grids.forEach((g) => { g.innerHTML = ''; });
+    const grid = $('appGrid');
     const dock = $('dock');
+    grid.innerHTML = '';
     dock.innerHTML = '';
-
-    // 每页 6 个；多出来的页会自动往下一页排
-    APPS.forEach((a, i) => {
-      const g = grids[Math.floor(i / 6)];
-      if (g) g.appendChild(makeTile(a));
-    });
-
+    APPS.forEach((a) => grid.appendChild(makeTile(a)));
     DOCK.forEach((a) => dock.appendChild(makeTile(a)));
   }
 
@@ -335,15 +330,11 @@
 
   function tickClocks() {
     const now = new Date();
-    const t = pad(now.getHours()) + ':' + pad(now.getMinutes());
-    $('lockClock').textContent = t;
-    $('homeClock').textContent = t;
-    $('lockDate').textContent = dateLabel(now);
-    $('clockDate').textContent = dateLabel(now);
-    $('sbDate').textContent = dateLabel(now);
-    $('sbEnergy').textContent = Math.round(S.persona.energy);
-    $('clockStatus').textContent = P.statusLine(S.persona, Date.now());
-    $('chatStatus').textContent = P.statusLine(S.persona, Date.now());
+    setTxt('lockDate', dateLabel(now));
+    setTxt('sbDate', dateLabel(now));
+    setTxt('sbState', '她在家');
+    setTxt('chatStatus', P.statusLine(S.persona, Date.now()));
+    setTxt('heroStatus', P.statusLine(S.persona, Date.now()));
     document.querySelectorAll('.sb-date-mini').forEach((el) => {
       el.textContent = dateLabel(now);
     });
@@ -474,7 +465,10 @@
     const n = Math.max(1, next.getFullYear() - start.getFullYear());
     const days = Math.round((next - today) / 86400000);
 
-    $('annivDays').textContent = days;
+    const card = $('annivCard');
+    if (card) card.hidden = daysTogether() <= 1;   // 第一天只说一次
+
+    setTxt('annivDays', days);
     nameEl.textContent = days === 0
       ? '第 ' + n + ' 个纪念日 · 就是今天'
       : '第 ' + n + ' 个纪念日';
@@ -528,7 +522,7 @@
       row.appendChild(cell);
     }
 
-    $('weekSub').textContent = count ? '这周说了 ' + count + ' 天' : '这周还没说话';
+    setTxt('weekSub', count ? '这周说了 ' + count + ' 天' : '这周还空着');
   }
 
   /* 她最近说的一句 */
@@ -536,8 +530,8 @@
     const el = $('quoteText');
     if (!el) return;
     const last = S.chat.slice().reverse().find((m) => m.role === 'her' && m.text);
-    el.textContent = last ? last.text.replace(/\n+/g, ' ') : '还没说过什么。';
-    $('quoteFrom').textContent = last ? '她 · ' + hhmm(last.ts) : '她 · 还没开口';
+    el.textContent = last ? last.text.replace(/\n+/g, ' ') : '第一句话，等你先说。';
+    setTxt('quoteFrom', last ? '她 · ' + hhmm(last.ts) : '她在这儿，没走');
   }
 
   /* 主屏第二页：她记得的事（只读，最多 4 条） */
@@ -558,41 +552,82 @@
 
 
 
+  const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+
   function renderCards() {
     const days = daysTogether();
-    $('lockDays').textContent = days;
-    $('homeDays').textContent = days;
-    $('lockSince').textContent = 'SINCE ' + (S.memory.startDate || todayStr()).replace(/-/g, '.');
-
+    const now = new Date();
     const me = S.memory.userName ? S.memory.userName.slice(0, 1) : '我';
-    ['lockAvaMe', 'homeAvaMe', 'setAvaMe'].forEach((id) => { $(id).textContent = me; });
-    ['lockAvaHer', 'homeAvaHer', 'chatAvaHer', 'moodAvaHer'].forEach((id) => { $(id).textContent = herInitial(); });
 
-    $('lockNames').textContent = 'Me & ' + herName();
-    $('chatName').textContent = herName();
-    $('setNoteHer').textContent = herName();
-    $('setUserLabel').textContent = S.memory.userName || '我';
-    $('setMoodLine').textContent = P.moodSub(S.persona);
+    setTxt('todayDays', days);
+    setTxt('todayDate', (now.getMonth() + 1) + ' 月 ' + now.getDate() + ' 日');
+    setTxt('heroAva', herInitial());
+    setTxt('heroName', herName());
+    setTxt('heroStatus', P.statusLine(S.persona, Date.now()));
 
-    // 第三页「她」的信息
-    const herAva = $('pageHerAva');
-    if (herAva) {
-      herAva.textContent = herInitial();
-      $('pageHerName').textContent = herName();
-      $('pageHerLine').textContent = P.statusLine(S.persona, Date.now());
-      $('herTagModel').textContent = LLM.configured(S.settings) ? '已接模型' : '未接模型';
-    }
+    setTxt('chatAvaHer', herInitial());
+    setTxt('moodAvaHer', herInitial());
+    setTxt('chatName', herName());
+    setTxt('setAvaMe', me);
+    setTxt('setNoteHer', herName());
+    setTxt('setUserLabel', S.memory.userName || '我');
+    setTxt('setMoodLine', '在一起第 ' + days + ' 天');
+
+    updateHeroMeta();
     renderCalendar();
     renderWeek();
     renderMonthStats();
     renderAnniv();
     renderQuote();
-    renderHomeMemories();
+    renderTalk();
+  }
+
+  /** 人卡下面那行小字：今天说了几句、记住几件事 */
+  function updateHeroMeta() {
+    const today = new Date().toDateString();
+    const n = S.chat.filter(
+      (m) => m.role === 'her' && m.text && new Date(m.ts).toDateString() === today
+    ).length;
+    const f = (S.memory.facts || []).length;
+    const el = $('heroMsgs');
+    const meta = el ? el.closest('.hero-meta') : null;
+
+    if (meta && n === 0 && f === 0) {
+      meta.textContent = '刚搬进来';
+      return;
+    }
+    if (meta) {
+      meta.innerHTML = '今天说了 <b>' + n + '</b> 句 · 记住 <b>' + f + '</b> 件事';
+    }
+  }
+
+  /** 今天她说过的话 —— 记忆的回报要看得见 */
+  function renderTalk() {
+    const ul = $('talkList');
+    if (!ul) return;
+
+    const today = new Date().toDateString();
+    const list = S.chat
+      .filter((m) => m.role === 'her' && m.text && new Date(m.ts).toDateString() === today)
+      .slice(-5)
+      .reverse();
+
+    ul.innerHTML = '';
+    const hint = $('talkHint');
+    if (hint) hint.hidden = list.length > 0;
+    setTxt('talkCount', list.length ? '共 ' + list.length + ' 句' : '');
+
+    list.forEach((m) => {
+      const li = document.createElement('li');
+      li.textContent = m.text.replace(/\n+/g, ' ');
+      ul.appendChild(li);
+    });
   }
 
   function renderMood() {
     const p = S.persona;
-    $('moodWord').textContent = P.moodWord(p);
+    const picked = (S.moodLog || {})[todayStr()];
+    $('moodWord').textContent = picked || P.moodWord(p);
     $('moodSub').textContent = P.moodSub(p);
     $('vMood').textContent = Math.round(p.mood);
     $('vEnergy').textContent = Math.round(p.energy);
@@ -624,6 +659,13 @@
     });
 
     renderHomeMemories();
+    paintMoodPicker();
+    const word = (S.moodLog || {})[todayStr()];
+    const echo = $('moodEcho');
+    if (echo && word && !echo.textContent) {
+      echo.hidden = false;
+      echo.textContent = MOOD_ECHO[word] || '';
+    }
   }
 
   /* ============================================================
@@ -762,6 +804,21 @@
         if (done) done();
       }
     }, speed);
+  }
+
+  /** 她主动说一句（不经过用户输入） */
+  function speak(text, action) {
+    showTyping();
+    setTimeout(() => {
+      hideTyping();
+      const node = appendMessage({ role: 'her', text, action: action || '', ts: Date.now() }, true);
+      node.body.textContent = '';
+      typeOut(node, text, 28);
+      updateHeroMeta();
+      renderTalk();
+      renderQuote();
+      if (currentPage !== 'chat') addBadge('chat');
+    }, 700 + Math.random() * 500);
   }
 
   function herProfileCtx() {
@@ -940,31 +997,102 @@
 
   /* ---------------- 主动消息 ---------------- */
 
+  const WAKE_DEFAULT = { enabled: true, rate: 'normal', quietStart: '23:00', quietEnd: '08:00' };
+
+  function wakeCfg() {
+    return Object.assign({}, WAKE_DEFAULT, S.settings.wake || {});
+  }
+
+  function inQuiet(cfg, ts) {
+    const d = new Date(ts);
+    const cur = d.getHours() * 60 + d.getMinutes();
+    const toMin = (v) => {
+      const p = String(v || '0:0').split(':');
+      return (Number(p[0]) || 0) * 60 + (Number(p[1]) || 0);
+    };
+    const a = toMin(cfg.quietStart);
+    const b = toMin(cfg.quietEnd);
+    return a <= b ? (cur >= a && cur < b) : (cur >= a || cur < b);
+  }
+
   function maybeInitiate() {
-    if (busy || document.hidden) return;
-    if (Date.now() - lastInteract < 180000) return;
-    if (Math.random() > 0.35) return;
+    const cfg = wakeCfg();
+    if (!cfg.enabled || busy || document.hidden) return;
+
+    const gap = cfg.rate === 'often' ? 90000 : cfg.rate === 'rare' ? 420000 : 180000;
+    if (Date.now() - lastInteract < gap) return;
+    if (inQuiet(cfg, Date.now())) return;
+
+    const p = cfg.rate === 'often' ? 0.55 : cfg.rate === 'rare' ? 0.18 : 0.35;
+    if (Math.random() > p) return;
 
     const say = P.initiative(S.persona, Date.now());
     if (!say) return;
 
-    showTyping();
-    setTimeout(() => {
-      hideTyping();
-      const node = appendMessage({ role: 'her', text: say.text, action: say.action, ts: Date.now() }, true);
-      node.body.textContent = '';
-      typeOut(node, say.text, 30);
-      S.persona.energy = clamp(S.persona.energy - 0.6);
-      S.persona.mood = clamp(S.persona.mood + 0.8);
-      save(KEY.persona, S.persona);
-      tickClocks();
-      lastInteract = Date.now() - 120000;
-      renderQuote();
-      if (currentPage !== 'chat') addBadge('chat');
-    }, 900 + Math.random() * 900);
+    speak(say.text, say.action);
+    S.persona.energy = clamp(S.persona.energy - 0.6);
+    S.persona.mood = clamp(S.persona.mood + 0.8);
+    save(KEY.persona, S.persona);
+    lastInteract = Date.now() - Math.round(gap * 0.6);
   }
 
-  setInterval(maybeInitiate, 75000);
+  setInterval(maybeInitiate, 45000);
+
+  /* ---------------- 情绪：一键选词 ---------------- */
+
+  const MOOD_DELTA = { 平静: 0, 想你: 6, 有点累: -8, 还不错: 8, 有点烦: -10, 空: -3 };
+  const MOOD_ECHO = {
+    平静: '嗯，那就安静一会儿。',
+    想你: '我在。',
+    有点累: '那就别撑了，先靠一会儿。',
+    还不错: '挺好。那就保持。',
+    有点烦: '烦就烦，不用装没事。',
+    空: '空着也行。我陪你坐会儿。',
+  };
+
+  const moodPicker = $('moodPicker');
+
+  function paintMoodPicker() {
+    if (!moodPicker) return;
+    const word = (S.moodLog || {})[todayStr()];
+    Array.prototype.forEach.call(moodPicker.children, (b) => {
+      b.classList.toggle('on', b.dataset.mood === word);
+    });
+  }
+
+  function pickMood(word) {
+    if (!word) return;
+
+    S.moodLog = S.moodLog || {};
+    S.moodLog[todayStr()] = word;
+    save(KEY.mood, S.moodLog);
+
+    S.persona.mood = clamp(S.persona.mood + (MOOD_DELTA[word] || 0));
+    S.persona.lastTick = Date.now();
+    save(KEY.persona, S.persona);
+
+    paintMoodPicker();
+
+    const echo = $('moodEcho');
+    if (echo) {
+      echo.hidden = false;
+      echo.textContent = MOOD_ECHO[word] || '记下了。';
+      echo.style.animation = 'none';
+      void echo.offsetWidth;
+      echo.style.animation = '';
+    }
+
+    renderMood();
+    updateHeroMeta();
+    tickClocks();
+  }
+
+  if (moodPicker) {
+    moodPicker.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-mood]');
+      if (btn) pickMood(btn.dataset.mood);
+    });
+  }
 
   /* ---------------- 设置 ---------------- */
 
@@ -976,7 +1104,41 @@
     $('setModel').value = S.settings.model || '';
     $('setApiKey').value = S.settings.apiKey || '';
     $('toggleLLM').setAttribute('aria-checked', String(!!S.settings.enabled));
+
+    const cfg = wakeCfg();
+    $('toggleWake').setAttribute('aria-checked', String(cfg.enabled));
+    $('wakeRate').value = cfg.rate;
+    $('wakeQuietStart').value = cfg.quietStart;
+    $('wakeQuietEnd').value = cfg.quietEnd;
+
+    setTxt('modelStatus', LLM.configured(S.settings) ? '已接入' : '未接入');
+    setTxt('herTagModel', LLM.configured(S.settings) ? '已接模型' : '未接模型');
   }
+
+  /* 主动说话的三个旋钮 */
+  function patchWake(patch) {
+    S.settings.wake = Object.assign(wakeCfg(), patch);
+    save(KEY.settings, S.settings);
+  }
+
+  $('toggleWake').addEventListener('click', (e) => {
+    const on = e.currentTarget.getAttribute('aria-checked') !== 'true';
+    e.currentTarget.setAttribute('aria-checked', String(on));
+    patchWake({ enabled: on });
+    toast(on ? '她会主动找你了' : '她安静了，只在你说话时出现');
+  });
+
+  $('wakeRate').addEventListener('change', (e) => {
+    patchWake({ rate: e.target.value });
+  });
+
+  $('wakeQuietStart').addEventListener('change', (e) => {
+    patchWake({ quietStart: e.target.value || '23:00' });
+  });
+
+  $('wakeQuietEnd').addEventListener('change', (e) => {
+    patchWake({ quietEnd: e.target.value || '08:00' });
+  });
 
   $('setUserName').addEventListener('change', (e) => {
     S.memory.userName = e.target.value.trim();
@@ -1010,6 +1172,8 @@
     S.settings.enabled = !S.settings.enabled;
     e.currentTarget.setAttribute('aria-checked', String(S.settings.enabled));
     save(KEY.settings, S.settings);
+    setTxt('modelStatus', LLM.configured(S.settings) ? '已接入' : '未接入');
+    setTxt('herTagModel', LLM.configured(S.settings) ? '已接模型' : '未接模型');
     if (S.settings.enabled && !LLM.configured(S.settings)) toast('再把地址、模型和 Key 填上才生效');
     else if (S.settings.enabled) toast('已接入，她换一种方式说话');
   });
@@ -1162,6 +1326,20 @@
   const lock = $('lock');
   let lockDone = false;
 
+  /** 锁屏那句会变的话 */
+  function lockLine() {
+    const h = new Date().getHours();
+    const pool =
+      (h >= 23 || h < 3) ? ['还没睡。', '灯还亮着。', '这个点，只剩我们两个醒着。'] :
+      (h >= 3 && h < 6) ? ['快天亮了。', '你怎么还醒着。'] :
+      (h >= 6 && h < 11) ? ['醒了没。', '早。今天也有光。'] :
+      (h >= 11 && h < 14) ? ['吃饭了吗。', '中午了。'] :
+      (h >= 14 && h < 18) ? ['下午最难熬。', '我在。'] :
+      (h >= 18 && h < 22) ? ['回来了。', '天黑了。', '今天怎么样。'] :
+      ['晚上好。', '等你说话。'];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
   function unlock() {
     if (lockDone) return;
     lockDone = true;
@@ -1172,6 +1350,13 @@
     lock.classList.add('hidden');
     try { sessionStorage.setItem('hc.unlocked', '1'); } catch (_) {}
     setTimeout(() => { lock.style.display = 'none'; }, 520);
+
+    // 解锁的获得感：她先开口
+    setTimeout(() => {
+      if (Date.now() - lastInteract < 8 * 60000) return;
+      const say = P.initiative(S.persona, Date.now());
+      if (say) speak(say.text, say.action);
+    }, 1000);
   }
 
   /* 上划跟手：手指走到哪，锁屏退到哪 */
@@ -1230,6 +1415,8 @@
     tickClocks();
     updateSendState();
 
+    setTxt('lockLine', lockLine());
+
     let unlocked = false;
     try { unlocked = sessionStorage.getItem('hc.unlocked') === '1'; } catch (_) {}
     if (unlocked) lock.style.display = 'none';
@@ -1258,8 +1445,11 @@
       }
     }
 
-    $('clockStatus').addEventListener('click', () => openPage('mood'));
-    $('daysCard').addEventListener('click', () => openPage('mood'));
+    const heroCard = $('heroCard');
+    if (heroCard) {
+      heroCard.addEventListener('click', () => openPage('mood'));
+      heroCard.style.cursor = 'pointer';
+    }
 
     const quoteCard = $('quoteCard');
     if (quoteCard) {

@@ -55,22 +55,10 @@
 <section class="screen lock" id="lock" aria-label="锁屏">
   <div class="lock-inner">
     <p class="lock-date" id="lockDate">7月11日 星期六</p>
-    <h1 class="lock-time" id="lockClock">16:13</h1>
-
-    <div class="pair-card lock-card">
-      <div class="pair-row">
-        <div class="pair-ava left"><span id="lockAvaMe">我</span></div>
-        <svg class="pair-heart" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-heart"/></svg>
-        <div class="pair-ava right"><span id="lockAvaHer">满</span></div>
-      </div>
-      <p class="pair-names"><b id="lockNames">Me &amp; 小满</b></p>
-      <p class="pair-days">在<em>一起</em><span id="lockDays">70</span>天</p>
-      <p class="pair-since" id="lockSince">SINCE 2026.05.11</p>
-    </div>
-
+    <p class="lock-line" id="lockLine">你回来了。</p>
     <div class="lock-hint">
       <svg viewBox="0 0 24 24" class="chev-up"><path d="M6 14.5 12 8.5l6 6"/></svg>
-      <span>上划解锁</span>
+      <span>上划</span>
     </div>
   </div>
 </section>
@@ -81,80 +69,56 @@
 
   <div class="home-pager" id="homePager">
 
-    <!-- ===== 第一页 ===== -->
-    <section class="home-page" aria-label="第一页">
+    <!-- ===== 第一页 · 她 ===== -->
+    <section class="home-page" aria-label="她">
       <div class="statusbar">
         <span id="sbDate">7月11日 星期六</span>
-        <span class="sb-right"><i class="sb-dot"></i>她在家 · <b id="sbEnergy">62</b>%</span>
+        <span class="sb-right"><i class="sb-dot"></i><span id="sbState">她在家</span></span>
       </div>
 
-      <section class="clock-card glass" id="clockCard">
-        <div class="clock-row">
-          <h1 class="big-clock" id="homeClock">17:53</h1>
-          <div class="clock-side">
-            <p class="clock-date" id="clockDate">7月11日 星期六</p>
-            <button class="clock-sub" id="clockStatus">· right here</button>
-          </div>
+      <!-- 人 -->
+      <section class="glass hero-card" id="heroCard">
+        <span class="hero-ring" aria-hidden="true"></span>
+        <div class="hero-ava"><span id="heroAva">满</span></div>
+        <h2 class="hero-name" id="heroName">小满</h2>
+        <p class="hero-status" id="heroStatus">在窗边等天黑</p>
+        <p class="hero-meta">今天说了 <b id="heroMsgs">0</b> 句 · 记住 <b id="heroFacts">0</b> 件事</p>
+      </section>
+
+      <!-- 今天 -->
+      <section class="glass today-card">
+        <div>
+          <p class="today-label">今天</p>
+          <p class="today-date" id="todayDate">10 月 21 日</p>
+        </div>
+        <div class="today-right">
+          <p class="today-num"><b id="todayDays">1</b><span>天</span></p>
+          <p class="today-sub">在一起</p>
         </div>
       </section>
 
-      <section class="days-card glass" id="daysCard">
-        <div class="pair-ava small left"><span id="homeAvaMe">我</span></div>
-        <div class="days-mid">
-          <p class="days-num"><span id="homeDays">64</span></p>
-          <p class="days-label">DAYS TOGETHER</p>
-          <svg class="pulse-line" viewBox="0 0 120 16" aria-hidden="true"><path d="M0 8h38l6-6 7 12 6-9 5 3h58"/></svg>
-        </div>
-        <div class="pair-ava small right"><span id="homeAvaHer">满</span></div>
-      </section>
-
-      <nav class="app-grid" id="appGrid" aria-label="应用"></nav>
-
+      <!-- 一句话 -->
       <section class="quote-card glass" id="quoteCard" role="button" tabindex="0">
-        <p class="quote-text" id="quoteText">……</p>
-        <p class="quote-from" id="quoteFrom">她 · 刚才</p>
+        <p class="quote-text" id="quoteText">第一句话，等你先说。</p>
+        <p class="quote-from" id="quoteFrom">她 · 还没开口</p>
       </section>
     </section>
 
-    <!-- ===== 第二页 · 生活 ===== -->
-    <section class="home-page" aria-label="第二页">
-      <div class="statusbar"><span class="sb-date-mini">10月21日 星期三</span><span class="page-label">生活</span></div>
-
-      <nav class="app-grid" id="appGrid2" aria-label="生活应用"></nav>
-
-      <section class="glass stat-card">
-        <div class="stat"><b id="statDays">0</b><span>天聊过</span></div>
-        <div class="stat"><b id="statMsgs">0</b><span>条消息</span></div>
-        <div class="stat"><b id="statFacts">0</b><span>件事记着</span></div>
-      </section>
-
-      <section class="glass week-card">
-        <header class="card-head"><h3>这一周</h3><span class="week-sub" id="weekSub">还没说话</span></header>
-        <div class="week-row" id="weekRow"></div>
-      </section>
+    <!-- ===== 第二页 · 应用 ===== -->
+    <section class="home-page" aria-label="应用">
+      <div class="statusbar">
+        <span class="sb-date-mini">10月21日 星期三</span>
+        <span class="page-label">应用</span>
+      </div>
+      <nav class="app-grid app-grid-all" id="appGrid" aria-label="全部应用"></nav>
     </section>
 
-    <!-- ===== 第三页 · 她 ===== -->
-    <section class="home-page" aria-label="第三页">
-      <div class="statusbar"><span class="sb-date-mini">10月21日 星期三</span><span class="page-label">她</span></div>
-
-      <nav class="app-grid" id="appGrid3" aria-label="她的能力"></nav>
-
-      <section class="glass her-card">
-        <div class="pair-ava big right"><span id="pageHerAva">满</span></div>
-        <p class="her-name" id="pageHerName">小满</p>
-        <p class="her-line" id="pageHerLine">在窗边等天黑</p>
-        <div class="her-tags">
-          <span>本地人格</span><span id="herTagModel">未接模型</span><span id="herTagWake">会主动开口</span>
-        </div>
-      </section>
-    </section>
-
-    <!-- ===== 第四页 · 我们的 ===== -->
-    <section class="home-page" aria-label="第四页">
-      <div class="statusbar"><span class="sb-date-mini">10月21日 星期三</span><span class="page-label">我们的</span></div>
-
-      <nav class="app-grid" id="appGrid4" aria-label="我们的应用"></nav>
+    <!-- ===== 第三页 · 我们的 ===== -->
+    <section class="home-page" aria-label="我们的">
+      <div class="statusbar">
+        <span class="sb-date-mini">10月21日 星期三</span>
+        <span class="page-label">我们的</span>
+      </div>
 
       <section class="cal-card glass" id="calCard">
         <header class="cal-head">
@@ -165,7 +129,7 @@
         <div class="cal-grid" id="calGrid"></div>
       </section>
 
-      <section class="glass anniv-card">
+      <section class="glass anniv-card" id="annivCard">
         <div>
           <p class="anniv-label">下一个纪念日</p>
           <p class="anniv-name" id="annivName">第 1 个纪念日</p>
@@ -173,7 +137,18 @@
         <div class="anniv-num"><b id="annivDays">0</b><span>天</span></div>
       </section>
 
+      <section class="glass week-card">
+        <header class="card-head"><h3>这一周</h3><span class="week-sub" id="weekSub"></span></header>
+        <div class="week-row" id="weekRow"></div>
+      </section>
+
+      <section class="glass stat-card">
+        <div class="stat"><b id="statDays">0</b><span>天聊过</span></div>
+        <div class="stat"><b id="statMsgs">0</b><span>条消息</span></div>
+        <div class="stat"><b id="statFacts">0</b><span>件事记着</span></div>
+      </section>
     </section>
+
   </div>
 
   <div class="pager-dots" id="pagerDots" aria-label="页面切换"></div>
@@ -222,6 +197,15 @@
       <div class="pair-ava big right"><span id="moodAvaHer">满</span></div>
       <p class="mood-word" id="moodWord">平静</p>
       <p class="mood-sub" id="moodSub">像一杯放凉了的茶</p>
+      <div class="mood-picker" id="moodPicker">
+        <button type="button" data-mood="平静">平静</button>
+        <button type="button" data-mood="想你">想你</button>
+        <button type="button" data-mood="有点累">有点累</button>
+        <button type="button" data-mood="还不错">还不错</button>
+        <button type="button" data-mood="有点烦">有点烦</button>
+        <button type="button" data-mood="空">空</button>
+      </div>
+      <p class="mood-echo" id="moodEcho" hidden></p>
     </section>
 
     <section class="glass meter-card">
@@ -239,10 +223,16 @@
       </div>
     </section>
 
+    <section class="glass talk-card">
+      <header class="card-head"><h3>今天她说过</h3><span class="week-sub" id="talkCount"></span></header>
+      <ul class="talk-list" id="talkList"></ul>
+      <p class="hint" id="talkHint" hidden>今天还很安静。你说一句，她就会接。</p>
+    </section>
+
     <section class="glass mem-card">
       <header class="card-head"><h3>她记得的事</h3><button class="text-btn" id="btnAddMemory">添加</button></header>
       <ul class="memories" id="memories"></ul>
-      <p class="hint" id="memoryHint" hidden>还没有。告诉她一件你希望她记住的事。</p>
+      <p class="hint" id="memoryHint" hidden>她记事，是从你说第一件小事开始的。</p>
     </section>
   </div>
 </section>
@@ -269,7 +259,7 @@
       <label class="row">
         <svg class="row-ic"><use href="#i-face"/></svg>
         <span class="row-name">你的称呼</span>
-        <input type="text" id="setUserName" placeholder="她该怎么叫你" maxlength="20" />
+        <input type="text" id="setUserName" placeholder="未设置" maxlength="20" />
       </label>
       <label class="row">
         <svg class="row-ic"><use href="#i-heart"/></svg>
@@ -292,7 +282,33 @@
       <label class="row sub"><span class="row-name">接口地址</span><input type="url" id="setApiBase" placeholder="https://api.deepseek.com/v1" /></label>
       <label class="row sub"><span class="row-name">模型</span><input type="text" id="setModel" placeholder="deepseek-chat" /></label>
       <label class="row sub"><span class="row-name">API Key</span><input type="password" id="setApiKey" placeholder="sk-…" /></label>
+      <div class="row sub"><span class="row-name">状态</span><span class="row-side" id="modelStatus">未接入</span></div>
       <p class="warn">密钥只存这台设备的浏览器里，不会上传。共用设备请用完清掉。</p>
+    </section>
+
+    <section class="glass list-card">
+      <div class="row switch-row">
+        <svg class="row-ic"><use href="#i-bell"/></svg>
+        <span class="row-name">她会主动说话<small>不只在被叫的时候</small></span>
+        <button class="switch" id="toggleWake" role="switch" aria-checked="true"><i></i></button>
+      </div>
+      <div class="row">
+        <span class="row-name">频率</span>
+        <select id="wakeRate" class="mini-select">
+          <option value="rare">少一点</option>
+          <option value="normal">正常</option>
+          <option value="often">多一点</option>
+        </select>
+      </div>
+      <div class="row">
+        <span class="row-name">免打扰</span>
+        <span class="time-range">
+          <input type="time" id="wakeQuietStart" value="23:00" />
+          <span>—</span>
+          <input type="time" id="wakeQuietEnd" value="08:00" />
+        </span>
+      </div>
+      <p class="hint">页面开着才会触发。关掉浏览器，她叫不到你。</p>
     </section>
 
     <section class="glass list-card">
@@ -322,7 +338,7 @@
     <section class="glass mem-card">
       <header class="card-head"><h3>全部</h3><button class="text-btn" id="btnAddMemory2">添加</button></header>
       <ul class="memories" id="allMemories"></ul>
-      <p class="hint" id="allMemoryHint" hidden>还没有。她会在聊天里自己记，你也可以手动加。</p>
+      <p class="hint" id="allMemoryHint" hidden>她会在聊天里自己记下你说的事，也可以手动加。</p>
     </section>
 
     <section class="glass mem-note">
