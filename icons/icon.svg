@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
   <defs>
-    <radialGradient id="core" cx="38%" cy="32%" r="72%">
-      <stop offset="0%" stop-color="#ffd9bd"/>
-      <stop offset="55%" stop-color="#e8a87c"/>
-      <stop offset="100%" stop-color="#a3482c"/>
+    <radialGradient id="core" cx="36%" cy="32%" r="74%">
+      <stop offset="0%" stop-color="#ffd6e2"/>
+      <stop offset="55%" stop-color="#e88ca2"/>
+      <stop offset="100%" stop-color="#c9637e"/>
     </radialGradient>
     <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#d97757" stop-opacity="0.42"/>
-      <stop offset="60%" stop-color="#d97757" stop-opacity="0.10"/>
-      <stop offset="100%" stop-color="#d97757" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#e88ca2" stop-opacity="0.30"/>
+      <stop offset="60%" stop-color="#e88ca2" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#e88ca2" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="192" height="192" rx="42" fill="#0a0b0f"/>
+  <rect width="192" height="192" rx="42" fill="#eef0f4"/>
   <circle cx="96" cy="96" r="74" fill="url(#halo)"/>
-  <circle cx="96" cy="96" r="46" fill="none" stroke="#e8a87c" stroke-opacity="0.28" stroke-width="1.5"/>
-  <circle cx="96" cy="96" r="30" fill="none" stroke="#e8a87c" stroke-opacity="0.16" stroke-width="1.5"/>
+  <circle cx="96" cy="96" r="46" fill="none" stroke="#e88ca2" stroke-opacity="0.32" stroke-width="1.6"/>
+  <circle cx="96" cy="96" r="30" fill="none" stroke="#8fa6c4" stroke-opacity="0.30" stroke-width="1.6"/>
   <circle cx="96" cy="96" r="19" fill="url(#core)"/>
-  <circle cx="96" cy="96" r="19" fill="none" stroke="#ffd9bd" stroke-opacity="0.35" stroke-width="1"/>
+  <circle cx="96" cy="96" r="19" fill="none" stroke="#ffffff" stroke-opacity="0.5" stroke-width="1"/>
 </svg>

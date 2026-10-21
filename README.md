@@ -1,6 +1,8 @@
-# 小满 · 同居日志
+# 小满手机
 
-一个只属于两个人的房间。纯前端，无后端，数据只存在你自己的浏览器里。
+一部只装了一个人的小手机。锁屏 → 解锁 → 桌面 → 点开聊天，纯前端，无后端，数据只存在你自己的浏览器里。
+
+> 界面布局参考了「小组件桌面」类 App 的排布思路（时钟 / 天数 / 网格 / Dock），全部视觉素材（图标、头像、配色）均为自绘，未使用任何第三方图片。
 
 ---
 
@@ -25,15 +27,33 @@
 ## 目录
 
 ```
-index.html              页面骨架
-css/style.css           全部样式
+index.html              页面骨架（锁屏 / 主屏 / 聊天 / 心情 / 设置）
+css/style.css           全部样式（浅色磨砂小手机）
 js/persona.js           人格引擎（想改她的说话方式，改这里）
 js/llm.js               可选的模型接入
-js/app.js               渲染 / 交互 / 存储
+js/app.js               渲染 / 交互 / 存储 / 路由
 manifest.webmanifest    PWA 配置（可"添加到主屏幕"）
 sw.js                   离线缓存
 icons/                  图标
 ```
+
+## 加一个新"App"（给你的功能留的门）
+
+打开 `js/app.js`，顶部有一个 `APPS` 注册表：
+
+```js
+const APPS = [
+  { id: 'chat',  name: '聊天', icon: 'i-chat',  page: 'chat' },
+  { id: 'mood',  name: '心情', icon: 'i-face',  page: 'mood' },
+  { id: 'music', name: '音乐', icon: 'i-music' },   // 没有 page = 占位抽屉
+  // 在这里加一条，桌面就会多一个图标
+];
+```
+
+- 想接一个真页面：在 `index.html` 里照着 `#mood` 写一个 `<section class="screen page">`，
+  给它一个 id，然后注册时填 `page: '你的id'`（并在 `pages` 对象里加一行）。
+- 图标去 `index.html` 顶部的 `<symbol>` 图标库里挑一个，或自己画一个。
+- Dock 是同一个玩法，改 `DOCK` 数组即可。
 
 ---
 

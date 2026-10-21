@@ -2,51 +2,122 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#0a0b0f" />
-<meta name="description" content="一个只属于两个人的房间。" />
-<title>小满 · 同居日志</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#eef0f4" />
+<meta name="description" content="一部只装了一个人的小手机。" />
+<title>小满手机</title>
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="icons/icon-192.png" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-<div class="grain" aria-hidden="true"></div>
-<div class="glow" aria-hidden="true"></div>
+<!-- 自绘图标库 -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 6.2A2.2 2.2 0 0 1 6.2 4h11.6A2.2 2.2 0 0 1 20 6.2v8.1a2.2 2.2 0 0 1-2.2 2.2H10l-4.4 3.9.5-3.9H6.2A2.2 2.2 0 0 1 4 14.3Z"/><path d="M8.4 10.3h.01M12 10.3h.01M15.6 10.3h.01"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.6-9-9c-1.4-3.4 1-6.9 4.4-6.9 2 0 3.6 1.1 4.6 2.8 1-1.7 2.6-2.8 4.6-2.8C20 4.1 22.4 7.6 21 11c-2 4.4-9 9-9 9Z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.8h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-photo" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="8.6" cy="9.4" r="1.7"/><path d="M4 17.2l4.8-4.8 4 4 3-3 4.2 4.2"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 17.5V6.3l10-2v11"/><circle cx="7" cy="17.7" r="2.1"/><circle cx="17" cy="15.5" r="2.1"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.2"/><path d="M3.6 7.2 12 13l8.4-5.8"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 4.2l2.1 4.5 4.9.6-3.6 3.4.9 4.9-4.3-2.4-4.3 2.4.9-4.9L4.9 9.3l4.9-.6Z"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M6.5 3.8h8.2L19 8.2v11.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19.7V5.3a1.5 1.5 0 0 1 1.5-1.5Z"/><path d="M14.2 4v4.5H19M8.6 12.5h6.8M8.6 16h4.6"/></symbol>
+  <symbol id="i-face" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M9 10.2v.2M15 10.2v.2M8.7 14.3c1.8 1.7 4.8 1.7 6.6 0"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M5 7.5h14M5 12h14M5 16.5h14"/><circle cx="9.5" cy="7.5" r="1.9"/><circle cx="15" cy="12" r="1.9"/><circle cx="8" cy="16.5" r="1.9"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.2 17.5a4.2 4.2 0 0 1 .3-8.4 5.6 5.6 0 0 1 10.9 1.6 3.9 3.9 0 0 1-.7 6.8Z"/></symbol>
+</svg>
 
-<div class="app" id="app">
+<div class="bg" aria-hidden="true">
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <div class="bg-blob b3"></div>
+  <div class="bg-grain"></div>
+</div>
 
-  <header class="topbar">
-    <div class="avatar" id="avatar" aria-hidden="true">
-      <span class="avatar-ring"></span>
-      <span class="avatar-core"></span>
-      <span class="avatar-pulse"></span>
-    </div>
-    <div class="who">
-      <div class="name-line">
-        <h1 class="name" id="herName">小满</h1>
-        <span class="tag">家机</span>
+<div class="phone" id="phone">
+<!-- ============ 锁屏 ============ -->
+<section class="screen lock" id="lock" aria-label="锁屏">
+  <div class="lock-inner">
+    <p class="lock-date" id="lockDate">7月11日 星期六</p>
+    <h1 class="lock-time" id="lockClock">16:13</h1>
+
+    <div class="pair-card lock-card">
+      <div class="pair-row">
+        <div class="pair-ava left"><span id="lockAvaMe">我</span></div>
+        <svg class="pair-heart" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-heart"/></svg>
+        <div class="pair-ava right"><span id="lockAvaHer">满</span></div>
       </div>
-      <p class="status" id="statusLine">正在启动…</p>
+      <p class="pair-names"><b id="lockNames">Me &amp; 小满</b></p>
+      <p class="pair-days">在<em>一起</em><span id="lockDays">70</span>天</p>
+      <p class="pair-since" id="lockSince">SINCE 2026.05.11</p>
     </div>
-    <div class="top-actions">
-      <button class="icon-btn" id="btnPanel" aria-label="她的状态与记忆" title="她的状态">
-        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-          <circle cx="12" cy="12" r="8.2"/><path d="M12 8.4v.2M12 11.6v4"/>
-        </svg>
-      </button>
-      <button class="icon-btn" id="btnSettings" aria-label="设置" title="设置">
-        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-          <path d="M4 7h10M18 7h2M4 12h4M12 12h8M4 17h9M17 17h3"/>
-          <circle cx="16" cy="7" r="1.8"/><circle cx="10" cy="12" r="1.8"/><circle cx="15" cy="17" r="1.8"/>
-        </svg>
-      </button>
+
+    <div class="lock-hint">
+      <svg viewBox="0 0 24 24" class="chev-up"><path d="M6 14.5 12 8.5l6 6"/></svg>
+      <span>上划解锁</span>
     </div>
+  </div>
+</section>
+
+<!-- ============ 主屏 ============ -->
+<main class="screen home" id="home" aria-label="主屏">
+  <div class="home-scroll">
+    <div class="statusbar">
+      <span id="sbDate">7月11日 星期六</span>
+      <span class="sb-right"><i class="sb-dot"></i>她在家 · <b id="sbEnergy">62</b>%</span>
+    </div>
+
+    <section class="clock-card glass" id="clockCard">
+      <div class="clock-row">
+        <h1 class="big-clock" id="homeClock">17:53</h1>
+        <div class="clock-side">
+          <p class="clock-date" id="clockDate">7月11日 星期六</p>
+          <button class="clock-sub" id="clockStatus">· right here</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="days-card glass" id="daysCard">
+      <div class="pair-ava small left"><span id="homeAvaMe">我</span></div>
+      <div class="days-mid">
+        <p class="days-num"><span id="homeDays">64</span></p>
+        <p class="days-label">DAYS TOGETHER</p>
+        <svg class="pulse-line" viewBox="0 0 120 16" aria-hidden="true"><path d="M0 8h38l6-6 7 12 6-9 5 3h58"/></svg>
+      </div>
+      <div class="pair-ava small right"><span id="homeAvaHer">满</span></div>
+    </section>
+
+    <nav class="app-grid" id="appGrid" aria-label="应用"></nav>
+
+    <section class="cal-card glass" id="calCard">
+      <header class="cal-head">
+        <h2 id="calTitle">2026 · 七月</h2>
+        <span class="cal-mark">♥</span>
+      </header>
+      <div class="cal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span class="wk">六</span><span class="wk">日</span></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </section>
+  </div>
+
+  <nav class="dock glass" id="dock" aria-label="常驻"></nav>
+</main>
+
+<!-- ============ 聊天 ============ -->
+<section class="screen page chat-page" id="chat" aria-label="聊天">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <div class="head-mid">
+      <div class="pair-ava tiny right"><span id="chatAvaHer">满</span></div>
+      <div>
+        <p class="head-name" id="chatName">小满</p>
+        <p class="head-status" id="chatStatus">…</p>
+      </div>
+    </div>
+    <span class="head-spacer"></span>
   </header>
 
-  <main class="stream" id="stream" role="log" aria-live="polite" aria-relevant="additions text"></main>
+  <div class="stream" id="stream" role="log" aria-live="polite"></div>
 
   <div class="composer-wrap">
     <div class="quick" id="quick"></div>
@@ -54,30 +125,28 @@
       <label class="sr-only" for="input">对她说点什么</label>
       <textarea id="input" rows="1" placeholder="说点什么…" maxlength="1200"></textarea>
       <button type="submit" class="send" id="send" aria-label="发送">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4.5 12h14M12.5 6l6 6-6 6"/>
-        </svg>
+        <svg viewBox="0 0 24 24"><path d="M4.5 12h14M12.5 6l6 6-6 6"/></svg>
       </button>
     </form>
   </div>
-</div>
+</section>
 
-<!-- 侧面板：状态 / 记忆 -->
-<aside class="panel" id="panel" aria-hidden="true" aria-label="她的状态与记忆">
-  <div class="panel-inner">
-    <div class="panel-head">
-      <span class="eyebrow">此刻</span>
-      <button class="icon-btn small" id="btnClosePanel" aria-label="关闭">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </div>
+<!-- ============ 心情（她的状态） ============ -->
+<section class="screen page mood-page" id="mood" aria-label="她的状态">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">她的状态</p>
+    <span class="head-spacer"></span>
+  </header>
 
-    <div class="mood-block">
+  <div class="page-scroll">
+    <section class="glass mood-hero">
+      <div class="pair-ava big right"><span id="moodAvaHer">满</span></div>
       <p class="mood-word" id="moodWord">平静</p>
       <p class="mood-sub" id="moodSub">像一杯放凉了的茶</p>
-    </div>
+    </section>
 
-    <div class="meters">
+    <section class="glass meter-card">
       <div class="meter">
         <div class="meter-top"><span>心情</span><span class="meter-val" id="vMood">62</span></div>
         <div class="bar"><i id="bMood"></i></div>
@@ -88,88 +157,93 @@
       </div>
       <div class="meter">
         <div class="meter-top"><span>亲密度</span><span class="meter-val" id="vAffection">12</span></div>
-        <div class="bar accent"><i id="bAffection"></i></div>
+        <div class="bar pink"><i id="bAffection"></i></div>
       </div>
-    </div>
+    </section>
 
-    <div class="panel-section">
-      <div class="panel-head"><span class="eyebrow">她记得的事</span>
-        <button class="text-btn" id="btnAddMemory">添加</button>
-      </div>
+    <section class="glass mem-card">
+      <header class="card-head"><h3>她记得的事</h3><button class="text-btn" id="btnAddMemory">添加</button></header>
       <ul class="memories" id="memories"></ul>
       <p class="hint" id="memoryHint" hidden>还没有。告诉她一件你希望她记住的事。</p>
-    </div>
-
-    <div class="panel-section">
-      <div class="panel-head"><span class="eyebrow">一起走过</span></div>
-      <p class="counter"><span id="daysCount">0</span> 天</p>
-      <p class="hint" id="sinceDate"></p>
-    </div>
+    </section>
   </div>
-</aside>
+</section>
 
-<!-- 设置 -->
-<div class="sheet" id="settings" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-  <div class="sheet-inner">
-    <div class="panel-head">
-      <span class="eyebrow" id="settingsTitle">设置</span>
-      <button class="icon-btn small" id="btnCloseSettings" aria-label="关闭">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </div>
+<!-- ============ 设置（我的） ============ -->
+<section class="screen page set-page" id="settings" aria-label="设置">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">我的</p>
+    <span class="head-spacer"></span>
+  </header>
 
-    <section class="field-group">
-      <label class="field">
-        <span class="field-label">你的称呼</span>
+  <div class="page-scroll">
+    <section class="glass profile-card">
+      <div class="pair-ava big left"><span id="setAvaMe">我</span></div>
+      <div class="profile-mid">
+        <p class="profile-name" id="setUserLabel">我</p>
+        <p class="profile-sub" id="setMoodLine">这台手机里住着一个人。</p>
+      </div>
+      <p class="profile-note">他的备注<b id="setNoteHer">小满</b></p>
+    </section>
+
+    <section class="glass list-card">
+      <label class="row">
+        <svg class="row-ic"><use href="#i-face"/></svg>
+        <span class="row-name">你的称呼</span>
         <input type="text" id="setUserName" placeholder="她该怎么叫你" maxlength="20" />
       </label>
-      <label class="field">
-        <span class="field-label">她的名字</span>
+      <label class="row">
+        <svg class="row-ic"><use href="#i-heart"/></svg>
+        <span class="row-name">她的名字</span>
         <input type="text" id="setHerName" placeholder="小满" maxlength="12" />
       </label>
-      <label class="field">
-        <span class="field-label">从哪天开始</span>
+      <label class="row">
+        <svg class="row-ic"><use href="#i-cal"/></svg>
+        <span class="row-name">从哪天开始</span>
         <input type="date" id="setStartDate" />
       </label>
     </section>
 
-    <section class="field-group">
-      <div class="switch-row">
-        <div>
-          <p class="field-label">接入大模型（可选）</p>
-          <p class="hint">不填也能用。填了之后回复由模型生成，失败会自动退回本地人格引擎。</p>
-        </div>
+    <section class="glass list-card">
+      <div class="row switch-row">
+        <svg class="row-ic"><use href="#i-cloud"/></svg>
+        <span class="row-name">接入大模型<small>不填也能用 · 失败自动退回本地</small></span>
         <button class="switch" id="toggleLLM" role="switch" aria-checked="false"><i></i></button>
       </div>
-      <label class="field">
-        <span class="field-label">接口地址</span>
-        <input type="url" id="setApiBase" placeholder="https://api.openai.com/v1" />
-      </label>
-      <label class="field">
-        <span class="field-label">模型</span>
-        <input type="text" id="setModel" placeholder="gpt-4o-mini" />
-      </label>
-      <label class="field">
-        <span class="field-label">API Key</span>
-        <input type="password" id="setApiKey" placeholder="sk-…" />
-      </label>
-      <p class="warn">密钥只存在这台设备的浏览器里，不会上传到任何地方。但如果你在共用设备上打开，请用完清掉。</p>
+      <label class="row sub"><span class="row-name">接口地址</span><input type="url" id="setApiBase" placeholder="https://api.deepseek.com/v1" /></label>
+      <label class="row sub"><span class="row-name">模型</span><input type="text" id="setModel" placeholder="deepseek-chat" /></label>
+      <label class="row sub"><span class="row-name">API Key</span><input type="password" id="setApiKey" placeholder="sk-…" /></label>
+      <p class="warn">密钥只存这台设备的浏览器里，不会上传。共用设备请用完清掉。</p>
     </section>
 
-    <section class="field-group">
-      <div class="btn-row">
-        <button class="ghost-btn" id="btnExport">导出记录</button>
-        <button class="ghost-btn" id="btnImport">导入记录</button>
-      </div>
-      <button class="danger-btn" id="btnReset">清空所有数据</button>
+    <section class="glass list-card">
+      <button class="row" id="btnExport"><svg class="row-ic"><use href="#i-note"/></svg><span class="row-name">导出记录</span><span class="row-side">JSON</span></button>
+      <button class="row" id="btnImport"><svg class="row-ic"><use href="#i-photo"/></svg><span class="row-name">导入记录</span><span class="row-side"></span></button>
+      <button class="row danger" id="btnReset"><svg class="row-ic"><use href="#i-star"/></svg><span class="row-name">清空所有数据</span><span class="row-side"></span></button>
     </section>
 
-    <p class="footnote">本地优先 · 无服务器 · 数据只在你手里</p>
+    <p class="foot-note">本地优先 · 无服务器 · 数据只在你手里</p>
   </div>
-</div>
+</section>
+
+<!-- ============ 占位页（之后自己盖） ============ -->
+<section class="screen page todo-page" id="todo" aria-label="施工中">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title" id="todoTitle">抽屉</p>
+    <span class="head-spacer"></span>
+  </header>
+  <div class="page-scroll todo-body">
+    <div class="todo-ic glass"><svg><use id="todoIcon" href="#i-photo"/></svg></div>
+    <p class="todo-word">还没盖好</p>
+    <p class="hint">这个抽屉空着，等你决定放什么。<br>在 app.js 顶部的 APPS 里注册，就能点亮。</p>
+  </div>
+</section>
+
+</div><!-- /phone -->
 
 <input type="file" id="importFile" accept="application/json" hidden />
-
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="js/persona.js"></script>
