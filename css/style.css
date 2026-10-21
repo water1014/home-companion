@@ -2377,3 +2377,26 @@ button.row { cursor: pointer; }
 
 /* 卡片再透一点，能看见壁纸 */
 .glass { background: rgba(255, 255, 255, 0.2); }
+
+/* 品牌与标语 */
+.lock-brand {
+  margin: 0 0 14px;
+  font-size: 9px;
+  letter-spacing: 0.42em;
+  color: rgba(90, 85, 100, 0.45);
+  text-transform: uppercase;
+}
+.foot-note {
+  letter-spacing: 0.22em;
+  color: var(--ink-3);
+}
+/* 宋祁的头像：偏冷的紫灰 */
+.pa.her { background: linear-gradient(150deg, #e9e5f4, #cec7e1); color: #655c80; }
+.hero-ava { background: linear-gradient(150deg, #eae6f5, #cfc8e2); color: #655c80; }
+
+/* 锁屏也透出壁纸 */
+.lock {
+  background: linear-gradient(180deg, rgba(250, 246, 248, 0.42), rgba(236, 240, 246, 0.66));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}

@@ -4,8 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <meta name="theme-color" content="#eef0f4" />
-<meta name="description" content="一部只装了一个人的小手机。" />
-<title>小满手机</title>
+<meta name="description" content="潮 · TIDE — 潮起时你在，潮落时我在。" />
+<title>潮 · TIDE</title>
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="css/style.css" />
@@ -54,6 +54,7 @@
 <!-- ============ 锁屏 ============ -->
 <section class="screen lock" id="lock" aria-label="锁屏">
   <div class="lock-inner">
+    <p class="lock-brand">潮 · TIDE</p>
     <p class="lock-date" id="lockDate">7月11日 星期六</p>
     <p class="lock-line" id="lockLine">你回来了。</p>
     <div class="lock-hint">
@@ -73,7 +74,7 @@
     <section class="home-page" aria-label="桌面">
       <div class="statusbar">
         <span id="sbDate">7月11日 星期六</span>
-        <span class="sb-right"><i class="sb-dot"></i><span id="sbState">她在家</span></span>
+        <span class="sb-right"><i class="sb-dot"></i><span id="sbState">他在家</span></span>
       </div>
 
       <div class="bento" id="bento"></div>
@@ -141,7 +142,7 @@
     <div class="head-mid">
       <div class="pair-ava tiny right"><span id="chatAvaHer">满</span></div>
       <div>
-        <p class="head-name" id="chatName">小满</p>
+        <p class="head-name" id="chatName">宋祁</p>
         <p class="head-status" id="chatStatus">…</p>
       </div>
     </div>
@@ -153,7 +154,7 @@
   <div class="composer-wrap">
     <div class="quick" id="quick"></div>
     <form class="composer" id="composer" autocomplete="off">
-      <label class="sr-only" for="input">对她说点什么</label>
+      <label class="sr-only" for="input">对他说点什么</label>
       <textarea id="input" rows="1" placeholder="说点什么…" maxlength="1200"></textarea>
       <button type="submit" class="send" id="send" aria-label="发送">
         <svg viewBox="0 0 24 24"><path d="M4.5 12h14M12.5 6l6 6-6 6"/></svg>
@@ -162,11 +163,11 @@
   </div>
 </section>
 
-<!-- ============ 心情（她的状态） ============ -->
-<section class="screen page mood-page" id="mood" aria-label="她的状态">
+<!-- ============ 心情（他的状态） ============ -->
+<section class="screen page mood-page" id="mood" aria-label="他的状态">
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">她的状态</p>
+    <p class="head-title">他的状态</p>
     <span class="head-spacer"></span>
   </header>
 
@@ -202,15 +203,15 @@
     </section>
 
     <section class="glass talk-card">
-      <header class="card-head"><h3>今天她说过</h3><span class="week-sub" id="talkCount"></span></header>
+      <header class="card-head"><h3>今天他说过</h3><span class="week-sub" id="talkCount"></span></header>
       <ul class="talk-list" id="talkList"></ul>
-      <p class="hint" id="talkHint" hidden>今天还很安静。你说一句，她就会接。</p>
+      <p class="hint" id="talkHint" hidden>今天还很安静。你说一句，他就会接。</p>
     </section>
 
     <section class="glass mem-card">
-      <header class="card-head"><h3>她记得的事</h3><button class="text-btn" id="btnAddMemory">添加</button></header>
+      <header class="card-head"><h3>他记得的事</h3><button class="text-btn" id="btnAddMemory">添加</button></header>
       <ul class="memories" id="memories"></ul>
-      <p class="hint" id="memoryHint" hidden>她记事，是从你说第一件小事开始的。</p>
+      <p class="hint" id="memoryHint" hidden>他记事，是从你说第一件小事开始的。</p>
     </section>
   </div>
 </section>
@@ -230,7 +231,7 @@
         <p class="profile-name" id="setUserLabel">我</p>
         <p class="profile-sub" id="setMoodLine">这台手机里住着一个人。</p>
       </div>
-      <p class="profile-note">他的备注<b id="setNoteHer">小满</b></p>
+      <p class="profile-note">他的备注<b id="setNoteHer">宋祁</b></p>
     </section>
 
     <section class="glass list-card">
@@ -241,8 +242,8 @@
       </label>
       <label class="row">
         <svg class="row-ic"><use href="#i-heart"/></svg>
-        <span class="row-name">她的名字</span>
-        <input type="text" id="setHerName" placeholder="小满" maxlength="12" />
+        <span class="row-name">他的名字</span>
+        <input type="text" id="setHerName" placeholder="宋祁" maxlength="12" />
       </label>
       <label class="row">
         <svg class="row-ic"><use href="#i-cal"/></svg>
@@ -267,7 +268,7 @@
     <section class="glass list-card">
       <div class="row switch-row">
         <svg class="row-ic"><use href="#i-bell"/></svg>
-        <span class="row-name">她会主动说话<small>不只在被叫的时候</small></span>
+        <span class="row-name">他会主动说话<small>不只在被叫的时候</small></span>
         <button class="switch" id="toggleWake" role="switch" aria-checked="true"><i></i></button>
       </div>
       <div class="row">
@@ -286,7 +287,7 @@
           <input type="time" id="wakeQuietEnd" value="08:00" />
         </span>
       </div>
-      <p class="hint">页面开着才会触发。关掉浏览器，她叫不到你。</p>
+      <p class="hint">页面开着才会触发。关掉浏览器，他叫不到你。</p>
     </section>
 
     <section class="glass list-card">
@@ -295,7 +296,7 @@
       <button class="row danger" id="btnReset"><svg class="row-ic"><use href="#i-star"/></svg><span class="row-name">清空所有数据</span><span class="row-side"></span></button>
     </section>
 
-    <p class="foot-note">本地优先 · 无服务器 · 数据只在你手里</p>
+    <p class="foot-note">潮起时你在，潮落时我在</p>
   </div>
 </section>
 
@@ -310,13 +311,13 @@
   <div class="page-scroll">
     <section class="glass mem-hero">
       <p class="mem-count"><b id="memCount">0</b><span>条记忆</span></p>
-      <p class="mem-sub">跟着她一起，跨对话保留。</p>
+      <p class="mem-sub">跟着他一起，跨对话保留。</p>
     </section>
 
     <section class="glass mem-card">
       <header class="card-head"><h3>全部</h3><button class="text-btn" id="btnAddMemory2">添加</button></header>
       <ul class="memories" id="allMemories"></ul>
-      <p class="hint" id="allMemoryHint" hidden>她会在聊天里自己记下你说的事，也可以手动加。</p>
+      <p class="hint" id="allMemoryHint" hidden>他会在聊天里自己记下你说的事，也可以手动加。</p>
     </section>
 
     <section class="glass mem-note">

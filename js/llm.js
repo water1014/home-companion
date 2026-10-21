@@ -11,7 +11,7 @@
 
   function buildSystem(state, ctx) {
     ctx = ctx || {};
-    const name = ctx.herName || '小满';
+    const name = ctx.herName || '宋祁';
     const user = ctx.userName || '你';
     const now = new Date();
     const hh = now.getHours();

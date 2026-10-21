@@ -1,5 +1,5 @@
 /* ============================================================
-   app.js — 小满手机 · 界面 / 存储 / 交互
+   app.js — 宋祁手机 · 界面 / 存储 / 交互
    想加新功能：在下面 APPS 里注册一条即可
    ============================================================ */
 (function () {
@@ -34,36 +34,36 @@
     /* 第一页 · 日常 */
     { id: 'chat',     name: '聊天',     icon: 'i-chat',    page: 'chat' },
     { id: 'mood',     name: '心情',     icon: 'i-face',    page: 'mood' },
-    { id: 'notes',    name: '碎碎念',   icon: 'i-note',    desc: '她随口说的话、你随手记下的碎片，按时间堆在这里。不整理，也不删。' },
-    { id: 'moments',  name: '朋友圈',   icon: 'i-moments', desc: '只有你们两个人的时间线。发一张图，配一句话，她在下面回你。' },
+    { id: 'notes',    name: '碎碎念',   icon: 'i-note',    desc: '他随口说的话、你随手记下的碎片，按时间堆在这里。不整理，也不删。' },
+    { id: 'moments',  name: '朋友圈',   icon: 'i-moments', desc: '只有你们两个人的时间线。发一张图，配一句话，他在下面回你。' },
     { id: 'album',    name: '相册',     icon: 'i-album',   desc: '每天都在长的一本。翻到某一张，能看见那天你们说过什么。' },
     { id: 'music',    name: '音乐',     icon: 'i-music',   desc: '想做成「一起听」：同一个进度条，两边同时听到同一秒。\n真同步需要服务端，纯前端只能做到手动对齐。' },
 
     /* 第二页 · 生活 */
     { id: 'health',   name: '健康',     icon: 'i-health',  desc: '睡眠、喝水、久坐。数字旁边会跟一句人话，比如「今天只走了 800 步，坐太久了」。' },
     { id: 'weather',  name: '天气',     icon: 'i-sun',     desc: '今天的温度、有没有雨。不接 API 就先手动记，接了就自动。' },
-    { id: 'ledger',   name: '记账本',   icon: 'i-ledger',  desc: '一起花的钱，一笔一笔。她也可以记下自己「想要」的东西。' },
+    { id: 'ledger',   name: '记账本',   icon: 'i-ledger',  desc: '一起花的钱，一笔一笔。他也可以记下自己「想要」的东西。' },
     { id: 'quota',    name: '额度',     icon: 'i-quota',   desc: '不显示还剩多少钱，显示还能陪你几次。' },
-    { id: 'study',    name: '学习',     icon: 'i-book',    desc: '一起背单词、番茄钟。她在旁边看着，你走神她会说一句。' },
-    { id: 'calendar', name: '日历',     icon: 'i-cal',     desc: '纪念日、约定、她的作息。点某一天，能看见那天发生了什么。' },
+    { id: 'study',    name: '学习',     icon: 'i-book',    desc: '一起背单词、番茄钟。他在旁边看着，你走神他会说一句。' },
+    { id: 'calendar', name: '日历',     icon: 'i-cal',     desc: '纪念日、约定、他的作息。点某一天，能看见那天发生了什么。' },
 
-    /* 第三页 · 她 */
+    /* 第三页 · 他 */
     { id: 'memory',   name: '记忆库',   icon: 'i-brain',   page: 'memory' },
-    { id: 'image',    name: '生图',     icon: 'i-magic',   desc: '打字出图。她的样子、你们想去的地方、今天的心情。\n需要一个画图的 API Key，接在哪由你定。' },
-    { id: 'voice',    name: '声音',     icon: 'i-wave',    desc: '让她读出来，或者发一条语音。先在本地合成，不联网也能响。' },
-    { id: 'theme',    name: '美化',     icon: 'i-palette', desc: '换壁纸、换主题、换她说话的风格。同一个房间，不同的光。' },
+    { id: 'image',    name: '生图',     icon: 'i-magic',   desc: '打字出图。他的样子、你们想去的地方、今天的心情。\n需要一个画图的 API Key，接在哪由你定。' },
+    { id: 'voice',    name: '声音',     icon: 'i-wave',    desc: '让他读出来，或者发一条语音。先在本地合成，不联网也能响。' },
+    { id: 'theme',    name: '美化',     icon: 'i-palette', desc: '换壁纸、换主题、换他说话的风格。同一个房间，不同的光。' },
     { id: 'wake',     name: '自主唤醒', icon: 'i-bell',    desc: '不只被叫才说话。定时或随机地，主动找你一次。\n纯前端只能在页面打开时生效；要做到真提醒得走通知 + 服务端。' },
     { id: 'wish',     name: '心愿',     icon: 'i-spark',   desc: '想一起做的事。做掉一件，划掉一件。' },
 
     /* 第四页 · 我们的 */
-    { id: 'message',  name: '留言',     icon: 'i-mail',    desc: '她不在的时候，你可以留一句；她回来会先看到。反过来也一样。' },
+    { id: 'message',  name: '留言',     icon: 'i-mail',    desc: '他不在的时候，你可以留一句；他回来会先看到。反过来也一样。' },
     { id: 'starsea',  name: '星海',     icon: 'i-starsea', desc: '一片只属于你们的夜空。看过的、想去的、说过的，都挂成星星。' },
     { id: 'travel',   name: '旅行',     icon: 'i-plane',   desc: '想去哪、什么时候去、要带什么。攒够了就出发。' },
   ];
 
   const DOCK = [
     { id: 'chat',     name: '说', icon: 'i-chat',  page: 'chat' },
-    { id: 'mood',     name: '她', icon: 'i-face',  page: 'mood' },
+    { id: 'mood',     name: '他', icon: 'i-face',  page: 'mood' },
     { id: 'memory',   name: '记', icon: 'i-brain', page: 'memory' },
     { id: 'settings', name: '我', icon: 'i-gear',  page: 'settings' },
   ];
@@ -96,13 +96,19 @@
   const S = {
     chat: load(KEY.chat, []),
     persona: load(KEY.persona, { mood: 58, energy: 62, affection: 12, lastTick: Date.now() }),
-    memory: load(KEY.memory, { userName: '', herName: '小满', facts: [], startDate: todayStr() }),
+    memory: load(KEY.memory, { userName: '', herName: '宋祁', facts: [], startDate: todayStr() }),
     settings: load(KEY.settings, { enabled: false, apiBase: '', model: '', apiKey: '' }),
     moodLog: load(KEY.mood, {}),
   };
 
   S.persona = P.evolve(S.persona, Date.now());
   save(KEY.persona, S.persona);
+
+  // 从旧版本迁移：默认名换过一次
+  if (S.memory.herName === '小满') {
+    S.memory.herName = '宋祁';
+    save(KEY.memory, S.memory);
+  }
 
   const persistAll = () => {
     save(KEY.chat, S.chat);
@@ -134,7 +140,7 @@
     el._t = setTimeout(() => el.classList.remove('show'), 2400);
   }
 
-  const herName = () => S.memory.herName || '小满';
+  const herName = () => S.memory.herName || '宋祁';
   const herInitial = () => (herName().trim().slice(-1) || '满');
 
   function daysTogether() {
@@ -358,7 +364,7 @@
     const now = new Date();
     setTxt('lockDate', dateLabel(now));
     setTxt('sbDate', dateLabel(now));
-    setTxt('sbState', '她在家');
+    setTxt('sbState', '他在家');
     setTxt('chatStatus', P.statusLine(S.persona, Date.now()));
     setTxt('clockSub', P.statusLine(S.persona, Date.now()));
     setTxt('clockTime', pad(now.getHours()) + ':' + pad(now.getMinutes()));
@@ -553,16 +559,16 @@
     setTxt('weekSub', count ? '这周说了 ' + count + ' 天' : '这周还空着');
   }
 
-  /* 她最近说的一句 */
+  /* 他最近说的一句 */
   function renderQuote() {
     const el = $('quoteText');
     if (!el) return;
     const last = S.chat.slice().reverse().find((m) => m.role === 'her' && m.text);
     el.textContent = last ? last.text.replace(/\n+/g, ' ') : '第一句话，等你先说。';
-    setTxt('quoteFrom', last ? '她 · ' + hhmm(last.ts) : '她在这儿，没走');
+    setTxt('quoteFrom', last ? '他 · ' + hhmm(last.ts) : '他在这儿，没走');
   }
 
-  /* 主屏第二页：她记得的事（只读，最多 4 条） */
+  /* 主屏第二页：他记得的事（只读，最多 4 条） */
   function renderHomeMemories() {
     const ul = $('homeMemories');
     if (!ul) return;
@@ -596,7 +602,7 @@
             '<svg class="pair-heart" viewBox="0 0 24 24"><use href="#i-heart"/></svg>' +
             '<div class="pa her"><span id="paHer">满</span></div>' +
           '</div>' +
-          '<p class="pair-names"><b id="pairMe">我</b><b id="pairHer">小满</b></p>' +
+          '<p class="pair-names"><b id="pairMe">我</b><b id="pairHer">宋祁</b></p>' +
         '</div>',
     },
 
@@ -854,7 +860,7 @@
     }
   }
 
-  /** 今天她说过的话 —— 记忆的回报要看得见 */
+  /** 今天他说过的话 —— 记忆的回报要看得见 */
   function renderTalk() {
     const ul = $('talkList');
     if (!ul) return;
@@ -1059,7 +1065,7 @@
     }, speed);
   }
 
-  /** 她主动说一句（不经过用户输入） */
+  /** 他主动说一句（不经过用户输入） */
   function speak(text, action) {
     showTyping();
     setTimeout(() => {
@@ -1158,7 +1164,7 @@
           finish();
           return;
         }
-        toast('模型没接上，让她自己说');
+        toast('模型没接上，让他自己说');
       }
     }
 
@@ -1351,7 +1357,7 @@
 
   function syncSettingsForm() {
     $('setUserName').value = S.memory.userName || '';
-    $('setHerName').value = S.memory.herName || '小满';
+    $('setHerName').value = S.memory.herName || '宋祁';
     $('setStartDate').value = S.memory.startDate || todayStr();
     $('setApiBase').value = S.settings.apiBase || '';
     $('setModel').value = S.settings.model || '';
@@ -1378,7 +1384,7 @@
     const on = e.currentTarget.getAttribute('aria-checked') !== 'true';
     e.currentTarget.setAttribute('aria-checked', String(on));
     patchWake({ enabled: on });
-    toast(on ? '她会主动找你了' : '她安静了，只在你说话时出现');
+    toast(on ? '他会主动找你了' : '他安静了，只在你说话时出现');
   });
 
   $('wakeRate').addEventListener('change', (e) => {
@@ -1399,7 +1405,7 @@
     renderCards();
   });
   $('setHerName').addEventListener('change', (e) => {
-    S.memory.herName = e.target.value.trim() || '小满';
+    S.memory.herName = e.target.value.trim() || '宋祁';
     save(KEY.memory, S.memory);
     renderCards();
   });
@@ -1428,7 +1434,7 @@
     setTxt('modelStatus', LLM.configured(S.settings) ? '已接入' : '未接入');
     setTxt('herTagModel', LLM.configured(S.settings) ? '已接模型' : '未接模型');
     if (S.settings.enabled && !LLM.configured(S.settings)) toast('再把地址、模型和 Key 填上才生效');
-    else if (S.settings.enabled) toast('已接入，她换一种方式说话');
+    else if (S.settings.enabled) toast('已接入，他换一种方式说话');
   });
 
   /* ---------------- 记忆 ---------------- */
@@ -1604,7 +1610,7 @@
     try { sessionStorage.setItem('hc.unlocked', '1'); } catch (_) {}
     setTimeout(() => { lock.style.display = 'none'; }, 520);
 
-    // 解锁的获得感：她先开口
+    // 解锁的获得感：他先开口
     setTimeout(() => {
       if (Date.now() - lastInteract < 8 * 60000) return;
       const say = P.initiative(S.persona, Date.now());
