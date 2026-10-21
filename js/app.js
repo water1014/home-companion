@@ -15,18 +15,29 @@
      page 留空 = 占位页（点开会显示 desc 里写好的设想）
      ============================================================ */
   const APPS = [
-    { id: 'chat',     name: '聊天',   icon: 'i-chat',    page: 'chat' },
-    { id: 'mood',     name: '心情',   icon: 'i-face',    page: 'mood' },
-    { id: 'notes',    name: '碎碎念', icon: 'i-note',    desc: '她随口说的话、你随手记下的碎片，按时间堆在这里。不整理，也不删。' },
-    { id: 'moments',  name: '朋友圈', icon: 'i-moments', desc: '只有你们两个人的时间线。发一张图，配一句话，她在下面回你。' },
-    { id: 'album',    name: '相册',   icon: 'i-album',   desc: '照片按天排。翻到某一张，能看见那天你们说过什么。' },
-    { id: 'music',    name: '音乐',   icon: 'i-music',   desc: '想做成「一起听」：同一个进度条，两边同时听到同一秒。' },
-    { id: 'health',   name: '健康',   icon: 'i-health',  desc: '睡眠、喝水、久坐。先手动记，以后想从手机健康数据里读。' },
-    { id: 'ledger',   name: '记账本', icon: 'i-ledger',  desc: '一起花的钱，一笔一笔。她也可以记下自己「想要」的东西。' },
-    { id: 'quota',    name: '额度',   icon: 'i-quota',   desc: '这个月还能花多少。给她留一点，也给自己留一点。' },
-    { id: 'calendar', name: '日历',   icon: 'i-cal',     desc: '纪念日、约定、她的作息。点某一天，能看见那天发生了什么。' },
-    { id: 'memory',   name: '记忆库', icon: 'i-brain',   page: 'memory' },
-    { id: 'wish',     name: '心愿',   icon: 'i-spark',   desc: '想一起做的事。做掉一件，划掉一件。' },
+    /* 第一页 · 日常 */
+    { id: 'chat',     name: '聊天',     icon: 'i-chat',    page: 'chat' },
+    { id: 'mood',     name: '心情',     icon: 'i-face',    page: 'mood' },
+    { id: 'notes',    name: '碎碎念',   icon: 'i-note',    desc: '她随口说的话、你随手记下的碎片，按时间堆在这里。不整理，也不删。' },
+    { id: 'moments',  name: '朋友圈',   icon: 'i-moments', desc: '只有你们两个人的时间线。发一张图，配一句话，她在下面回你。' },
+    { id: 'album',    name: '相册',     icon: 'i-album',   desc: '照片按天排。翻到某一张，能看见那天你们说过什么。' },
+    { id: 'music',    name: '音乐',     icon: 'i-music',   desc: '想做成「一起听」：同一个进度条，两边同时听到同一秒。\n真同步需要服务端，纯前端只能做到手动对齐。' },
+
+    /* 第二页 · 生活 */
+    { id: 'health',   name: '健康',     icon: 'i-health',  desc: '睡眠、喝水、久坐。先手动记，以后想从手机健康数据里读。' },
+    { id: 'weather',  name: '天气',     icon: 'i-sun',     desc: '今天的温度、有没有雨。不接 API 就先手动记，接了就自动。' },
+    { id: 'ledger',   name: '记账本',   icon: 'i-ledger',  desc: '一起花的钱，一笔一笔。她也可以记下自己「想要」的东西。' },
+    { id: 'quota',    name: '额度',     icon: 'i-quota',   desc: '这个月还能花多少。给她留一点，也给自己留一点。' },
+    { id: 'study',    name: '学习',     icon: 'i-book',    desc: '一起背单词、番茄钟。她在旁边看着，你走神她会说一句。' },
+    { id: 'calendar', name: '日历',     icon: 'i-cal',     desc: '纪念日、约定、她的作息。点某一天，能看见那天发生了什么。' },
+
+    /* 第三页 · 她 */
+    { id: 'memory',   name: '记忆库',   icon: 'i-brain',   page: 'memory' },
+    { id: 'image',    name: '生图',     icon: 'i-magic',   desc: '打字出图。她的样子、你们想去的地方、今天的心情。\n需要一个画图的 API Key，接在哪由你定。' },
+    { id: 'voice',    name: '声音',     icon: 'i-wave',    desc: '让她读出来，或者发一条语音。先在本地合成，不联网也能响。' },
+    { id: 'theme',    name: '美化',     icon: 'i-palette', desc: '换壁纸、换主题、换她说话的风格。同一个房间，不同的光。' },
+    { id: 'wake',     name: '自主唤醒', icon: 'i-bell',    desc: '不只被叫才说话。定时或随机地，主动找你一次。\n纯前端只能在页面打开时生效；要做到真提醒得走通知 + 服务端。' },
+    { id: 'wish',     name: '心愿',     icon: 'i-spark',   desc: '想一起做的事。做掉一件，划掉一件。' },
   ];
 
   const DOCK = [
@@ -298,14 +309,20 @@
     return b;
   }
 
+  const GRID_IDS = ['appGrid', 'appGrid2', 'appGrid3'];
+
   function renderApps() {
-    const g1 = $('appGrid');
-    const g2 = $('appGrid2');
+    const grids = GRID_IDS.map((id) => $(id)).filter(Boolean);
+    grids.forEach((g) => { g.innerHTML = ''; });
     const dock = $('dock');
-    g1.innerHTML = '';
-    g2.innerHTML = '';
     dock.innerHTML = '';
-    APPS.forEach((a, i) => (i < 6 ? g1 : g2).appendChild(makeTile(a)));
+
+    // 每页 6 个；多出来的页会自动往下一页排
+    APPS.forEach((a, i) => {
+      const g = grids[Math.floor(i / 6)];
+      if (g) g.appendChild(makeTile(a));
+    });
+
     DOCK.forEach((a) => dock.appendChild(makeTile(a)));
   }
 
@@ -551,6 +568,15 @@
     $('setNoteHer').textContent = herName();
     $('setUserLabel').textContent = S.memory.userName || '我';
     $('setMoodLine').textContent = P.moodSub(S.persona);
+
+    // 第三页「她」的信息
+    const herAva = $('pageHerAva');
+    if (herAva) {
+      herAva.textContent = herInitial();
+      $('pageHerName').textContent = herName();
+      $('pageHerLine').textContent = P.statusLine(S.persona, Date.now());
+      $('herTagModel').textContent = LLM.configured(S.settings) ? '已接模型' : '未接模型';
+    }
     renderCalendar();
     renderWeek();
     renderMonthStats();

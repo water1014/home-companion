@@ -388,8 +388,7 @@ button { font-family: inherit; }
 
 /* 这一周（有没有说话） */
 .week-card { padding: 15px 18px 16px; }
-.home-page .week-card { margin-top: auto; }
-.home-page .mem-card { margin-top: auto; }
+
 .week-sub { font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em; }
 .week-row {
   display: grid;
@@ -425,7 +424,6 @@ button { font-family: inherit; }
 /* 她最近说的一句 */
 .quote-card {
   position: relative;
-  margin-top: auto;      /* 贴到底部，把留白留在中间 */
   padding: 15px 18px 13px;
   cursor: pointer;
   transition: transform 0.2s var(--ease);
@@ -1340,3 +1338,41 @@ button.row { cursor: pointer; }
 }
 .anniv-num span { font-size: 11px; color: var(--ink-3); }
 .statusbar .page-label { text-align: right; }
+
+/* 第三页「她」 */
+.her-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 26px 22px 20px;
+  gap: 4px;
+}
+.her-name {
+  margin: 10px 0 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.her-line {
+  margin: 3px 0 0;
+  max-width: 26ch;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.her-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+.her-tags span {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  border: 1px solid rgba(60, 55, 70, 0.09);
+  border-radius: 999px;
+  padding: 4px 11px;
+}
