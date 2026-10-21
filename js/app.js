@@ -14,6 +14,22 @@
      page: 'chat' | 'mood' | 'memory' | 'settings'
      page 留空 = 占位页（点开会显示 desc 里写好的设想）
      ============================================================ */
+  /* 贴纸色板：浅底 / 同色深线 */
+  const TINTS = [
+    ['#ffe4ec', '#f8c6d5', '#bf6b83'],
+    ['#e2eefc', '#c3d8f3', '#6885ab'],
+    ['#fdf0dc', '#f6ddb8', '#a8814c'],
+    ['#ece4fc', '#d8c8f5', '#8268ab'],
+    ['#e0f4e8', '#c3e6d3', '#5f9478'],
+    ['#ffe9e0', '#f9cfc0', '#b87360'],
+  ];
+
+  function tintFor(id) {
+    let h = 7;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 9973;
+    return TINTS[h % TINTS.length];
+  }
+
   const APPS = [
     /* 第一页 · 日常 */
     { id: 'chat',     name: '聊天',     icon: 'i-chat',    page: 'chat' },
@@ -60,6 +76,7 @@
     memory: 'hc.v1.memory',
     settings: 'hc.v1.settings',
     mood: 'hc.v1.mood',
+    layout: 'hc.v1.layout',
   };
 
   const load = (k, fb) => {
@@ -317,8 +334,10 @@
     b.type = 'button';
     b.className = 'tile';
     b.dataset.app = app.id;
+    const t = tintFor(app.id);
     b.innerHTML =
-      '<span class="tile-ic"><svg><use href="#' + app.icon + '"/></svg><i class="badge"></i></span>' +
+      '<span class="tile-ic" style="--c1:' + t[0] + ';--c2:' + t[1] + ';--inkc:' + t[2] + '">' +
+      '<svg><use href="#' + app.icon + '"/></svg><i class="badge"></i></span>' +
       '<span class="tile-name">' + app.name + '</span>';
     b.addEventListener('click', () => openApp(app));
     return b;
@@ -341,7 +360,9 @@
     setTxt('sbDate', dateLabel(now));
     setTxt('sbState', '她在家');
     setTxt('chatStatus', P.statusLine(S.persona, Date.now()));
-    setTxt('heroStatus', P.statusLine(S.persona, Date.now()));
+    setTxt('clockSub', P.statusLine(S.persona, Date.now()));
+    setTxt('clockTime', pad(now.getHours()) + ':' + pad(now.getMinutes()));
+    setTxt('clockDate', dateLabel(now));
     document.querySelectorAll('.sb-date-mini').forEach((el) => {
       el.textContent = dateLabel(now);
     });
@@ -561,16 +582,242 @@
 
   const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
 
-  function renderCards() {
-    const days = daysTogether();
+  /* ============================================================
+     桌面组件 —— 想加新组件：往 WIDGETS 里加一条，再放进 layout
+     col / row 是占几格（总四栏）
+     ============================================================ */
+  const WIDGETS = {
+    pair: {
+      col: 4, row: 1,
+      html: () =>
+        '<div class="w-pair">' +
+          '<div class="pair-avas">' +
+            '<div class="pa me"><span id="paMe">我</span></div>' +
+            '<svg class="pair-heart" viewBox="0 0 24 24"><use href="#i-heart"/></svg>' +
+            '<div class="pa her"><span id="paHer">满</span></div>' +
+          '</div>' +
+          '<p class="pair-names"><b id="pairMe">我</b><b id="pairHer">小满</b></p>' +
+        '</div>',
+    },
+
+    days: {
+      col: 4, row: 1,
+      html: () =>
+        '<div class="w-days">' +
+          '<p class="days-num" id="daysNum">1</p>' +
+          '<p class="days-label">DAYS TOGETHER</p>' +
+          '<svg class="pulse-line" viewBox="0 0 120 16"><path d="M0 8h34l5-5 6 10 5-8 4 3h56"/></svg>' +
+        '</div>',
+    },
+
+    clock: {
+      col: 2, row: 2,
+      html: () =>
+        '<div class="w-clock">' +
+          '<p class="clock-time" id="clockTime">--:--</p>' +
+          '<p class="clock-date" id="clockDate">—</p>' +
+          '<p class="clock-sub" id="clockSub">right here</p>' +
+        '</div>',
+    },
+
+    quad: {
+      col: 2, row: 2,
+      html: () => '<div class="w-quad"><div class="quad" id="quad"></div></div>',
+    },
+
+    music: {
+      col: 4, row: 2,
+      html: () =>
+        '<div class="w-music"><div class="music-row">' +
+          '<div class="mcover"></div>' +
+          '<div class="mmeta">' +
+            '<p class="mkicker">NOW PLAYING</p>' +
+            '<p class="mtitle" id="musicTitle">还没开始</p>' +
+            '<div class="mbar"><i id="musicBar"></i></div>' +
+          '</div>' +
+          '<button class="mplay" id="musicPlay" aria-label="播放">▶</button>' +
+        '</div></div>',
+    },
+
+    diary: {
+      col: 4, row: 1,
+      html: () =>
+        '<div class="w-diary">' +
+          '<div class="diary-top">' +
+            '<p class="diary-kicker">My Diary</p>' +
+            '<p class="diary-date" id="diaryDate">—</p>' +
+          '</div>' +
+          '<p class="diary-text" id="diaryText">第一句话，等你先说。</p>' +
+          '<p class="diary-meta"><span id="diaryDay">Day 1</span><span id="diaryFrom"></span></p>' +
+        '</div>',
+    },
+  };
+
+  const LAYOUT_DEFAULT = ['pair', 'days', 'clock', 'quad', 'music', 'diary'];
+  let layout = load(KEY.layout, LAYOUT_DEFAULT.slice());
+
+  function renderBento() {
+    const box = $('bento');
+    if (!box) return;
+    box.innerHTML = '';
+
+    layout.forEach((id) => {
+      const w = WIDGETS[id];
+      if (!w) return;
+      const el = document.createElement('div');
+      el.className = 'w glass w-' + id;
+      el.dataset.id = id;
+      el.style.gridColumn = 'span ' + w.col;
+      el.style.gridRow = 'span ' + w.row;
+      el.innerHTML = w.html();
+      box.appendChild(el);
+
+      if (id === 'clock' || id === 'pair' || id === 'days') {
+        el.addEventListener('click', () => { if (!editMode) openPage('mood'); });
+      } else if (id === 'diary') {
+        el.addEventListener('click', () => { if (!editMode) openPage('chat'); });
+      } else if (id === 'music') {
+        el.addEventListener('click', () => { if (!editMode) toast('一起听还没接上'); });
+      }
+    });
+
+    renderQuad();
+    bindMusic();
+    updateWidgets();
+  }
+
+  function renderQuad() {
+    const q = $('quad');
+    if (!q) return;
+    q.innerHTML = '';
+    ['album', 'notes', 'music', 'memory'].forEach((id) => {
+      const app = findApp(id);
+      if (app) q.appendChild(makeTile(app));
+    });
+  }
+
+  function bindMusic() {
+    const btn = $('musicPlay');
+    if (btn) {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toast('一起听还没接上');
+      });
+    }
+  }
+
+  function updateWidgets() {
     const now = new Date();
+    const days = daysTogether();
+
+    setTxt('paMe', (S.memory.userName || '我').slice(0, 1));
+    setTxt('paHer', herInitial());
+    setTxt('pairMe', S.memory.userName || '我');
+    setTxt('pairHer', herName());
+    setTxt('daysNum', days);
+    setTxt('clockTime', pad(now.getHours()) + ':' + pad(now.getMinutes()));
+    setTxt('clockDate', dateLabel(now));
+    setTxt('clockSub', P.statusLine(S.persona, Date.now()));
+    setTxt('diaryDay', 'Day ' + days);
+    setTxt('diaryDate', (now.getMonth() + 1) + '.' + pad(now.getDate()));
+
+    const last = S.chat.slice().reverse().find((m) => m.role === 'her' && m.text);
+    setTxt('diaryText', last ? last.text.replace(/\n+/g, ' ') : '第一句话，等你先说。');
+    setTxt('diaryFrom', last ? 'From ' + herName() : '');
+  }
+
+  /* ---- 长按进入编辑，拖动换位 ---- */
+  let editMode = false;
+  let dragId = null;
+  let pressTimer = 0;
+
+  function setEdit(on) {
+    editMode = on;
+    const box = $('bento');
+    if (box) box.classList.toggle('editing', on);
+    const btn = $('editDone');
+    if (btn) btn.hidden = !on;
+    const hint = $('editHint');
+    if (hint) hint.hidden = !on;
+    if (!on) {
+      dragId = null;
+      document.querySelectorAll('.w.dragging').forEach((w) => w.classList.remove('dragging'));
+      save(KEY.layout, layout);
+    }
+  }
+
+  function swapTo(targetId) {
+    if (!dragId || !targetId || targetId === dragId) return;
+    const a = layout.indexOf(dragId);
+    const b = layout.indexOf(targetId);
+    if (a < 0 || b < 0) return;
+
+    layout.splice(a, 1);
+    layout.splice(b, 0, dragId);
+    renderBento();
+
+    const again = document.querySelector('.w[data-id="' + dragId + '"]');
+    if (again) again.classList.add('dragging');
+    save(KEY.layout, layout);
+  }
+
+  const bento = $('bento');
+
+  if (bento) {
+    bento.addEventListener('pointerdown', (e) => {
+      const w = e.target.closest('.w');
+      if (!w) return;
+      const id = w.dataset.id;
+
+      if (editMode) {
+        dragId = id;
+        w.classList.add('dragging');
+        e.preventDefault();
+        return;
+      }
+
+      // 长按 480ms 进入编辑
+      clearTimeout(pressTimer);
+      pressTimer = setTimeout(() => {
+        setEdit(true);
+        dragId = id;
+        const el = document.querySelector('.w[data-id="' + id + '"]');
+        if (el) el.classList.add('dragging');
+      }, 480);
+    });
+
+    bento.addEventListener('pointermove', (e) => {
+      if (!dragId) return;
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      const target = under && under.closest ? under.closest('.w') : null;
+      if (target) swapTo(target.dataset.id);
+    });
+
+    bento.addEventListener('click', (e) => {
+      if (editMode) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+  }
+
+  const editDoneBtn = $('editDone');
+  if (editDoneBtn) editDoneBtn.addEventListener('click', () => setEdit(false));
+
+  document.addEventListener('pointerup', () => {
+    clearTimeout(pressTimer);
+    dragId = null;
+    document.querySelectorAll('.w.dragging').forEach((w) => w.classList.remove('dragging'));
+  });
+  document.addEventListener('pointercancel', () => {
+    clearTimeout(pressTimer);
+    dragId = null;
+  });
+
+  function renderCards() {
     const me = S.memory.userName ? S.memory.userName.slice(0, 1) : '我';
 
-    setTxt('todayDays', days);
-    setTxt('todayDate', (now.getMonth() + 1) + ' 月 ' + now.getDate() + ' 日');
-    setTxt('heroAva', herInitial());
-    setTxt('heroName', herName());
-    setTxt('heroStatus', P.statusLine(S.persona, Date.now()));
+    updateWidgets();
 
     setTxt('chatAvaHer', herInitial());
     setTxt('moodAvaHer', herInitial());
@@ -578,9 +825,8 @@
     setTxt('setAvaMe', me);
     setTxt('setNoteHer', herName());
     setTxt('setUserLabel', S.memory.userName || '我');
-    setTxt('setMoodLine', '在一起第 ' + days + ' 天');
+    setTxt('setMoodLine', '在一起第 ' + daysTogether() + ' 天');
 
-    updateHeroMeta();
     renderCalendar();
     renderWeek();
     renderMonthStats();
@@ -1414,6 +1660,7 @@
   }
 
   function boot() {
+    renderBento();
     renderApps();
     renderCards();
     renderMood();

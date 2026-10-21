@@ -69,57 +69,17 @@
 
   <div class="home-pager" id="homePager">
 
-    <!-- ===== 第一页 · 她 ===== -->
-    <section class="home-page home-first" aria-label="她">
+    <!-- ===== 第一页 · 组件 ===== -->
+    <section class="home-page" aria-label="桌面">
       <div class="statusbar">
         <span id="sbDate">7月11日 星期六</span>
         <span class="sb-right"><i class="sb-dot"></i><span id="sbState">她在家</span></span>
       </div>
 
-      <!-- 大卡：有字的那块 -->
-      <section class="glass big-card" id="heroCard">
-        <div class="big-head">
-          <div class="hero-ava"><span id="heroAva">满</span></div>
-          <div class="big-who">
-            <h2 class="hero-name" id="heroName">小满</h2>
-            <p class="hero-status" id="heroStatus">在窗边等天黑</p>
-          </div>
-        </div>
+      <div class="bento" id="bento"></div>
 
-        <div class="big-body">
-          <p class="big-quote" id="quoteText">第一句话，等你先说。</p>
-          <p class="big-from" id="quoteFrom">她在这儿</p>
-        </div>
-
-        <svg class="ripple" viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true">
-          <g class="wv w1"><path d="M0 32 Q50 16 100 32 T200 32 T300 32 T400 32"/></g>
-          <g class="wv w2"><path d="M0 38 Q50 26 100 38 T200 38 T300 38 T400 38"/></g>
-        </svg>
-      </section>
-
-      <!-- 音乐横条 -->
-      <section class="glass music-bar" id="musicBar">
-        <svg class="mb-ic" aria-hidden="true"><use href="#i-music"/></svg>
-        <div class="mb-text">
-          <p class="mb-title">一起听</p>
-          <p class="mb-sub" id="musicSub">还没开始</p>
-        </div>
-        <span class="mb-pulse" aria-hidden="true"></span>
-      </section>
-
-      <!-- 两个图标 + 一个数据卡 -->
-      <button class="glass mini-tile" type="button" data-app="album">
-        <svg aria-hidden="true"><use href="#i-album"/></svg><span>相册</span>
-      </button>
-
-      <button class="glass mini-tile" type="button" data-app="notes">
-        <svg aria-hidden="true"><use href="#i-note"/></svg><span>碎念</span>
-      </button>
-
-      <section class="glass data-card">
-        <p class="data-num"><b id="todayDays">1</b><span>天</span></p>
-        <p class="data-label">在一起</p>
-      </section>
+      <div class="page-dots-hint" id="editHint" hidden>拖动组件换位置</div>
+      <button class="edit-done" id="editDone" type="button" hidden>完成</button>
     </section>
 
     <!-- ===== 第二页 · 应用 ===== -->
