@@ -16,12 +16,12 @@
      ============================================================ */
   /* 贴纸色板：浅底 / 同色深线 */
   const TINTS = [
-    ['#ffe4ec', '#f8c6d5', '#bf6b83'],
-    ['#e2eefc', '#c3d8f3', '#6885ab'],
-    ['#fdf0dc', '#f6ddb8', '#a8814c'],
-    ['#ece4fc', '#d8c8f5', '#8268ab'],
-    ['#e0f4e8', '#c3e6d3', '#5f9478'],
-    ['#ffe9e0', '#f9cfc0', '#b87360'],
+    ['#ffe9f0', '#ffcbdb', '#b8697f'],
+    ['#e8f1fe', '#cadef8', '#6b86ad'],
+    ['#fff5e4', '#ffe2ba', '#a8824e'],
+    ['#f1eaff', '#ddcdfa', '#8168ac'],
+    ['#e6f8ee', '#caecda', '#5f9478'],
+    ['#fff1e9', '#ffd8c6', '#b87360'],
   ];
 
   function tintFor(id) {
@@ -728,11 +728,13 @@
       col: 4, row: 2,
       html: () =>
         '<div class="w-music"><div class="music-row">' +
-          '<div class="mcover"></div>' +
+          '<div class="mcover"><span class="mnote">♪</span></div>' +
           '<div class="mmeta">' +
-            '<p class="mkicker">NOW PLAYING</p>' +
+            '<p class="mkicker">NOW PLAYING · 一起听</p>' +
             '<p class="mtitle" id="musicTitle">还没开始</p>' +
+            '<p class="msub" id="musicSub">想听什么，放给我</p>' +
             '<div class="mbar"><i id="musicBar"></i></div>' +
+            '<div class="mtimes"><span>0:00</span><span id="mtimeAll">--:--</span></div>' +
           '</div>' +
           '<button class="mplay" id="musicPlay" aria-label="播放">▶</button>' +
         '</div></div>',
@@ -1947,6 +1949,81 @@
     return bits.join('，');
   }
 
+  /* ================= 美化：壁纸 ================= */
+
+  function wallCfg() {
+    return Object.assign({ preset: 'mist', img: '' }, S.settings.wall || {});
+  }
+
+  function applyWall() {
+    const w = wallCfg();
+    document.body.dataset.wall = w.preset || 'mist';
+    if (w.img) {
+      document.documentElement.style.setProperty('--wall-img', 'url("' + w.img + '")');
+      document.body.dataset.wallimg = '1';
+    } else {
+      document.documentElement.style.removeProperty('--wall-img');
+      delete document.body.dataset.wallimg;
+    }
+    // 美化页里高亮当前选中的那颗
+    document.querySelectorAll('#wallRow .wall-dot[data-wall]').forEach((b) => {
+      b.classList.toggle('on', b.dataset.wall === (w.preset || 'mist'));
+    });
+    const clearRow = $('wallClearRow');
+    if (clearRow) clearRow.hidden = !w.img;
+  }
+
+  function patchWall(patch) {
+    S.settings.wall = Object.assign(wallCfg(), patch);
+    save(KEY.settings, S.settings);
+    applyWall();
+  }
+
+  /** 把上传的图压到 1440 以内，存 dataURL（只在这台设备上） */
+  function readWallFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 1440;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        const data = c.toDataURL('image/jpeg', 0.82);
+        if (data.length > 3.6 * 1024 * 1024) { toast('这张太大了，换张小点的'); return; }
+        patchWall({ img: data });
+        toast('壁纸换好了');
+      };
+      img.onerror = () => toast('这个格式读不了');
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function bindWallControls() {
+    document.querySelectorAll('#wallRow .wall-dot[data-wall]').forEach((b) => {
+      b.addEventListener('click', () => {
+        patchWall({ preset: b.dataset.wall, img: '' });
+      });
+    });
+    const pick = $('wallPick');
+    const file = $('wallFile');
+    if (pick && file) {
+      pick.addEventListener('click', () => file.click());
+      file.addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (f) readWallFile(f);
+        e.target.value = '';
+      });
+    }
+    const clear = $('wallClear');
+    if (clear) clear.addEventListener('click', () => { patchWall({ img: '' }); toast('换回预设了'); });
+  }
+
   /* ================= 美化：桌面组件与排布 ================= */
 
   function renderTheme() {
@@ -1986,6 +2063,8 @@
         box.appendChild(row);
       });
     }
+
+    applyWall();
 
     const hcfg = homeCfg();
     const setVal = (id, v) => { const el = $(id); if (el) el.value = v; };
@@ -3051,6 +3130,8 @@
     collectDevice();
     renderCoupons();
     bindThemeControls();
+    bindWallControls();
+    applyWall();
     applyGap(homeCfg().gap);
 
     setInterval(() => {

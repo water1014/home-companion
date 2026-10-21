@@ -2697,3 +2697,357 @@ code {
   background: rgba(17, 20, 28, 0.06);
   border-radius: 4px;
 }
+
+/* ============================================================
+   皮肤 v13：整屏壁纸 + 厚玻璃 + 大字排版 + 糖果图标
+   —— 图层独立，换壁纸只动 .bg，换卡片只动 .glass
+   ============================================================ */
+
+/* ---- 壁纸：四套预设，都能被上传的图顶掉 ---- */
+body[data-wall="mist"] {
+  --wall-grad:
+    radial-gradient(ellipse 92% 58% at 10% 2%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0) 62%),
+    radial-gradient(ellipse 74% 52% at 90% 14%, rgba(205, 222, 243, 0.72), rgba(205, 222, 243, 0) 64%),
+    radial-gradient(ellipse 86% 56% at 68% 96%, rgba(233, 228, 244, 0.8), rgba(233, 228, 244, 0) 62%),
+    linear-gradient(168deg, #f3f5f9 0%, #e3e9f2 46%, #eff1f6 100%);
+}
+body[data-wall="tide"] {
+  --wall-grad:
+    radial-gradient(ellipse 96% 54% at 50% -6%, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0) 60%),
+    radial-gradient(ellipse 70% 44% at 18% 40%, rgba(255, 226, 234, 0.72), rgba(255, 226, 234, 0) 66%),
+    radial-gradient(ellipse 78% 52% at 84% 78%, rgba(226, 233, 248, 0.78), rgba(226, 233, 248, 0) 62%),
+    linear-gradient(172deg, #fdf4f6 0%, #f2edf5 52%, #eef2f8 100%);
+}
+body[data-wall="dawn"] {
+  --wall-grad:
+    radial-gradient(ellipse 94% 60% at 24% 0%, rgba(255, 250, 240, 1), rgba(255, 250, 240, 0) 62%),
+    radial-gradient(ellipse 66% 46% at 88% 26%, rgba(255, 226, 205, 0.6), rgba(255, 226, 205, 0) 66%),
+    radial-gradient(ellipse 80% 54% at 12% 92%, rgba(219, 231, 240, 0.7), rgba(219, 231, 240, 0) 62%),
+    linear-gradient(170deg, #fbf6ee 0%, #f4f0f2 48%, #eceff5 100%);
+}
+body[data-wall="plain"] {
+  --wall-grad: linear-gradient(172deg, #f8f9fb 0%, #eef0f5 58%, #f6f4f3 100%);
+}
+
+.bg {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.12) 42%, rgba(255, 255, 255, 0.3)),
+    var(--wall-img, none),
+    var(--wall-grad, none) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+body[data-wallimg="1"] .bg {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0.4) 44%, rgba(255, 255, 255, 0.62)),
+    var(--wall-img),
+    var(--wall-grad) !important;
+}
+/* 纸感颗粒：让底不"塑料" */
+.bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+}
+
+/* 锁屏也吃壁纸 */
+.lock {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ---- 厚玻璃 ---- */
+.glass,
+.dock.glass,
+.cal-card,
+.anniv-card,
+.week-card,
+.stat-card,
+.dev-card,
+.list-card {
+  background: rgba(255, 255, 255, 0.34) !important;
+  border: 1px solid rgba(255, 255, 255, 0.52) !important;
+  border-radius: 28px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 30px rgba(96, 96, 120, 0.07) !important;
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+}
+.w { border-radius: 28px; }
+
+/* 卡片内部留白更松 */
+.w-pair, .w-days, .w-said, .w-diary { padding-left: 18px; padding-right: 18px; }
+
+/* ---- 大字 ---- */
+.days-num {
+  font-size: 46px !important;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: #23262d;
+  font-variant-numeric: tabular-nums;
+}
+.days-label {
+  font-size: 8.5px !important;
+  letter-spacing: 0.4em !important;
+  color: rgba(70, 74, 86, 0.5) !important;
+  text-transform: uppercase;
+}
+.clock-time {
+  font-size: 44px !important;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: #23262d;
+}
+.clock-date { font-size: 10px; letter-spacing: 0.06em; color: rgba(70, 74, 86, 0.55); }
+.clock-sub { font-size: 10px; color: rgba(70, 74, 86, 0.42); font-style: italic; letter-spacing: 0.02em; }
+.pair-names b { font-size: 13px; font-weight: 400; letter-spacing: 0.02em; }
+.pair-names { gap: 30px !important; }
+.said-kicker { font-size: 8.5px !important; letter-spacing: 0.22em !important; color: rgba(70, 74, 86, 0.45) !important; }
+.said-text { font-size: 14.5px; line-height: 1.55; color: #2b2f38; font-weight: 300; }
+.diary-kicker { font-size: 8.5px; letter-spacing: 0.22em; color: rgba(70, 74, 86, 0.45); }
+.diary-text { font-size: 13px; line-height: 1.6; color: #33373f; font-weight: 300; }
+.diary-meta { font-size: 9px; color: rgba(70, 74, 86, 0.42); letter-spacing: 0.06em; }
+.mtitle { font-size: 14px; font-weight: 400; letter-spacing: 0.01em; }
+.mkicker { font-size: 7.5px; letter-spacing: 0.24em; color: rgba(70, 74, 86, 0.42); }
+
+/* ---- 糖果图标 ---- */
+.tile-ic {
+  background: linear-gradient(150deg, var(--c1, #ffe6ec), var(--c2, #f7c8d6)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 18px !important;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -6px 12px rgba(255, 255, 255, 0.35),
+    0 5px 12px rgba(120, 100, 130, 0.12) !important;
+}
+.tile-ic svg {
+  stroke: var(--inkc, #6b5a66) !important;
+  stroke-width: 1.7 !important;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.7));
+}
+.tile-name {
+  font-size: 10px !important;
+  color: rgba(56, 60, 72, 0.78) !important;
+  letter-spacing: 0.02em;
+  margin-top: 7px;
+}
+
+/* ---- 底部常驻 ---- */
+.dock.glass {
+  background: rgba(255, 255, 255, 0.4) !important;
+  border-radius: 30px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 12px 30px rgba(90, 90, 115, 0.1) !important;
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+}
+.dock .tile-ic { width: 50px; height: 50px; border-radius: 16px; }
+
+/* ---- 状态栏更轻 ---- */
+.statusbar { color: rgba(56, 60, 72, 0.66); }
+.sb-date-mini, .page-label { color: rgba(56, 60, 72, 0.5); letter-spacing: 0.1em; }
+.page-label { font-size: 9px; letter-spacing: 0.2em; }
+
+/* ---- 分页圆点 ---- */
+.pager-dots button {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(60, 64, 76, 0.18);
+  border: none; padding: 0;
+}
+.pager-dots button.on { background: rgba(60, 64, 76, 0.55); width: 14px; border-radius: 3px; }
+
+/* ---- 壁纸选择 ---- */
+.wall-row {
+  display: flex;
+  gap: 10px;
+  padding: 6px 4px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.wall-row::-webkit-scrollbar { display: none; }
+.wall-dot {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.wall-dot i {
+  display: block;
+  width: 46px;
+  height: 62px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(90, 90, 115, 0.1);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s;
+}
+.wall-dot span { font-size: 10px; color: rgba(60, 64, 76, 0.6); letter-spacing: 0.06em; }
+.wall-dot.on i {
+  box-shadow: 0 0 0 2px rgba(40, 44, 54, 0.7), 0 6px 16px rgba(90, 90, 115, 0.14);
+  transform: translateY(-2px);
+}
+.wall-dot.on span { color: #23262d; }
+.w-mist {
+  background:
+    radial-gradient(ellipse 90% 50% at 12% 4%, #fff, transparent 62%),
+    radial-gradient(ellipse 70% 46% at 88% 24%, #cddff3, transparent 66%),
+    linear-gradient(168deg, #f3f5f9, #e3e9f2);
+}
+.w-tide {
+  background:
+    radial-gradient(ellipse 90% 46% at 50% 0%, #fff, transparent 60%),
+    radial-gradient(ellipse 66% 40% at 20% 44%, #ffe2ea, transparent 68%),
+    linear-gradient(172deg, #fdf4f6, #eef2f8);
+}
+.w-dawn {
+  background:
+    radial-gradient(ellipse 90% 52% at 26% 2%, #fffaf0, transparent 62%),
+    radial-gradient(ellipse 62% 40% at 86% 30%, #ffe2cd, transparent 68%),
+    linear-gradient(170deg, #fbf6ee, #eceff5);
+}
+.w-plain { background: linear-gradient(172deg, #f8f9fb, #eef0f5); }
+.w-up {
+  display: grid !important;
+  place-items: center;
+  font-style: normal;
+  font-size: 16px;
+  color: rgba(60, 64, 76, 0.45);
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px dashed rgba(60, 64, 76, 0.22) !important;
+}
+
+/* 覆盖旧"极简版"里用 !important 关掉的毛玻璃与颗粒 */
+.glass,
+.dock.glass,
+.cal-card,
+.anniv-card,
+.week-card,
+.stat-card,
+.dev-card,
+.list-card {
+  backdrop-filter: blur(20px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.35) !important;
+}
+.lock { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.bg::after { display: block !important; }
+
+/* ---- 再修一档：底要有纵深，dock 收成一个色调 ---- */
+.bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 8%, rgba(255, 255, 255, 0.5), transparent 62%),
+    radial-gradient(ellipse 130% 90% at 50% 108%, rgba(108, 112, 136, 0.12), transparent 58%);
+}
+
+/* 底部常驻统一成奶玫瑰，和上面的彩色图标分开层次 */
+.dock .tile-ic {
+  --c1: #ffe7ee !important;
+  --c2: #ffcdda !important;
+  --inkc: #a4637a !important;
+  border-radius: 16px !important;
+}
+
+/* 两个人的卡：头像再大一点、名字更轻 */
+.pa { width: 54px !important; height: 54px !important; font-size: 16px !important; border-width: 2.5px !important; }
+.pair-heart { width: 13px !important; height: 13px !important; opacity: 0.75; }
+.pair-names b { font-size: 13.5px !important; font-weight: 400; color: #33373f; }
+.pair-names { gap: 26px !important; margin-top: 1px; }
+
+/* 组件之间留白再松一点 */
+.w-pair { gap: 10px !important; }
+
+/* ---- 卡片内容要撑满并垂直居中（两行高的卡不再顶在上边） ---- */
+.w-music { height: 100%; display: flex; align-items: center; }
+.w-diary {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+}
+.w-diary .diary-top { margin-bottom: 0; }
+.w-quad { height: 100%; }
+.w-said { height: 100%; }
+.w-clock { height: 100%; }
+.w-days { height: 100%; }
+.w-pair { height: 100%; }
+
+/* 封面回到柔和渐变 */
+.mcover {
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.95), transparent 58%),
+    linear-gradient(150deg, #f3e8ee 0%, #dfe7f4 52%, #ece4f6 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 6px 16px rgba(120, 110, 140, 0.12) !important;
+}
+
+/* flex 子项不许被压扁（日记/他想对你说/人卡的文字之前被挤成 10px 高） */
+.w-diary > *,
+.w-said > *,
+.w-pair > * { flex: 0 0 auto; min-height: 0; }
+.diary-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.said-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ---- 音乐卡充实一点 ---- */
+.w-music { padding: 18px 20px !important; }
+.mcover {
+  width: 76px !important;
+  height: 76px !important;
+  flex: 0 0 76px !important;
+  border-radius: 18px !important;
+  position: relative;
+}
+.mnote {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  color: rgba(120, 110, 140, 0.4);
+}
+.mmeta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.msub {
+  margin: 1px 0 0;
+  font-size: 10.5px;
+  color: rgba(70, 74, 86, 0.45);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mbar { margin-top: 9px !important; height: 3px !important; }
+.mtimes {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 8.5px;
+  color: rgba(70, 74, 86, 0.38);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.mplay {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.92) !important;
+  box-shadow: 0 6px 14px rgba(90, 90, 115, 0.12) !important;
+  border: none !important;
+}
