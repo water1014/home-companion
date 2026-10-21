@@ -3164,4 +3164,88 @@ body[data-wall="photo"] .bg {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.34) 42%, rgba(255, 255, 255, 0.54) 100%),
     url("../icons/wall-soft.jpg") !important;
+  /* 图是两张照片拼的，接缝正好压在图标名字那行 —— 放大一点、往上挪开 */
+  background-size: auto 122% !important;
+  background-position: center 34% !important;
+}
+
+/* 线稿颜色：用 id 级选择器压过旧的 #6f7480（之前被 .tile:nth-child(odd) 那条盖住了） */
+#bento .tile-ic svg,
+#appGrid .tile-ic svg,
+#appGrid2 .tile-ic svg,
+#dock .tile-ic svg,
+.mini-tile svg {
+  stroke: rgba(40, 44, 54, 0.88) !important;
+  stroke-width: 1.55 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  fill: none !important;
+}
+
+/* 非当前页关掉毛玻璃（防串味 + 省性能） */
+.home-page:not(.active) .glass,
+.home-page:not(.active) .tile-ic {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ============================================================
+   磨砂玻璃（frosted glass）
+   —— 之前各层皮肤把 blur/白纱越改越薄，这里统一收厚一档：
+   模糊更开、饱和度更高（背后的颜色透出来是鲜的，不是灰的）、
+   白纱半透（看得见壁纸但不抢字）、上下各一道细高光勾出"玻璃厚度"。
+   这条放在最后面，压过上面所有皮肤层；非当前页关模糊的规则在更下面，
+   照样生效，所以串味和性能都不受影响。
+   ============================================================ */
+.glass,
+.dock.glass,
+.cal-card,
+.anniv-card,
+.week-card,
+.stat-card,
+.dev-card,
+.list-card {
+  background: rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.62) !important;
+  border-radius: 28px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.28),
+    0 10px 30px rgba(96, 96, 120, 0.08) !important;
+  backdrop-filter: blur(26px) saturate(1.55);
+  -webkit-backdrop-filter: blur(26px) saturate(1.55);
+}
+.dock.glass {
+  background: rgba(255, 255, 255, 0.44) !important;
+  backdrop-filter: blur(30px) saturate(1.6);
+  -webkit-backdrop-filter: blur(30px) saturate(1.6);
+}
+
+/* 图标托底也跟上：磨砂感但别糊成一团 */
+.tile-ic,
+.dock .tile-ic,
+.app-row .tile-ic,
+.quad .tile-ic {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 12px rgba(60, 62, 82, 0.08) !important;
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+}
+
+/* 转场进行中：全部临时收掉模糊，别让每帧重算拖慢动画 */
+.phone.moving .glass,
+.phone.moving .tile-ic {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 落到整页容器上（跨页拖拽的落点高亮）：一圈细线，不晃动 */
+.app-row.drop-on,
+#appGrid.drop-on,
+#appGrid2.drop-on {
+  box-shadow: inset 0 0 0 1.5px rgba(31, 35, 43, 0.35);
+  border-radius: 20px;
 }

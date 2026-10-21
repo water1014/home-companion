@@ -437,7 +437,10 @@
     return b;
   }
 
-  const APP_PER_PAGE = 8;    // 第二页放几个，剩下的去第三页（宁少不多，留白）
+  /* 第二页放几个应用，剩下的去第三页。
+     第二页上面还有组件（音乐条 / 他最近一句），放 8 个会顶出屏幕被裁掉，
+     看起来就像"只显示一排"。4 个 + 组件刚好一屏，第三页纯图标放得下。 */
+  const APP_PER_PAGE = 4;
 
   function renderApps() {
     const grid = $('appGrid');
@@ -560,6 +563,11 @@
     const idx = Math.round(pager.scrollLeft / w);
     Array.prototype.forEach.call(dotsBox.children, (d, i) => {
       d.classList.toggle('on', i === idx);
+    });
+    /* 只让当前页开毛玻璃：屏幕外那一页的 backdrop-filter 会串味，
+       把它的模糊采样画到当前页上（Chromium 在横向滚动容器里的老毛病） */
+    Array.prototype.forEach.call(pager.children, (p, i) => {
+      p.classList.toggle('active', i === idx);
     });
   }
 
@@ -783,17 +791,9 @@
     save(KEY.settings, S.settings);
   }
 
-  /* 哪些组件不出现在桌面（美化页里关掉的） */
-  function widgetCfg() {
-    const w = S.settings.widgets || {};
-    return { hidden: Array.isArray(w.hidden) ? w.hidden : [] };
-  }
-  function patchWidgets(hidden) {
-    S.settings.widgets = { hidden: hidden };
-    save(KEY.settings, S.settings);
-  }
-
-  /* 组件归属：p1 里的放首页，其余放第二页（美化页可调） */
+  /* 组件归属：p1 里的放首页，其余放第二页（美化页可调）；
+     关掉的收在 hidden 里。下面这份是唯一生效的定义（老代码重复定义过两份，
+     后一份会把前一份盖掉，容易看花眼，这里只留一份）。 */
   const WIDGET_CN = {
     pair: '两个人',
     days: '在一起多少天',
@@ -1058,12 +1058,42 @@
     ghost.style.transform = 'translate3d(' + dx + 'px,' + dy + 'px,0) scale(1.05)';
   }
 
+  /* ---- 拖到屏幕边缘：自动翻到相邻页（真机桌面就是这个手感）---- */
+  const EDGE_W = 34;       // 边缘多宽算"想翻页"
+  const EDGE_MS = 520;     // 在边缘按住多久才翻
+  let edgeTimer = 0;
+  let edgeDir = 0;
+  function stopEdge() {
+    if (edgeTimer) { clearTimeout(edgeTimer); edgeTimer = 0; }
+    edgeDir = 0;
+  }
+  function edgeScroll(x) {
+    if (!editing || !pager) { stopEdge(); return; }
+    const r = pager.getBoundingClientRect();
+    let dir = 0;
+    if (x < r.left + EDGE_W) dir = -1;
+    else if (x > r.right - EDGE_W) dir = 1;
+    if (!dir) { stopEdge(); return; }
+    if (edgeDir === dir && edgeTimer) return;   // 同一边，等着
+    stopEdge();
+    edgeDir = dir;
+    edgeTimer = setTimeout(() => {
+      edgeTimer = 0;
+      edgeDir = 0;
+      const w = pager.clientWidth || 1;
+      const i = Math.round(pager.scrollLeft / w) + dir;
+      const max = pager.scrollWidth - w;
+      pager.scrollTo({ left: Math.max(0, Math.min(max, i * w)), behavior: 'smooth' });
+    }, EDGE_MS);
+  }
+
   /* ---- 开始拖 ---- */
   function beginDrag(g) {
     if (!g || !g.dragEl) return;
     if (!editing) setEdit(true);
     g.mode = 'drag';
     g.dropEl = null;
+    g.dropZone = null;
     g.dragMoved = false;
     makeGhost(g.dragEl);                 // 先克隆，再给原位置打隐藏标记
     g.dragEl.classList.add('drag-src');
@@ -1073,18 +1103,22 @@
 
   function clearDrop(g) {
     if (g && g.dropEl) g.dropEl.classList.remove('drop-on');
-    if (g) g.dropEl = null;
+    if (g && g.dropZone) g.dropZone.classList.remove('drop-on');
+    if (g) { g.dropEl = null; g.dropZone = null; }
   }
 
   function abortDrag(g) {
+    stopEdge();
     killGhost();
     if (g && g.dragEl) g.dragEl.classList.remove('drag-src');
     clearDrop(g);
   }
 
   /* 手指下面是什么：
-     组件只能在组件之间换；应用图标可以在首页的应用行和第二页之间换；
-     底部常驻只在常驻里换 —— 三者互不串味 */
+     组件只能在组件之间换；应用图标可以在首页应用行、第二页、第三页之间换；
+     底部常驻只在常驻里换 —— 三者互不串味。
+     拖到某一页的空白处也算数：落到那一页应用列表的末尾。这样从第二页往
+     第三页拖，不必非得瞄准某个图标，按在那页空位上松手就过去。 */
   function updateDrop(g, x, y) {
     const el = g.dragEl;
     const isW = el.classList.contains('w');
@@ -1100,10 +1134,35 @@
       // 四格组件里的图标不算落点
       else if (!cs && !t.closest('.app-row') && !t.closest('#appGrid') && !t.closest('#appGrid2')) t = null;
     }
-    if (t !== g.dropEl) {
+    /* 没命中图标：看看是不是按在另一页的空白处（落页尾）。
+       网格是 align-content:start 的，空白在容器外面 —— 所以整页空白都算，
+       归到那一页的应用容器（第一页取 bento 里最后一排应用行）。
+       按在自己本来那页的空白处不算 —— 那等于哪都没去。 */
+    let zone = null;
+    if (!t && !isW) {
+      const cs = el.closest('#dock');
+      if (!cs) {
+        let z = under.closest('.app-row, #appGrid, #appGrid2');
+        if (!z) {
+          const pg = under.closest('.home-page');
+          if (pg) {
+            z = pg.querySelector('.app-grid');
+            if (!z) {
+              const rows = pg.querySelectorAll('.app-row');
+              if (rows.length) z = rows[rows.length - 1];
+            }
+          }
+        }
+        if (z && z !== el.closest('.app-row, #appGrid, #appGrid2')) zone = z;
+      }
+    }
+    if (t !== g.dropEl || zone !== g.dropZone) {
       if (g.dropEl) g.dropEl.classList.remove('drop-on');
+      if (g.dropZone) g.dropZone.classList.remove('drop-on');
       g.dropEl = t;
+      g.dropZone = zone;
       if (t) t.classList.add('drop-on');
+      if (zone) zone.classList.add('drop-on');
     }
   }
 
@@ -1135,33 +1194,51 @@
 
   function commitDrag(g, fromRect) {
     const src = g.dragEl, dst = g.dropEl;
-    if (!dst) return false;
     const isW = src.classList.contains('w');
-    const idA = isW ? src.dataset.id : src.dataset.app;
-    const idB = isW ? dst.dataset.id : dst.dataset.app;
-    const box = src.parentElement;
     if (isW) {
+      if (!dst) return false;
+      const idA = src.dataset.id;
+      const idB = dst.dataset.id;
       const a = layout.indexOf(idA), b = layout.indexOf(idB);
       if (a < 0 || b < 0) return false;
       layout.splice(a, 1);
       layout.splice(b, 0, idA);
       save(KEY.layout, layout);
       flipAll('.bento .w', 'id', () => { renderBento(); renderBento2(); }, fromRect ? { id: idA, r: fromRect } : null);
-    } else {
-      const inDock = !!src.closest('#dock');
-      const arr = inDock ? DOCK : APPS;
-      const a = arr.findIndex((x) => x.id === idA);
-      const b = arr.findIndex((x) => x.id === idB);
-      if (a < 0 || b < 0) return false;
-      const item = arr.splice(a, 1)[0];
-      arr.splice(b, 0, item);
-      save(KEY.apps, APPS.map((x) => x.id));
-      save(KEY.dock, DOCK.map((x) => x.id));
-      const sel = inDock ? '#dock .tile' : '.app-row .tile, #appGrid .tile, #appGrid2 .tile';
-      flipAll(sel, 'app', () => {
-        if (inDock) renderApps(); else { renderBento(); renderApps(); }
-      }, fromRect ? { id: idA, r: fromRect } : null);
+      return true;
     }
+
+    /* ---- 应用图标：dock 内换位，或跨页移动到目标位置 ---- */
+    const idA = src.dataset.app;
+    const inDock = !!src.closest('#dock');
+    const arr = inDock ? DOCK : APPS;
+    const a = arr.findIndex((x) => x.id === idA);
+    if (a < 0) return false;
+
+    let b;   //  dragged 要去的全局下标
+    if (dst) {
+      b = arr.findIndex((x) => x.id === dst.dataset.app);
+      if (b < 0) return false;
+    } else if (g.dropZone) {
+      // 落在某页空白：插到那一页最后一个后面（页尾）
+      const last = g.dropZone.lastElementChild;
+      const lastId = last ? (last.dataset.app || last.dataset.id) : '';
+      const li = lastId ? arr.findIndex((x) => x.id === lastId) : -1;
+      if (li < 0) return false;
+      b = li + 1;
+    } else {
+      return false;   // 哪儿都没落上 → 回原位
+    }
+
+    const item = arr.splice(a, 1)[0];
+    if (b > a) b -= 1;               // 移除后目标下标左移一位，保证"移到目标处"而不是越过
+    arr.splice(b, 0, item);
+    save(KEY.apps, APPS.map((x) => x.id));
+    save(KEY.dock, DOCK.map((x) => x.id));
+    const sel = inDock ? '#dock .tile' : '.app-row .tile, #appGrid .tile, #appGrid2 .tile';
+    flipAll(sel, 'app', () => {
+      if (inDock) renderApps(); else { renderBento(); renderApps(); }
+    }, fromRect ? { id: idA, r: fromRect } : null);
     return true;
   }
 
@@ -1223,6 +1300,7 @@
       if (ges.moved > 6) ges.dragMoved = true;
       moveGhost(ges, e.clientX, e.clientY);
       updateDrop(ges, e.clientX, e.clientY);
+      edgeScroll(e.clientX);            // 拖到边缘 → 自动翻页，才能去别的页面
       return;
     }
 
@@ -1262,6 +1340,7 @@
       const gr = ghostRect();               // 先量 ghost 落点，再撤
       killGhost();
       if (g.dragEl) g.dragEl.classList.remove('drag-src');
+      stopEdge();
       commitDrag(g, gr);
       clearDrop(g);
       suppressClick = performance.now() + 260;
