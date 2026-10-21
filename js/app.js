@@ -337,7 +337,149 @@
     }
   }
 
-  /* ---------------- 卡片 / 头像 ---------------- */
+  /* ---------------- 主屏分页 ---------------- */
+
+  const pager = $('homePager');
+  const dotsBox = $('pagerDots');
+
+  function renderDots() {
+    if (!pager || !dotsBox) return;
+    const w = pager.clientWidth || 1;
+    const count = Math.max(1, Math.round(pager.scrollWidth / w));
+    dotsBox.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('aria-label', '第 ' + (i + 1) + ' 页');
+      b.addEventListener('click', () => {
+        pager.scrollTo({ left: i * (pager.clientWidth || 1), behavior: 'smooth' });
+      });
+      dotsBox.appendChild(b);
+    }
+    syncDots();
+  }
+
+  function syncDots() {
+    if (!pager || !dotsBox) return;
+    const w = pager.clientWidth || 1;
+    const idx = Math.round(pager.scrollLeft / w);
+    Array.prototype.forEach.call(dotsBox.children, (d, i) => {
+      d.classList.toggle('on', i === idx);
+    });
+  }
+
+  if (pager) {
+    let raf = 0;
+    pager.addEventListener('scroll', () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; syncDots(); });
+    }, { passive: true });
+    window.addEventListener('resize', renderDots);
+
+    /* 手机上翻页交给原生滑动（有惯性、有吸附）；
+       桌面鼠标拖拽不会产生原生滚动，这里补一套 */
+    let mdrag = null;
+    let dragged = false;
+
+    pager.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      mdrag = { x0: e.clientX, sl: pager.scrollLeft };
+      dragged = false;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!mdrag) return;
+      const dx = e.clientX - mdrag.x0;
+      if (!dragged && Math.abs(dx) > 6) {
+        dragged = true;
+        pager.style.scrollSnapType = 'none';
+        pager.classList.add('dragging');
+      }
+      if (!dragged) return;
+      pager.scrollLeft = mdrag.sl - dx;
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (!mdrag) return;
+      const moved = dragged;
+      mdrag = null;
+      if (!moved) return;
+      pager.style.scrollSnapType = '';
+      pager.classList.remove('dragging');
+      const w = pager.clientWidth || 1;
+      const i = Math.round(pager.scrollLeft / w);
+      pager.scrollTo({ left: i * w, behavior: 'smooth' });
+      setTimeout(() => { dragged = false; }, 80);
+    });
+
+    // 拖完那一下别误触发图标
+    pager.addEventListener('click', (e) => {
+      if (dragged) { e.stopPropagation(); e.preventDefault(); }
+    }, true);
+  }
+
+  /* 这一周：哪几天说过话 */
+  function renderWeek() {
+    const row = $('weekRow');
+    if (!row) return;
+
+    const spoken = new Set(S.chat.map((m) => new Date(m.ts).toDateString()));
+    const today = new Date();
+    const names = '日一二三四五六';
+
+    row.innerHTML = '';
+    let count = 0;
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today.getTime() - i * 86400000);
+      const on = spoken.has(d.toDateString());
+      if (on) count++;
+
+      const cell = document.createElement('div');
+      cell.className = 'week-day' + (on ? ' on' : '') + (i === 0 ? ' today' : '');
+
+      const nm = document.createElement('span');
+      nm.className = 'wd-name';
+      nm.textContent = names[d.getDay()];
+
+      const dt = document.createElement('span');
+      dt.className = 'wd-dot';
+      dt.textContent = d.getDate();
+
+      cell.appendChild(nm);
+      cell.appendChild(dt);
+      row.appendChild(cell);
+    }
+
+    $('weekSub').textContent = count ? '这周说了 ' + count + ' 天' : '这周还没说话';
+  }
+
+  /* 她最近说的一句 */
+  function renderQuote() {
+    const el = $('quoteText');
+    if (!el) return;
+    const last = S.chat.slice().reverse().find((m) => m.role === 'her' && m.text);
+    el.textContent = last ? last.text.replace(/\n+/g, ' ') : '还没说过什么。';
+    $('quoteFrom').textContent = last ? '她 · ' + hhmm(last.ts) : '她 · 还没开口';
+  }
+
+  /* 主屏第二页：她记得的事（只读，最多 4 条） */
+  function renderHomeMemories() {
+    const ul = $('homeMemories');
+    if (!ul) return;
+    const facts = (S.memory.facts || []).slice(-4).reverse();
+    ul.innerHTML = '';
+    $('homeMemoryHint').hidden = facts.length > 0;
+    facts.forEach((f) => {
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.textContent = f;
+      li.appendChild(span);
+      ul.appendChild(li);
+    });
+  }
+
+
 
   function renderCards() {
     const days = daysTogether();
@@ -355,6 +497,9 @@
     $('setUserLabel').textContent = S.memory.userName || '我';
     $('setMoodLine').textContent = P.moodSub(S.persona);
     renderCalendar();
+    renderWeek();
+    renderQuote();
+    renderHomeMemories();
   }
 
   function renderMood() {
@@ -389,6 +534,8 @@
       li.appendChild(del);
       ul.appendChild(li);
     });
+
+    renderHomeMemories();
   }
 
   /* ============================================================
@@ -515,14 +662,17 @@
     if (typingEl) { typingEl.remove(); typingEl = null; }
   }
 
-  function typeOut(node, fullText, speed) {
+  function typeOut(node, fullText, speed, done) {
     let i = 0;
     const step = Math.max(1, Math.round(fullText.length / 90));
     const timer = setInterval(() => {
       i = Math.min(fullText.length, i + step);
       node.body.textContent = fullText.slice(0, i);
       scrollDown();
-      if (i >= fullText.length) clearInterval(timer);
+      if (i >= fullText.length) {
+        clearInterval(timer);
+        if (done) done();
+      }
     }, speed);
   }
 
@@ -633,6 +783,9 @@
     busy = false;
     lastInteract = Date.now();
     updateSendState();
+    renderQuote();
+    renderHomeMemories();
+    renderWeek();
     if (currentPage !== 'chat') addBadge('chat');
   }
 
@@ -718,6 +871,7 @@
       save(KEY.persona, S.persona);
       tickClocks();
       lastInteract = Date.now() - 120000;
+      renderQuote();
       if (currentPage !== 'chat') addBadge('chat');
     }, 900 + Math.random() * 900);
   }
@@ -947,7 +1101,7 @@
         const g = greeting();
         const node = appendMessage({ role: 'her', text: g, action: '', ts: Date.now() }, true);
         node.body.textContent = '';
-        typeOut(node, g, 34);
+        typeOut(node, g, 34, () => renderQuote());
       }, 900);
     } else {
       const gap = Date.now() - (S.chat[S.chat.length - 1].ts || 0);
@@ -964,6 +1118,21 @@
 
     $('clockStatus').addEventListener('click', () => openPage('mood'));
     $('daysCard').addEventListener('click', () => openPage('mood'));
+
+    const quoteCard = $('quoteCard');
+    if (quoteCard) {
+      quoteCard.addEventListener('click', () => openPage('chat'));
+      quoteCard.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPage('chat'); }
+      });
+    }
+    const moreMem = $('btnHomeMemories');
+    if (moreMem) moreMem.addEventListener('click', () => openPage('mood'));
+
+    renderDots();
+    // 字体加载完/旋转屏幕后重新量一次宽度
+    requestAnimationFrame(renderDots);
+    setTimeout(renderDots, 300);
 
     setInterval(() => {
       S.persona = P.evolve(S.persona, Date.now());

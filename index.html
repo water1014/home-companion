@@ -63,43 +63,69 @@
 <!-- ============ 主屏 ============ -->
 <main class="screen home" id="home" aria-label="主屏">
   <div class="home-dim" aria-hidden="true"></div>
-  <div class="home-scroll">
-    <div class="statusbar">
-      <span id="sbDate">7月11日 星期六</span>
-      <span class="sb-right"><i class="sb-dot"></i>她在家 · <b id="sbEnergy">62</b>%</span>
-    </div>
 
-    <section class="clock-card glass" id="clockCard">
-      <div class="clock-row">
-        <h1 class="big-clock" id="homeClock">17:53</h1>
-        <div class="clock-side">
-          <p class="clock-date" id="clockDate">7月11日 星期六</p>
-          <button class="clock-sub" id="clockStatus">· right here</button>
+  <div class="home-pager" id="homePager">
+
+    <!-- ===== 第一页 ===== -->
+    <section class="home-page" aria-label="第一页">
+      <div class="statusbar">
+        <span id="sbDate">7月11日 星期六</span>
+        <span class="sb-right"><i class="sb-dot"></i>她在家 · <b id="sbEnergy">62</b>%</span>
+      </div>
+
+      <section class="clock-card glass" id="clockCard">
+        <div class="clock-row">
+          <h1 class="big-clock" id="homeClock">17:53</h1>
+          <div class="clock-side">
+            <p class="clock-date" id="clockDate">7月11日 星期六</p>
+            <button class="clock-sub" id="clockStatus">· right here</button>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section class="days-card glass" id="daysCard">
+        <div class="pair-ava small left"><span id="homeAvaMe">我</span></div>
+        <div class="days-mid">
+          <p class="days-num"><span id="homeDays">64</span></p>
+          <p class="days-label">DAYS TOGETHER</p>
+          <svg class="pulse-line" viewBox="0 0 120 16" aria-hidden="true"><path d="M0 8h38l6-6 7 12 6-9 5 3h58"/></svg>
+        </div>
+        <div class="pair-ava small right"><span id="homeAvaHer">满</span></div>
+      </section>
+
+      <nav class="app-grid" id="appGrid" aria-label="应用"></nav>
+
+      <section class="quote-card glass" id="quoteCard" role="button" tabindex="0">
+        <p class="quote-text" id="quoteText">……</p>
+        <p class="quote-from" id="quoteFrom">她 · 刚才</p>
+      </section>
     </section>
 
-    <section class="days-card glass" id="daysCard">
-      <div class="pair-ava small left"><span id="homeAvaMe">我</span></div>
-      <div class="days-mid">
-        <p class="days-num"><span id="homeDays">64</span></p>
-        <p class="days-label">DAYS TOGETHER</p>
-        <svg class="pulse-line" viewBox="0 0 120 16" aria-hidden="true"><path d="M0 8h38l6-6 7 12 6-9 5 3h58"/></svg>
-      </div>
-      <div class="pair-ava small right"><span id="homeAvaHer">满</span></div>
-    </section>
+    <!-- ===== 第二页 ===== -->
+    <section class="home-page" aria-label="第二页">
+      <section class="glass week-card">
+        <header class="card-head"><h3>这一周</h3><span class="week-sub" id="weekSub">还没说话</span></header>
+        <div class="week-row" id="weekRow"></div>
+      </section>
 
-    <nav class="app-grid" id="appGrid" aria-label="应用"></nav>
+      <section class="cal-card glass" id="calCard">
+        <header class="cal-head">
+          <h2 id="calTitle">2026 · 十月</h2>
+          <span class="cal-mark">♥</span>
+        </header>
+        <div class="cal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span class="wk">六</span><span class="wk">日</span></div>
+        <div class="cal-grid" id="calGrid"></div>
+      </section>
 
-    <section class="cal-card glass" id="calCard">
-      <header class="cal-head">
-        <h2 id="calTitle">2026 · 七月</h2>
-        <span class="cal-mark">♥</span>
-      </header>
-      <div class="cal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span class="wk">六</span><span class="wk">日</span></div>
-      <div class="cal-grid" id="calGrid"></div>
+      <section class="glass mem-card">
+        <header class="card-head"><h3>她记得的事</h3><button class="text-btn" id="btnHomeMemories">全部</button></header>
+        <ul class="memories" id="homeMemories"></ul>
+        <p class="hint" id="homeMemoryHint" hidden>还没有。去聊天里告诉她一件小事。</p>
+      </section>
     </section>
   </div>
+
+  <div class="pager-dots" id="pagerDots" aria-label="页面切换"></div>
 
   <nav class="dock glass" id="dock" aria-label="常驻"></nav>
 </main>

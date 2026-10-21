@@ -273,18 +273,133 @@ button { font-family: inherit; }
 
 .home { z-index: 10; }
 
-.home-scroll {
+/* 横向分页：一页一屏，滑动吸附 */
+.home-pager {
   flex: 1;
-  overflow-y: auto;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  padding: calc(14px + var(--safe-t)) 18px 14px;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
+  touch-action: pan-x;
+}
+.home-pager::-webkit-scrollbar { display: none; }
+
+.home-page {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  padding: calc(14px + var(--safe-t)) 18px 2px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow: hidden;
 }
-.home-scroll::-webkit-scrollbar { display: none; }
+.home-page > * { flex-shrink: 0; }
+.home-pager.dragging { cursor: grabbing; user-select: none; }
+.home-pager.dragging * { user-select: none; }
+
+/* 页面指示点 */
+.pager-dots {
+  flex: 0 0 auto;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.pager-dots button {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(60, 55, 70, 0.18);
+  cursor: pointer;
+  transition: width 0.3s var(--ease-ios), background 0.3s var(--ease-ios);
+}
+.pager-dots button.on {
+  width: 16px;
+  border-radius: 3px;
+  background: rgba(60, 55, 70, 0.4);
+}
+
+/* 这一周（有没有说话） */
+.week-card { padding: 15px 18px 16px; }
+.home-page .mem-card { margin-top: auto; }
+.week-sub { font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em; }
+.week-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 12px;
+}
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.wd-name { font-size: 10px; color: var(--ink-3); letter-spacing: 0.05em; }
+.wd-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  background: rgba(70, 65, 80, 0.05);
+  font-variant-numeric: tabular-nums;
+}
+.week-day.on .wd-dot {
+  background: linear-gradient(145deg, #f7cdd8, #e9a0b4);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(224, 127, 151, 0.28);
+}
+.week-day.today .wd-dot { outline: 1.5px solid rgba(232, 140, 162, 0.55); outline-offset: 2px; }
+
+/* 她最近说的一句 */
+.quote-card {
+  position: relative;
+  margin-top: auto;      /* 贴到底部，把留白留在中间 */
+  padding: 15px 18px 13px;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease);
+}
+.quote-card:active { transform: scale(0.985); }
+.quote-card::before {
+  content: "\201C";
+  position: absolute;
+  top: 6px;
+  left: 11px;
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 30px;
+  line-height: 1;
+  color: rgba(232, 140, 162, 0.32);
+}
+.quote-text {
+  margin: 0 0 5px;
+  padding-left: 17px;
+  font-size: 13px;
+  line-height: 1.72;
+  color: var(--ink-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.quote-from {
+  margin: 0;
+  padding-left: 17px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+}
 
 .statusbar {
   display: flex;
@@ -387,8 +502,8 @@ button { font-family: inherit; }
 .app-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px 8px;
-  padding: 4px 6px;
+  gap: 20px 8px;
+  padding: 8px 6px 4px;
 }
 
 .tile {
@@ -1122,7 +1237,22 @@ button.row { cursor: pointer; }
 @media (min-width: 820px) {
   .lock-time { font-size: 76px; }
   .big-clock { font-size: 58px; }
-  .home-scroll, .page-scroll { padding-left: 22px; padding-right: 22px; }
+  .home-page, .page-scroll { padding-left: 22px; padding-right: 22px; }
+}
+
+@media (max-height: 780px) {
+  .home-page { gap: 11px; padding-top: calc(10px + var(--safe-t)); }
+  .clock-card { padding: 14px 20px 12px; }
+  .big-clock { font-size: 50px; }
+  .days-card { padding: 13px 18px; }
+  .days-num { font-size: 38px; }
+  .days-label { margin: 2px 0 4px; }
+  .app-grid { gap: 12px 6px; }
+  .tile-ic { width: 52px; height: 52px; border-radius: 17px; }
+  .quote-card { padding: 11px 16px 10px; }
+  .quote-text { -webkit-line-clamp: 1; }
+  .cal-card { padding: 12px 16px 10px; }
+  .cal-grid span { line-height: 26px; height: 26px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
