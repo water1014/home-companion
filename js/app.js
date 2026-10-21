@@ -679,11 +679,11 @@
       box.appendChild(el);
 
       if (id === 'clock' || id === 'pair' || id === 'days') {
-        el.addEventListener('click', () => { if (!editMode) openPage('mood'); });
+        el.addEventListener('click', () => { if (!editing) openPage('mood'); });
       } else if (id === 'diary') {
-        el.addEventListener('click', () => { if (!editMode) openPage('chat'); });
+        el.addEventListener('click', () => { if (!editing) openPage('chat'); });
       } else if (id === 'music') {
-        el.addEventListener('click', () => { if (!editMode) toast('一起听还没接上'); });
+        el.addEventListener('click', () => { if (!editing) toast('一起听还没接上'); });
       }
     });
 
