@@ -38,6 +38,11 @@
     { id: 'theme',    name: '美化',     icon: 'i-palette', desc: '换壁纸、换主题、换她说话的风格。同一个房间，不同的光。' },
     { id: 'wake',     name: '自主唤醒', icon: 'i-bell',    desc: '不只被叫才说话。定时或随机地，主动找你一次。\n纯前端只能在页面打开时生效；要做到真提醒得走通知 + 服务端。' },
     { id: 'wish',     name: '心愿',     icon: 'i-spark',   desc: '想一起做的事。做掉一件，划掉一件。' },
+
+    /* 第四页 · 我们的 */
+    { id: 'message',  name: '留言',     icon: 'i-mail',    desc: '她不在的时候，你可以留一句；她回来会先看到。反过来也一样。' },
+    { id: 'starsea',  name: '星海',     icon: 'i-starsea', desc: '一片只属于你们的夜空。看过的、想去的、说过的，都挂成星星。' },
+    { id: 'travel',   name: '旅行',     icon: 'i-plane',   desc: '想去哪、什么时候去、要带什么。攒够了就出发。' },
   ];
 
   const DOCK = [
@@ -309,7 +314,7 @@
     return b;
   }
 
-  const GRID_IDS = ['appGrid', 'appGrid2', 'appGrid3'];
+  const GRID_IDS = ['appGrid', 'appGrid2', 'appGrid3', 'appGrid4'];
 
   function renderApps() {
     const grids = GRID_IDS.map((id) => $(id)).filter(Boolean);
