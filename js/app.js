@@ -733,14 +733,16 @@
   }
 
   /* ---- 长按进入编辑，拖动换位 ---- */
-  let editMode = false;
+  let editing = false;
   let dragId = null;
   let pressTimer = 0;
+  let press = null;
 
   function setEdit(on) {
-    editMode = on;
+    editing = on;
     const box = $('bento');
     if (box) box.classList.toggle('editing', on);
+    document.body.classList.toggle('widget-editing', on);
     const btn = $('editDone');
     if (btn) btn.hidden = !on;
     const hint = $('editHint');
@@ -752,6 +754,13 @@
     }
   }
 
+  function startDrag(id) {
+    const el = document.querySelector('.w[data-id="' + id + '"]');
+    if (!el) return;
+    dragId = id;
+    el.classList.add('dragging');
+  }
+
   function swapTo(targetId) {
     if (!dragId || !targetId || targetId === dragId) return;
     const a = layout.indexOf(dragId);
@@ -761,63 +770,63 @@
     layout.splice(a, 1);
     layout.splice(b, 0, dragId);
     renderBento();
-
-    const again = document.querySelector('.w[data-id="' + dragId + '"]');
-    if (again) again.classList.add('dragging');
+    startDrag(dragId);
     save(KEY.layout, layout);
   }
 
-  const bento = $('bento');
+  /* 用 document 级事件：手指滑出格子也不会断 */
+  document.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('#editDone')) return;
+    const w = e.target.closest('.w');
+    if (!w) return;
+    const id = w.dataset.id;
 
-  if (bento) {
-    bento.addEventListener('pointerdown', (e) => {
-      const w = e.target.closest('.w');
-      if (!w) return;
-      const id = w.dataset.id;
+    if (editing) {
+      e.preventDefault();
+      startDrag(id);
+      return;
+    }
 
-      if (editMode) {
-        dragId = id;
-        w.classList.add('dragging');
-        e.preventDefault();
-        return;
-      }
-
-      // 长按 480ms 进入编辑
-      clearTimeout(pressTimer);
-      pressTimer = setTimeout(() => {
-        setEdit(true);
-        dragId = id;
-        const el = document.querySelector('.w[data-id="' + id + '"]');
-        if (el) el.classList.add('dragging');
-      }, 480);
-    });
-
-    bento.addEventListener('pointermove', (e) => {
-      if (!dragId) return;
-      const under = document.elementFromPoint(e.clientX, e.clientY);
-      const target = under && under.closest ? under.closest('.w') : null;
-      if (target) swapTo(target.dataset.id);
-    });
-
-    bento.addEventListener('click', (e) => {
-      if (editMode) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    }, true);
-  }
-
-  const editDoneBtn = $('editDone');
-  if (editDoneBtn) editDoneBtn.addEventListener('click', () => setEdit(false));
-
-  document.addEventListener('pointerup', () => {
+    press = { x: e.clientX, y: e.clientY, id };
     clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => {
+      if (!press) return;
+      setEdit(true);
+      startDrag(press.id);
+      if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} }
+      press = null;
+    }, 420);
+  }, { passive: false });
+
+  document.addEventListener('pointermove', (e) => {
+    // 还没进入编辑：手一动就取消长按（避免误触）
+    if (press && !editing) {
+      if (Math.abs(e.clientX - press.x) > 10 || Math.abs(e.clientY - press.y) > 10) {
+        clearTimeout(pressTimer);
+        press = null;
+      }
+    }
+
+    if (!dragId) return;
+    if (e.cancelable) e.preventDefault();
+
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const target = under && under.closest ? under.closest('.w') : null;
+    if (target) swapTo(target.dataset.id);
+  }, { passive: false });
+
+  function stopDrag() {
+    clearTimeout(pressTimer);
+    press = null;
     dragId = null;
     document.querySelectorAll('.w.dragging').forEach((w) => w.classList.remove('dragging'));
-  });
-  document.addEventListener('pointercancel', () => {
-    clearTimeout(pressTimer);
-    dragId = null;
+  }
+  document.addEventListener('pointerup', stopDrag);
+  document.addEventListener('pointercancel', stopDrag);
+
+  // 长按不要弹系统菜单
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('.w')) e.preventDefault();
   });
 
   function renderCards() {
@@ -1703,6 +1712,14 @@
         scrollDown(true);
         addBadge('chat');
       }
+    }
+
+    const editEntry = $('btnEditLayout');
+    if (editEntry) {
+      editEntry.addEventListener('click', () => {
+        closePage();
+        setTimeout(() => setEdit(true), 380);
+      });
     }
 
     const heroCard = $('heroCard');

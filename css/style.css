@@ -2400,3 +2400,79 @@ button.row { cursor: pointer; }
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* ============================================================
+   简约版（美化留到之后）
+   ============================================================ */
+
+/* 底：一整块干净的浅灰，不要四团光 */
+.bg {
+  background: #f3f4f7 !important;
+  background-image: none !important;
+}
+.bg-blob, .bg-grain, .bg::after { display: none !important; }
+
+/* 卡：白、细边、几乎无阴影 */
+.glass,
+.dock.glass {
+  background: #ffffff !important;
+  border: 1px solid rgba(17, 20, 28, 0.06) !important;
+  box-shadow: 0 1px 2px rgba(17, 20, 28, 0.03) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 图标：单色线稿 */
+.tile-ic {
+  background: #ffffff !important;
+  border: 1px solid rgba(17, 20, 28, 0.07) !important;
+  box-shadow: none !important;
+  border-radius: 16px;
+}
+.tile-ic svg,
+.tile:nth-child(odd) .tile-ic svg,
+.mini-tile svg {
+  stroke: #6f7480 !important;
+}
+
+/* 文字层级收一档 */
+.clock-time { color: #1f232b; }
+.days-num { color: #1f232b; }
+.hero-name, .mtitle, .diary-kicker { color: #2a2e36; }
+.hero-status, .clock-date, .diary-text, .mb-sub { color: #8b909a; }
+
+/* 锁屏：干净底色 */
+.lock {
+  background: #f3f4f7 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.lock-line { font-weight: 300; }
+
+/* 编辑态：禁止滚动与选中 */
+.w { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+body.widget-editing { overflow: hidden; }
+body.widget-editing .home-pager { overflow: hidden; touch-action: none; }
+body.widget-editing .w { touch-action: none; }
+body.widget-editing .dock { pointer-events: none; opacity: 0.6; }
+
+/* 编辑时组件只是轻微抬起，不晃动 */
+.bento.editing .w {
+  animation: none;
+  box-shadow: 0 0 0 1.5px rgba(120, 125, 140, 0.35);
+}
+.bento.editing .w.dragging {
+  box-shadow: 0 10px 24px rgba(30, 35, 45, 0.14), 0 0 0 1.5px rgba(120, 125, 140, 0.5);
+  transform: scale(1.03);
+}
+
+/* 头像与封面也回到极淡 */
+.pa.me { background: #edf1f7 !important; color: #64748b !important; }
+.pa.her { background: #f1eef7 !important; color: #6b6280 !important; }
+.hero-ava { background: #f1eef7 !important; color: #6b6280 !important; }
+.mcover {
+  background: #eceef3 !important;
+  border-color: rgba(17, 20, 28, 0.06) !important;
+  box-shadow: none !important;
+}
+.mplay { background: #fff; border-color: rgba(17,20,28,.08); }
