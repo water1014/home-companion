@@ -3051,3 +3051,117 @@ body[data-wallimg="1"] .bg {
   box-shadow: 0 6px 14px rgba(90, 90, 115, 0.12) !important;
   border: none !important;
 }
+
+/* ---- 内置照片壁纸（用户提供的图）：底部很暗，白纱要往上提 ---- */
+body[data-wall="photo"] { --wall-grad: linear-gradient(172deg, #eef2f6, #dfe4ea); }
+body[data-wall="photo"] .bg {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.1) 44%, rgba(255, 255, 255, 0.44) 100%),
+    url("../icons/wall.jpg") !important;
+  background-size: cover !important;
+  background-position: center 42% !important;
+  background-repeat: no-repeat !important;
+}
+/* 照片底上，玻璃要更实一点才压得住字 */
+body[data-wall="photo"] .glass,
+body[data-wall="photo"] .list-card {
+  background: rgba(255, 255, 255, 0.44) !important;
+  border-color: rgba(255, 255, 255, 0.66) !important;
+}
+body[data-wall="photo"] .dock.glass {
+  background: rgba(255, 255, 255, 0.5) !important;
+}
+/* 底部深色区里，状态栏文字反过来要提亮 */
+body[data-wall="photo"] .statusbar { color: rgba(44, 48, 58, 0.72); }
+.wall-dot i.w-photo {
+  background-image: url("../icons/wall.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+/* ============================================================
+   回到"简单线条勾勒"的图标 + 每页留白
+   ============================================================ */
+
+/* 图标只留线：不要色块、不要描边、不要阴影 */
+.tile-ic,
+.dock .tile-ic,
+.app-row .tile-ic,
+.quad .tile-ic {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+.tile-ic svg,
+.mini-tile svg {
+  stroke: rgba(52, 56, 66, 0.82) !important;
+  stroke-width: 1.35 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.85)) !important;
+}
+.tile-name {
+  color: rgba(48, 52, 62, 0.72) !important;
+  font-size: 10px !important;
+  letter-spacing: 0.02em;
+}
+/* 线稿在照片底上可能偏淡，图标稍微放大一点点 */
+.tile-ic svg { width: 24px; height: 24px; }
+.app-row .tile-ic svg { width: 22px; height: 22px; }
+.quad .tile-ic svg { width: 17px; height: 17px; }
+
+/* 每页别贴边：上下留白，网格不要铺满整个高度 */
+.home-page { padding-left: 20px !important; padding-right: 20px !important; }
+.app-grid-all { align-content: start !important; padding-bottom: 24px; }
+
+/* 第四页也别塞满：统计条先收起来（想看回来跟我说） */
+.stat-card { display: none !important; }
+
+/* 音乐卡收成一行高：小封面、少一行字 */
+.w-music { padding: 12px 18px !important; }
+.mcover { width: 54px !important; height: 54px !important; flex: 0 0 54px !important; border-radius: 14px !important; }
+.mnote { font-size: 18px; }
+.msub { display: none; }
+.mtimes { margin-top: 3px; }
+.mbar { margin-top: 6px !important; }
+.mplay { width: 34px !important; height: 34px !important; font-size: 10px; }
+
+/* 线稿图标 + 素白托底：字和图在照片上才站得住（去掉的是颜色，不是托底） */
+.tile-ic,
+.dock .tile-ic,
+.app-row .tile-ic,
+.quad .tile-ic {
+  background: rgba(255, 255, 255, 0.56) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
+  box-shadow:
+    0 3px 10px rgba(60, 62, 82, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  border-radius: 16px !important;
+}
+.tile-ic svg,
+.mini-tile svg {
+  stroke: rgba(42, 46, 56, 0.86) !important;
+  stroke-width: 1.5 !important;
+  filter: none !important;
+}
+.tile-name {
+  color: rgba(38, 42, 52, 0.84) !important;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+/* 照片上半部是亮天空、中间是树和草，纱再厚一点让字压得住 */
+body[data-wall="photo"] .bg {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.42) 40%, rgba(255, 255, 255, 0.62) 100%),
+    url("../icons/wall.jpg") !important;
+}
+
+/* 照片自带一行英文，正好落在图标名字后面，看着像重影 —— 底图轻微柔化 */
+body[data-wall="photo"] .bg {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.34) 42%, rgba(255, 255, 255, 0.54) 100%),
+    url("../icons/wall-soft.jpg") !important;
+}

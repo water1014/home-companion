@@ -437,7 +437,7 @@
     return b;
   }
 
-  const APP_PER_PAGE = 12;   // 第二页放几个，剩下的去第三页
+  const APP_PER_PAGE = 8;    // 第二页放几个，剩下的去第三页（宁少不多，留白）
 
   function renderApps() {
     const grid = $('appGrid');
@@ -725,7 +725,7 @@
     },
 
     music: {
-      col: 4, row: 2,
+      col: 4, row: 1,
       html: () =>
         '<div class="w-music"><div class="music-row">' +
           '<div class="mcover"><span class="mnote">♪</span></div>' +
@@ -1952,12 +1952,12 @@
   /* ================= 美化：壁纸 ================= */
 
   function wallCfg() {
-    return Object.assign({ preset: 'mist', img: '' }, S.settings.wall || {});
+    return Object.assign({ preset: 'photo', img: '' }, S.settings.wall || {});
   }
 
   function applyWall() {
     const w = wallCfg();
-    document.body.dataset.wall = w.preset || 'mist';
+    document.body.dataset.wall = w.preset || 'photo';
     if (w.img) {
       document.documentElement.style.setProperty('--wall-img', 'url("' + w.img + '")');
       document.body.dataset.wallimg = '1';
@@ -1967,7 +1967,7 @@
     }
     // 美化页里高亮当前选中的那颗
     document.querySelectorAll('#wallRow .wall-dot[data-wall]').forEach((b) => {
-      b.classList.toggle('on', b.dataset.wall === (w.preset || 'mist'));
+      b.classList.toggle('on', b.dataset.wall === (w.preset || 'photo'));
     });
     const clearRow = $('wallClearRow');
     if (clearRow) clearRow.hidden = !w.img;

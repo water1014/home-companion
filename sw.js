@@ -1,4 +1,4 @@
-const CACHE = 'xiaoman-v13';
+const CACHE = 'xiaoman-v14';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,8 @@ const ASSETS = [
   './js/app.js',
   './manifest.webmanifest',
   './icons/icon.svg',
+  './icons/wall.jpg',
+  './icons/wall-soft.jpg',
 ];
 
 self.addEventListener('install', (e) => {
