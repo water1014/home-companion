@@ -100,19 +100,57 @@
     return Math.max(0, Math.floor((Date.now() - start.getTime()) / 86400000)) + 1;
   }
 
-  /* ---------------- 路由 ---------------- */
+  /* ---------------- 路由 + 手势 ---------------- */
 
   const phone = $('phone');
+  const home = $('home');
+  const dim = document.querySelector('.home-dim');
   const pages = { chat: $('chat'), mood: $('mood'), settings: $('settings'), todo: $('todo') };
+
   let currentPage = null;
+  let movingTimer = 0;
+
+  function markMoving(ms) {
+    phone.classList.add('moving');
+    clearTimeout(movingTimer);
+    movingTimer = setTimeout(() => phone.classList.remove('moving'), ms || 520);
+  }
+
+  /** 清掉滑动过程中写下的 inline 值，让 CSS 重新接管 */
+  function resetHomeInline() {
+    home.style.transition = '';
+    home.style.transform = '';
+    home.style.opacity = '';
+    if (dim) dim.style.opacity = '';
+  }
 
   function openPage(id) {
     const el = pages[id];
-    if (!el) return;
-    Object.values(pages).forEach((p) => p.classList.remove('open'));
+    if (!el || currentPage === id) return;
+
+    resetHomeInline();
+
+    // 上一个页面瞬间归位（列表里只会有一个打开）
+    if (currentPage && pages[currentPage]) {
+      const prev = pages[currentPage];
+      prev.style.transition = 'none';
+      prev.classList.remove('open');
+      prev.style.transform = '';
+      void prev.offsetWidth;
+      prev.style.transition = '';
+    }
+
+    // 确保起始位置在屏幕右侧，再触发过渡
+    el.style.transition = 'none';
+    el.style.transform = '';
+    void el.offsetWidth;
+    el.style.transition = '';
+
     el.classList.add('open');
     phone.classList.add('zoom');
+    markMoving();
     currentPage = id;
+
     if (id === 'chat') {
       clearBadge('chat');
       scrollDown(true);
@@ -122,8 +160,14 @@
   }
 
   function closePage() {
-    Object.values(pages).forEach((p) => p.classList.remove('open'));
+    if (!currentPage) return;
+    const el = pages[currentPage];
+    el.style.transition = '';
+    el.style.transform = '';
+    el.classList.remove('open');
     phone.classList.remove('zoom');
+    resetHomeInline();
+    markMoving();
     currentPage = null;
   }
 
@@ -133,6 +177,79 @@
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closePage();
+  });
+
+  /* ---- 右滑返回（跟手） ---- */
+
+  const EDGE = 58; // 只有从左侧边缘开始才算返回手势
+
+  Object.keys(pages).forEach((id) => {
+    const el = pages[id];
+    let g = null;
+
+    el.addEventListener('pointerdown', (e) => {
+      if (currentPage !== id) return;
+      if (e.clientX > EDGE) return;
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+      g = { pid: e.pointerId, x0: e.clientX, y0: e.clientY, dx: 0, t0: performance.now(), live: false, w: el.clientWidth || 1 };
+    });
+
+    el.addEventListener('pointermove', (e) => {
+      if (!g || g.pid !== e.pointerId) return;
+      const dx = e.clientX - g.x0;
+      const dy = e.clientY - g.y0;
+
+      if (!g.live) {
+        if (dx < 8) return;
+        if (Math.abs(dx) <= Math.abs(dy)) { g = null; return; }
+        g.live = true;
+        markMoving(600);
+        el.style.transition = 'none';
+        home.style.transition = 'none';
+        if (dim) dim.style.transition = 'none';
+        try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+
+      const w = g.w;
+      const d = Math.max(0, Math.min(w, dx));
+      g.dx = d;
+      const inv = d / w;      // 0 → 1：从"页面全开"到"完全回到桌面"
+      const rest = 1 - inv;
+
+      el.style.transform = 'translate3d(' + d + 'px,0,0)';
+      home.style.transform = 'translate3d(' + (-15 * rest) + '%,0,0) scale(' + (0.92 + 0.08 * inv) + ')';
+      home.style.opacity = String(0.62 + 0.38 * inv);
+      if (dim) dim.style.opacity = String(0.1 * rest);
+    });
+
+    const end = (e) => {
+      if (!g || (e && e.pointerId !== g.pid)) return;
+      const moved = g.live;
+      const dx = g.dx;
+      const w = g.w || el.clientWidth || 1;
+      const dt = Math.max(1, performance.now() - g.t0);
+      const v = dx / dt; // px per ms
+      g = null;
+      if (!moved) return;
+
+      const done = dx > w * 0.28 || v > 0.5;
+
+      el.style.transition = '';
+      el.style.transform = '';
+      home.style.transition = '';
+      resetHomeInline();
+
+      if (done) {
+        el.classList.remove('open');
+        phone.classList.remove('zoom');
+        currentPage = null;
+      }
+      markMoving();
+    };
+
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
   });
 
   /* 未读角标 */
@@ -747,20 +864,50 @@
   /* ---------------- 锁屏 ---------------- */
 
   const lock = $('lock');
+  let lockDone = false;
 
   function unlock() {
-    if (lock.classList.contains('hidden')) return;
+    if (lockDone) return;
+    lockDone = true;
+    lock.style.transition = '';
+    lock.style.transform = '';
+    lock.style.opacity = '';
+    markMoving(560);
     lock.classList.add('hidden');
     try { sessionStorage.setItem('hc.unlocked', '1'); } catch (_) {}
-    setTimeout(() => { lock.style.display = 'none'; }, 600);
+    setTimeout(() => { lock.style.display = 'none'; }, 520);
   }
 
-  let dragY = null;
-  lock.addEventListener('pointerdown', (e) => { dragY = e.clientY; });
-  lock.addEventListener('pointermove', (e) => {
-    if (dragY !== null && e.clientY - dragY < -55) { dragY = null; unlock(); }
+  /* 上划跟手：手指走到哪，锁屏退到哪 */
+  let lockG = null;
+  lock.addEventListener('pointerdown', (e) => {
+    if (lockDone) return;
+    lockG = { y0: e.clientY, dy: 0, t0: performance.now() };
+    lock.style.transition = 'none';
+    try { lock.setPointerCapture(e.pointerId); } catch (_) {}
   });
-  lock.addEventListener('pointerup', () => { dragY = null; });
+
+  lock.addEventListener('pointermove', (e) => {
+    if (!lockG) return;
+    const dy = Math.min(0, e.clientY - lockG.y0);
+    lockG.dy = dy;
+    lock.style.transform = 'translate3d(0,' + dy + 'px,0)';
+    lock.style.opacity = String(Math.max(0.1, 1 + dy / 420));
+  });
+
+  const lockEnd = () => {
+    if (!lockG) return;
+    const dy = lockG.dy;
+    const v = dy / Math.max(1, performance.now() - lockG.t0);
+    lockG = null;
+    lock.style.transition = '';
+    lock.style.transform = '';
+    lock.style.opacity = '';
+    if (dy < -64 || v < -0.35) unlock();
+  };
+  lock.addEventListener('pointerup', lockEnd);
+  lock.addEventListener('pointercancel', lockEnd);
+
   lock.addEventListener('click', unlock);
   document.addEventListener('keydown', unlock, { once: true });
 

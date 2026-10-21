@@ -25,6 +25,8 @@
   --r-lg: 24px;
   --r-md: 18px;
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur: 440ms;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
 }
@@ -56,12 +58,24 @@ button { font-family: inherit; }
 .bg-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.75;
+  will-change: transform;
 }
-.b1 { width: 60vmax; height: 60vmax; left: -18vmax; top: -20vmax; background: #f6dee4; animation: drift1 26s ease-in-out infinite alternate; }
-.b2 { width: 52vmax; height: 52vmax; right: -16vmax; top: 16vh; background: #dde7f3; animation: drift2 32s ease-in-out infinite alternate; }
-.b3 { width: 44vmax; height: 44vmax; left: 8vw; bottom: -18vmax; background: #f3e9dc; animation: drift1 38s ease-in-out infinite alternate-reverse; }
+/* 用径向渐变代替 filter: blur —— 少一层全屏滤镜，滚动时不掉帧 */
+.b1 {
+  width: 78vmax; height: 78vmax; left: -30vmax; top: -32vmax;
+  background: radial-gradient(circle, rgba(246,222,228,0.95) 0%, rgba(246,222,228,0.55) 38%, rgba(246,222,228,0) 68%);
+  animation: drift1 30s ease-in-out infinite alternate;
+}
+.b2 {
+  width: 70vmax; height: 70vmax; right: -26vmax; top: 8vh;
+  background: radial-gradient(circle, rgba(221,231,243,0.92) 0%, rgba(221,231,243,0.5) 40%, rgba(221,231,243,0) 70%);
+  animation: drift2 36s ease-in-out infinite alternate;
+}
+.b3 {
+  width: 62vmax; height: 62vmax; left: 2vw; bottom: -26vmax;
+  background: radial-gradient(circle, rgba(243,233,220,0.85) 0%, rgba(243,233,220,0.4) 42%, rgba(243,233,220,0) 72%);
+  animation: drift1 42s ease-in-out infinite alternate-reverse;
+}
 
 @keyframes drift1 { from { transform: translate(0, 0) scale(1); } to { transform: translate(6vmax, 4vmax) scale(1.08); } }
 @keyframes drift2 { from { transform: translate(0, 0) scale(1.05); } to { transform: translate(-5vmax, 6vmax) scale(1); } }
@@ -105,28 +119,37 @@ button { font-family: inherit; }
   overflow: hidden;
 }
 
+/* 卡片：不再给每张卡加 backdrop-filter（滚动时要逐帧重算，最伤流畅度）。
+   背景本身就是柔和渐变，半透明白 + 细白边 + 柔阴影，观感一样是磨砂。 */
 .glass {
-  background: var(--glass);
-  backdrop-filter: blur(22px) saturate(1.25);
-  -webkit-backdrop-filter: blur(22px) saturate(1.25);
-  border: 1px solid var(--glass-line);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.82);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow);
+}
+
+/* 只有固定的 dock 用真模糊，成本可控 */
+.dock.glass {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
 }
 
 /* ---------- 锁屏 ---------- */
 
 .lock {
   z-index: 30;
-  background: linear-gradient(180deg, rgba(246, 240, 243, 0.55), rgba(233, 238, 245, 0.75));
-  backdrop-filter: blur(26px);
-  -webkit-backdrop-filter: blur(26px);
-  transition: opacity 0.55s var(--ease), transform 0.55s var(--ease);
+  background: linear-gradient(180deg, rgba(248, 243, 246, 0.86), rgba(236, 240, 246, 0.94));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: opacity 0.5s var(--ease-ios), transform 0.5s var(--ease-ios);
+  will-change: transform, opacity;
+  touch-action: none;
 }
 
 .lock.hidden {
   opacity: 0;
-  transform: translateY(-26%) scale(1.04);
+  transform: translate3d(0, -100%, 0);
   pointer-events: none;
 }
 
@@ -253,6 +276,8 @@ button { font-family: inherit; }
 .home-scroll {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   padding: calc(14px + var(--safe-t)) 18px 14px;
   scrollbar-width: none;
   display: flex;
@@ -516,19 +541,68 @@ button { font-family: inherit; }
 
 .page {
   z-index: 20;
-  background: linear-gradient(180deg, rgba(244, 242, 246, 0.82), rgba(238, 240, 244, 0.94));
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  transform: translateY(103%);
-  transition: transform 0.46s var(--ease), visibility 0.46s;
+  background: linear-gradient(180deg, #f5f3f7 0%, #eef0f4 100%);
+  transform: translate3d(100%, 0, 0);
+  transition: transform var(--dur) var(--ease-ios), visibility 0s var(--dur);
   visibility: hidden;
+  will-change: transform;
+  touch-action: pan-y;
+  contain: paint;
+  box-shadow: -18px 0 40px rgba(42, 34, 54, 0.16);
 }
 
-.page.open { transform: none; visibility: visible; }
+.page.open {
+  transform: translate3d(0, 0, 0);
+  visibility: visible;
+  transition: transform var(--dur) var(--ease-ios), visibility 0s;
+}
 
-#home, .lock { transition: transform 0.46s var(--ease), opacity 0.46s var(--ease); }
-.phone.zoom #home,
-.phone.zoom .lock { transform: scale(0.94); opacity: 0.4; }
+/* 主屏在后面的视差：左移 + 缩小 + 变暗（跟随滑动时由 JS 写 inline 值） */
+#home {
+  transform-origin: 50% 46%;
+  transition: transform var(--dur) var(--ease-ios), opacity var(--dur) var(--ease-ios);
+  will-change: transform;
+}
+
+.phone.zoom #home {
+  transform: translate3d(-15%, 0, 0) scale(0.92);
+  opacity: 0.62;
+}
+
+.home-dim {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: #151922;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease-ios);
+}
+.phone.zoom .home-dim { opacity: 0.1; }
+
+/* 卡片依次浮起 —— 只有子页面用，成本极低但手感差别很大 */
+.page .page-scroll > * { opacity: 0; }
+.page.open .page-scroll > * {
+  animation: cardIn 0.52s var(--ease-ios) both;
+}
+.page.open .page-scroll > *:nth-child(1) { animation-delay: 0.10s; }
+.page.open .page-scroll > *:nth-child(2) { animation-delay: 0.14s; }
+.page.open .page-scroll > *:nth-child(3) { animation-delay: 0.18s; }
+.page.open .page-scroll > *:nth-child(4) { animation-delay: 0.22s; }
+.page.open .page-scroll > *:nth-child(5) { animation-delay: 0.26s; }
+.page.open .page-scroll > *:nth-child(n + 6) { animation-delay: 0.28s; }
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 转场进行中：临时关掉模糊，避免每帧重算 */
+.phone.moving .dock.glass,
+.phone.moving .lock {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 
 .page-head {
   flex: 0 0 auto;
@@ -536,6 +610,9 @@ button { font-family: inherit; }
   align-items: center;
   gap: 10px;
   padding: calc(12px + var(--safe-t)) 16px 10px;
+  position: relative;
+  z-index: 3;
+  background: linear-gradient(to bottom, #f5f3f7 62%, rgba(245, 243, 247, 0));
 }
 
 .back {
@@ -567,6 +644,8 @@ button { font-family: inherit; }
 .page-scroll {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   padding: 4px 18px calc(24px + var(--safe-b));
   display: flex;
   flex-direction: column;
@@ -583,8 +662,8 @@ button { font-family: inherit; }
   padding: 10px 20px 6px;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 .day-mark {
