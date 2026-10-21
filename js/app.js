@@ -100,6 +100,7 @@
     layout: 'hc.v1.layout',
     apps: 'hc.v1.apps',
     dock: 'hc.v1.dock',
+    pages: 'hc.v1.appPages', // 三页各自的应用名单（自由摆放）
     life: 'hc.v1.life',      // 心事/念头/课程/倒数日/卡券/设备/用量/他的一天
     timers: 'hc.v1.timers',  // 内部闹钟（续话那种）
     meta: 'hc.v1.meta',      // schema 版本
@@ -437,22 +438,63 @@
     return b;
   }
 
-  /* 第二页放几个应用，剩下的去第三页。
-     第二页上面还有组件（音乐条 / 他最近一句），放 8 个会顶出屏幕被裁掉，
-     看起来就像"只显示一排"。4 个 + 组件刚好一屏，第三页纯图标放得下。 */
-  const APP_PER_PAGE = 4;
+  /* 应用不再按固定数量切页：三页各有各的名单（hc.v1.appPages），
+     拖到哪页就归哪页，每页放几个由你摆（各有放得下的上限）。
+     APPS 仍是全量目录（顺序 = 三页名单拼起来），给四格/其他地方按 id 找应用用。 */
+  const PAGE_CAP = [0, 8, 24];   // 首页的上限跟着「组件行数」走，见 page1Cap()
 
+  function page1Cap() {
+    const cfg = homeCfg();
+    return cfg.mix ? Math.max(0, Math.min(3, cfg.rows | 0)) * 4 : 0;
+  }
+  function pageCap(i) { return i === 0 ? page1Cap() : PAGE_CAP[i]; }
+
+  function loadPages() {
+    const ids = APPS.map((a) => a.id);
+    const saved = load(KEY.pages, null);
+    let out = null;
+    if (Array.isArray(saved) && saved.length === 3) {
+      const seen = {};
+      out = saved.map((l) => (Array.isArray(l) ? l : []).filter((id) => {
+        if (seen[id] || ids.indexOf(id) < 0) return false;
+        seen[id] = true;
+        return true;
+      }).map(findApp));
+      // 新版本加进来的应用，名单里没有 → 补到第三页末尾
+      ids.forEach((id) => { if (!seen[id]) out[2].push(findApp(id)); });
+    }
+    if (!out) {
+      // 老数据迁移：按以前的切法（首页 rows*4 个、第二页 4 个、剩下的第三页）
+      const start = appSliceStart();
+      out = [APPS.slice(0, start), APPS.slice(start, start + 4), APPS.slice(start + 4)];
+    }
+    return out;
+  }
+
+  function pagesSave() {
+    save(KEY.pages, appPages.map((l) => l.map((a) => a.id)));
+    APPS = appPages[0].concat(appPages[1], appPages[2]);
+    save(KEY.apps, APPS.map((a) => a.id));
+  }
+
+  /* 组件行数/首页开关变了 → 各页名单重新平衡（超出的依次往后挪） */
+  function clampPages() {
+    while (appPages[0].length > page1Cap()) appPages[1].unshift(appPages[0].pop());
+    while (appPages[1].length > PAGE_CAP[1]) appPages[2].unshift(appPages[1].pop());
+    while (appPages[2].length > PAGE_CAP[2]) appPages[1].push(appPages[2].pop());
+    pagesSave();
+  }
+
+  // appPages 在 appSliceStart 定义之后初始化（依赖 HOME_DEFAULT/homeCfg），见那儿
   function renderApps() {
     const grid = $('appGrid');
     const grid2 = $('appGrid2');
     const dock = $('dock');
-    const start = appSliceStart();
-    const rest = APPS.slice(start);
-    if (grid) { grid.innerHTML = ''; rest.slice(0, APP_PER_PAGE).forEach((a) => grid.appendChild(makeTile(a))); }
-    if (grid2) { grid2.innerHTML = ''; rest.slice(APP_PER_PAGE).forEach((a) => grid2.appendChild(makeTile(a))); }
+    if (grid) { grid.innerHTML = ''; appPages[1].forEach((a) => grid.appendChild(makeTile(a))); }
+    if (grid2) { grid2.innerHTML = ''; appPages[2].forEach((a) => grid2.appendChild(makeTile(a))); }
     // 第三页没东西就别留一屏空白
     const page3 = grid2 ? grid2.closest('.home-page') : null;
-    if (page3) page3.hidden = !grid2 || grid2.children.length === 0;
+    if (page3) page3.hidden = grid2.children.length === 0;
     if (dock) { dock.innerHTML = ''; DOCK.forEach((a) => dock.appendChild(makeTile(a))); }
   }
 
@@ -789,6 +831,7 @@
   function patchHome(patch) {
     S.settings.home = Object.assign(homeCfg(), patch);
     save(KEY.settings, S.settings);
+    clampPages();   // 首页行数/开关变了 → 各页名单重新平衡
   }
 
   /* 组件归属：p1 里的放首页，其余放第二页（美化页可调）；
@@ -853,6 +896,7 @@
     const ids = widgetIds(1);
     const rowCount = cfg.mix ? Math.max(0, Math.min(3, cfg.rows | 0)) : 0;
     const every = Math.max(1, cfg.every | 0);
+    const p1 = appPages[0];
     box.innerHTML = '';
 
     let placed = 0;
@@ -860,11 +904,16 @@
       box.appendChild(makeWidgetEl(id));
       // 组件之间插一行应用，让眼睛有地方歇一下
       if (placed < rowCount && (i + 1) % every === 0) {
-        box.appendChild(makeAppRow(placed));
+        const apps = p1.slice(placed * 4, placed * 4 + 4);
+        if (apps.length) box.appendChild(makeAppRow(apps));
         placed += 1;
       }
     });
-    while (placed < rowCount) { box.appendChild(makeAppRow(placed)); placed += 1; }
+    while (placed < rowCount) {
+      const apps = p1.slice(placed * 4, placed * 4 + 4);
+      if (apps.length) box.appendChild(makeAppRow(apps));
+      placed += 1;
+    }
 
     renderQuad();
     bindMusic();
@@ -882,13 +931,11 @@
     updateWidgets();
   }
 
-  /** 首页里的一行应用（4 个，跟着 APPS 顺序走） */
-  function makeAppRow(k) {
+  /** 首页里的一行应用：直接吃首页名单里的一chunk（4 个） */
+  function makeAppRow(apps) {
     const row = document.createElement('div');
     row.className = 'app-row';
-    row.dataset.row = String(k);
-    const slice = APPS.slice(k * 4, k * 4 + 4);
-    slice.forEach((a) => row.appendChild(makeTile(a)));
+    apps.forEach((a) => row.appendChild(makeTile(a)));
     return row;
   }
 
@@ -897,6 +944,11 @@
     const cfg = homeCfg();
     return cfg.mix ? Math.max(0, Math.min(3, cfg.rows | 0)) * 4 : 0;
   }
+
+  /* 到这里 HOME_DEFAULT / S 都就绪了，才初始化三页名单（依赖 homeCfg）；
+     顺手把名单落盘，迁移结果马上可见 */
+  let appPages = loadPages();
+  pagesSave();
 
   function renderQuad() {
     const q = $('quad');
@@ -1059,8 +1111,8 @@
   }
 
   /* ---- 拖到屏幕边缘：自动翻到相邻页（真机桌面就是这个手感）---- */
-  const EDGE_W = 34;       // 边缘多宽算"想翻页"
-  const EDGE_MS = 520;     // 在边缘按住多久才翻
+  const EDGE_W = 46;       // 边缘多宽算"想翻页"
+  const EDGE_MS = 400;     // 在边缘按住多久才翻
   let edgeTimer = 0;
   let edgeDir = 0;
   function stopEdge() {
@@ -1208,36 +1260,65 @@
       return true;
     }
 
-    /* ---- 应用图标：dock 内换位，或跨页移动到目标位置 ---- */
+    /* ---- 应用图标：dock 内换位，或移动到某一页的某个位置 ----
+       三页各有名单（appPages），拖到哪页就归哪页，页上顺序 = 名单顺序。
+       页放满了就放不进去（回原位 + 提示），不再固定每页几个。 */
     const idA = src.dataset.app;
-    const inDock = !!src.closest('#dock');
-    const arr = inDock ? DOCK : APPS;
-    const a = arr.findIndex((x) => x.id === idA);
-    if (a < 0) return false;
-
-    let b;   //  dragged 要去的全局下标
-    if (dst) {
-      b = arr.findIndex((x) => x.id === dst.dataset.app);
+    if (!!src.closest('#dock')) {
+      const a = DOCK.findIndex((x) => x.id === idA);
+      if (a < 0 || !dst) return false;
+      const b = DOCK.findIndex((x) => x.id === dst.dataset.app);
       if (b < 0) return false;
-    } else if (g.dropZone) {
-      // 落在某页空白：插到那一页最后一个后面（页尾）
-      const last = g.dropZone.lastElementChild;
-      const lastId = last ? (last.dataset.app || last.dataset.id) : '';
-      const li = lastId ? arr.findIndex((x) => x.id === lastId) : -1;
-      if (li < 0) return false;
-      b = li + 1;
-    } else {
-      return false;   // 哪儿都没落上 → 回原位
+      const item = DOCK.splice(a, 1)[0];
+      DOCK.splice(b > a ? b - 1 : b, 0, item);
+      save(KEY.dock, DOCK.map((x) => x.id));
+      flipAll('#dock .tile', 'app', renderApps, fromRect ? { id: idA, r: fromRect } : null);
+      return true;
     }
 
-    const item = arr.splice(a, 1)[0];
-    if (b > a) b -= 1;               // 移除后目标下标左移一位，保证"移到目标处"而不是越过
-    arr.splice(b, 0, item);
-    save(KEY.apps, APPS.map((x) => x.id));
-    save(KEY.dock, DOCK.map((x) => x.id));
-    const sel = inDock ? '#dock .tile' : '.app-row .tile, #appGrid .tile, #appGrid2 .tile';
-    flipAll(sel, 'app', () => {
-      if (inDock) renderApps(); else { renderBento(); renderApps(); }
+    // 目标页：落点图标所在的页；或空白落点对应的页
+    let dstPage = -1;
+    if (dst) {
+      dstPage = dst.closest('#appGrid2') ? 2 : dst.closest('#appGrid') ? 1 : dst.closest('.app-row') ? 0 : -1;
+    } else if (g.dropZone) {
+      dstPage = g.dropZone.id === 'appGrid2' ? 2 : g.dropZone.id === 'appGrid' ? 1 : 0;
+    }
+    if (dstPage < 0) return false;
+
+    let fromPage = -1;
+    for (let i = 0; i < 3; i++) {
+      if (appPages[i].some((x) => x.id === idA)) { fromPage = i; break; }
+    }
+    if (fromPage < 0) return false;
+
+    const srcList = appPages[fromPage];
+    const ai = srcList.findIndex((x) => x.id === idA);
+    const list = appPages[dstPage];
+    const moved = srcList.splice(ai, 1)[0];   // 先从原页拿出来
+
+    let b;
+    if (dst) {
+      b = list.findIndex((x) => x.id === dst.dataset.app);
+      if (b < 0) { srcList.splice(ai, 0, moved); return false; }
+    } else {
+      // 落在页面空白：归到这页名单的末尾（插在最后一个图标后面）
+      const last = g.dropZone ? g.dropZone.lastElementChild : null;
+      const lastId = last ? last.dataset.app : '';
+      const li = lastId ? list.findIndex((x) => x.id === lastId) : -1;
+      b = li >= 0 ? li + 1 : list.length;
+    }
+
+    if (dstPage !== fromPage && list.length >= pageCap(dstPage)) {
+      srcList.splice(ai, 0, moved);           // 这页放不下了 → 回原位
+      toast('这页放不下了');
+      return false;
+    }
+    if (b > list.length) b = list.length;
+    list.splice(b, 0, moved);
+
+    pagesSave();
+    flipAll('.app-row .tile, #appGrid .tile, #appGrid2 .tile', 'app', () => {
+      renderBento(); renderApps();
     }, fromRect ? { id: idA, r: fromRect } : null);
     return true;
   }
@@ -2167,10 +2248,12 @@
     if (reset) {
       reset.addEventListener('click', () => {
         if (!confirm('组件和应用都回到默认位置？')) return;
-        [KEY.layout, KEY.apps, KEY.dock].forEach((k) => { try { localStorage.removeItem(k); } catch (_) {} });
+        [KEY.layout, KEY.apps, KEY.dock, KEY.pages].forEach((k) => { try { localStorage.removeItem(k); } catch (_) {} });
         layout = LAYOUT_DEFAULT.slice();
         APPS = loadOrder(KEY.apps, APPS_DEFAULT);
         DOCK = loadOrder(KEY.dock, DOCK_DEFAULT);
+        appPages = loadPages();
+        pagesSave();
         patchWidgets([]);
         patchHome(Object.assign({}, HOME_DEFAULT));
         applyGap(HOME_DEFAULT.gap);
@@ -3161,12 +3244,14 @@
     if (resetLayout) {
       resetLayout.addEventListener('click', () => {
         if (!confirm('把组件和应用都放回默认位置？')) return;
-        [KEY.layout, KEY.apps, KEY.dock].forEach((k) => {
+        [KEY.layout, KEY.apps, KEY.dock, KEY.pages].forEach((k) => {
           try { localStorage.removeItem(k); } catch (_) {}
         });
         layout = LAYOUT_DEFAULT.slice();
         APPS = loadOrder(KEY.apps, APPS_DEFAULT);
         DOCK = loadOrder(KEY.dock, DOCK_DEFAULT);
+        appPages = loadPages();
+        pagesSave();
         setEdit(false);
         renderBento();
         renderApps();
