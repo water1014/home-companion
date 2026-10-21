@@ -41,6 +41,13 @@
   <symbol id="i-starsea" viewBox="0 0 24 24"><path d="M12 3.2l1.6 4.2 4.2 1.6-4.2 1.6L12 14.8l-1.6-4.2L6.2 9l4.2-1.6Z"/><path d="M18.6 14.2l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9Z"/><path d="M5.4 15.4l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6Z"/></symbol>
   <symbol id="i-plane" viewBox="0 0 24 24"><path d="M10.4 13.6L4.6 11.4a.8.8 0 0 1-.1-1.4l1.6-1 3.4 1L13 6.4a2.6 2.6 0 0 1 3.6 0l.8.8-2.4 3.9 3.3 3.3 2.2.5a.8.8 0 0 1 .4 1.4l-1.6 1.6-2.4-.6-3.4-3.4-2 2 .3 2.4-1.3 1.3-1.6-3.2Z"/></symbol>
   <symbol id="i-magic" viewBox="0 0 24 24"><path d="M4.8 19.2l9.2-9.2"/><path d="M15.4 4.4l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9Z"/><path d="M18.4 12.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6Z"/></symbol>
+  <symbol id="i-course" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15.5" rx="2.4"/><path d="M3.5 9h17M8 4.5V9M13 4.5V9"/><path d="M7.4 13h4M7.4 16.2h6.6"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3.8 7.6a1.6 1.6 0 0 0 0 3.2v2.4a1.6 1.6 0 0 0 0 3.2V19a1.4 1.4 0 0 0 1.4 1.4h13.6A1.4 1.4 0 0 0 20.2 19v-2.6a1.6 1.6 0 0 0 0-3.2V10.8a1.6 1.6 0 0 0 0-3.2V5a1.4 1.4 0 0 0-1.4-1.4H5.2A1.4 1.4 0 0 0 3.8 5Z"/><path d="M12 6.8v10.4"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3.6h10M7 20.4h10"/><path d="M8.4 3.6v3.2c0 2.4 7.2 2.4 7.2 5.2 0 2.8-7.2 2.8-7.2 5.2v3.2"/></symbol>
+  <symbol id="i-sunrise" viewBox="0 0 24 24"><path d="M3.6 18.4h16.8"/><path d="M7 18.4a5 5 0 0 1 10 0"/><path d="M12 4.4v3.2M5.6 7.6l2.2 2.2M18.4 7.6l-2.2 2.2M3.6 14.4h2M18.4 14.4h2"/></symbol>
+  <symbol id="i-device" viewBox="0 0 24 24"><rect x="6.4" y="2.8" width="11.2" height="18.4" rx="2.6"/><path d="M10.6 5.4h2.8"/><path d="M9.6 18.6h4.8"/></symbol>
+  <symbol id="i-game" viewBox="0 0 24 24"><path d="M7.6 7.4h8.8a4.2 4.2 0 0 1 4.1 3.3l.6 3.6a3.4 3.4 0 0 1-6.2 2.2l-.9-1.4H10l-.9 1.4a3.4 3.4 0 0 1-6.2-2.2l.6-3.6a4.2 4.2 0 0 1 4.1-3.3Z"/><path d="M7.2 11.2v2M6.2 12.2h2M15.4 11.6h.01M17.4 13.2h.01"/></symbol>
+  <symbol id="i-meter" viewBox="0 0 24 24"><path d="M3.6 17.4a8.4 8.4 0 1 1 16.8 0"/><path d="M12 17.4l4-4.4"/><circle cx="12" cy="17.4" r="1.1"/><path d="M3.6 20.4h16.8"/></symbol>
 </svg>
 
 <div class="bg" aria-hidden="true">
@@ -111,6 +118,22 @@
           <p class="anniv-name" id="annivName">第 1 个纪念日</p>
         </div>
         <div class="anniv-num"><b id="annivDays">0</b><span>天</span></div>
+      </section>
+
+      <section class="glass anniv-card" id="cdCard" hidden>
+        <div>
+          <p class="anniv-label">在数的日子</p>
+          <p class="anniv-name" id="cdCardName">—</p>
+        </div>
+        <div class="anniv-num"><b id="cdCardDays">0</b><span id="cdCardSub">天后</span></div>
+      </section>
+
+      <section class="glass dev-card" id="devCard" hidden>
+        <div>
+          <p class="anniv-label">他看到的你</p>
+          <p class="dev-line" id="devCardSub">—</p>
+        </div>
+        <div class="anniv-num"><b id="devCardVal">—</b><span>电量</span></div>
       </section>
 
       <section class="glass week-card">
@@ -332,6 +355,112 @@
         以后接跨窗口 / 跨平台的记忆同步时，这里是入口 ——
         每条记忆都带来源和时间，才能被别的会话认出来。
       </p>
+    </section>
+  </div>
+</section>
+
+<!-- ============ 课程表 ============ -->
+<section class="screen page" id="courses" aria-label="课程表">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">课程表</p>
+    <button class="head-act" id="btnAddCourse" type="button">加一节</button>
+  </header>
+  <div class="page-scroll">
+    <p class="hint">填好之后他会知道你今天有没有课、什么时候下课。</p>
+    <section class="glass list-card" id="courseList"></section>
+    <section class="glass" id="courseForm" hidden>
+      <div class="form-row"><label>星期</label>
+        <select id="cDay"><option value="1">周一</option><option value="2">周二</option><option value="3">周三</option><option value="4">周四</option><option value="5">周五</option><option value="6">周六</option><option value="0">周日</option></select>
+      </div>
+      <div class="form-row"><label>时间</label>
+        <span class="form-pair"><input type="time" id="cStart" value="08:00" /><em>—</em><input type="time" id="cEnd" value="09:40" /></span>
+      </div>
+      <div class="form-row"><label>课名</label><input type="text" id="cName" placeholder="数据结构" maxlength="20" /></div>
+      <div class="form-row"><label>地点</label><input type="text" id="cRoom" placeholder="三教 301" maxlength="16" /></div>
+      <div class="form-btns">
+        <button class="btn ghost" type="button" id="cCancel">取消</button>
+        <button class="btn" type="button" id="cSave">存下</button>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ============ 倒数日 ============ -->
+<section class="screen page" id="countdown" aria-label="倒数日">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">倒数日</p>
+    <button class="head-act" id="btnAddCd" type="button">加一个</button>
+  </header>
+  <div class="page-scroll">
+    <p class="hint">会在日历上点一个点。</p>
+    <section class="glass list-card" id="cdList"></section>
+    <section class="glass" id="cdForm" hidden>
+      <div class="form-row"><label>名字</label><input type="text" id="cdTitle" placeholder="见面那天" maxlength="18" /></div>
+      <div class="form-row"><label>日期</label><input type="date" id="cdDate" /></div>
+      <div class="form-row"><label>备注</label><input type="text" id="cdNote" placeholder="想一起去吃那家店" maxlength="40" /></div>
+      <div class="form-row"><label>每年</label><input type="checkbox" id="cdRepeat" /></div>
+      <div class="form-btns">
+        <button class="btn ghost" type="button" id="cdCancel">取消</button>
+        <button class="btn" type="button" id="cdSave">存下</button>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ============ 卡券 ============ -->
+<section class="screen page" id="cards" aria-label="卡券">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">卡券</p>
+    <button class="head-act" id="btnAddCard" type="button">加一张</button>
+  </header>
+  <div class="page-scroll">
+    <p class="hint">想让他哄你，用一张；想让他催你睡，用一张。用掉一张，记一笔。<br>他也能用——他用了会记在下面。</p>
+    <section class="glass list-card" id="cardList"></section>
+    <section class="glass" id="cardForm" hidden>
+      <div class="form-row"><label>名字</label><input type="text" id="cdName2" placeholder="哄我" maxlength="12" /></div>
+      <div class="form-row"><label>说明</label><input type="text" id="cdDesc2" placeholder="说点好听的，别敷衍" maxlength="30" /></div>
+      <div class="form-btns">
+        <button class="btn ghost" type="button" id="cardCancel">取消</button>
+        <button class="btn" type="button" id="cardSave">存下</button>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ============ 他的一天 ============ -->
+<section class="screen page" id="herday" aria-label="他的一天">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">他的一天</p>
+    <span class="head-spacer"></span>
+  </header>
+  <div class="page-scroll">
+    <section class="glass day-note">
+      <p class="hint">
+        页面开着的时候，下面是他真的做过的事。<br>
+        页面关掉后他没有后台 —— 那段时间是照着他状态的变化推出来的，标了「推」。<br>
+        想要真的后台唤醒，得有服务器和推送，以后再说。
+      </p>
+    </section>
+    <section class="glass list-card" id="dayList"></section>
+  </div>
+</section>
+
+<!-- ============ 查手机 ============ -->
+<section class="screen page" id="device" aria-label="查手机">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">查手机</p>
+    <span class="head-spacer"></span>
+  </header>
+  <div class="page-scroll">
+    <p class="hint">他能看到的就是这些：浏览器愿意告诉网页的那点信息。没有位置、没有你的任何隐私。</p>
+    <section class="glass list-card" id="deviceList"></section>
+    <section class="glass">
+      <p class="hint" id="deviceLine">—</p>
     </section>
   </div>
 </section>

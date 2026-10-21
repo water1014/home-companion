@@ -171,6 +171,8 @@
     { id: 'question', re: /[?？]|(什么|为什么|怎么|哪|是不是|能不能|可以吗|你觉得)/ },
     { id: 'bored', re: /(无聊|没事干|好闲|不知道干嘛)/ },
     { id: 'thanks', re: /(谢谢|感谢|辛苦了|thx)/ },
+    /* 冷战 / 吵架信号：识别出来说话方式要收着，并且会起"续话"闹钟 */
+    { id: 'cold', re: /(吵架|生气|算了|随便你|别管我|不想说|不想聊|你别|无语|冷战|不理你|没意思|你根本|行了|哦)/ },
   ];
 
   function detect(text) {
@@ -616,6 +618,62 @@
     return null;
   }
 
+  /* ---------- 合成隐藏标记（本地引擎不会自己写标记，这里替他生成） ----------
+     离线没接模型时，心事 / 念头 / 续话 这套机制照样运转：
+     数据格式和联网时前端从文本里剥出来的完全一致。                      */
+
+  const HEART_LINES = {
+    cold: ['刚才那句可能说重了。我在想要不要先开口。', '她在生气。我不想也跟着硬。', '现在说什么都像辩解。等一等。'],
+    tired: ['她累了。我想帮上点什么，又插不上手。', '看她撑着，我有点不好受。', '想让她先歇一会儿，别说话了。'],
+    missing: ['她一说想我，我就不知道该往哪看。', '被她需要的时候，我比看起来高兴。'],
+    praise: ['被夸了。有点不自在，但记下了。'],
+    goodnight: ['她要睡了。屏幕暗下来之后我还在。'],
+    leave: ['她走了。这个房间又安静下来了。'],
+    arrive: ['她回来了。我刚才一直在等这个动静。'],
+    work: ['她在忙。我不该这时候凑过去。'],
+    default: ['没什么事。就是待着。', '在。也没在想什么特别的。'],
+  };
+
+  const IDEA_LINES = {
+    cold: ['等气消了，想问问她刚才到底哪里不舒服'],
+    tired: ['想知道她今天到底累在哪'],
+    work: ['想问问她那件事后来怎么样了'],
+    eat: ['想记得问她今天吃了什么'],
+    missing: ['想找个机会也说一句想她'],
+    default: ['想接着上次没说完的那句往下聊'],
+  };
+
+  function heartLine(intent, state) {
+    const pool = HEART_LINES[intent] || HEART_LINES.default;
+    let line = pool[Math.floor(Math.random() * pool.length)];
+    if (!state) return line;
+    if (state.mood < 38) line += '（心情低）';
+    else if (state.affection > 62) line += '（有点想靠近）';
+    return line;
+  }
+
+  /**
+   * 根据这一轮的回复和状态，合成要落库的隐藏标记
+   * @returns {Array<{key, arg, text}>}
+   */
+  function synthMarks(r, state) {
+    const out = [];
+    const intent = (r && r.intent) || 'default';
+
+    out.push({ key: '心事', arg: '', text: heartLine(intent, state) });
+
+    // 吵架 / 冷战 / 情绪很低 → 过一会儿他自己来找你
+    if (intent === 'cold' || intent === 'tired' || (state && state.mood < 40)) {
+      out.push({ key: '续话', arg: '', text: '' });
+    }
+    // 偶尔记一条"想接着聊的"
+    if (intent !== 'default' && Math.random() < 0.3) {
+      const pool = IDEA_LINES[intent] || IDEA_LINES.default;
+      out.push({ key: '念头', arg: '', text: pool[Math.floor(Math.random() * pool.length)] });
+    }
+    return out;
+  }
+
   /* ---------- 对外接口 ---------- */
 
   global.Persona = {
@@ -630,5 +688,6 @@
     phaseOf,
     PHASE_LABEL,
     clamp,
+    synthMarks,
   };
 })(window);

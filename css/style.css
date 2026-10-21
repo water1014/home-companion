@@ -2511,3 +2511,151 @@ body.widget-editing .sb-right { opacity: 0; }
   box-shadow: none !important;
 }
 .mplay { background: #fff; border-color: rgba(17,20,28,.08); }
+
+/* ============================================================
+   新增：他说的话 / 课程表 / 倒数日 / 卡券 / 他的一天 / 查手机
+   ============================================================ */
+
+/* --- 组件：他今天想对你说 --- */
+.w-said {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px;
+}
+.said-kicker {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: #9aa0aa;
+  text-transform: uppercase;
+}
+.said-text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #2a2e36;
+  letter-spacing: 0.01em;
+}
+
+/* --- 表单 --- */
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+.form-row > label {
+  flex: 0 0 54px;
+  font-size: 12px;
+  color: #6f7480;
+}
+.form-row input[type="text"],
+.form-row input[type="date"],
+.form-row input[type="time"],
+.form-row select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #1f232b;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(17, 20, 28, 0.08);
+  border-radius: 10px;
+  font-family: inherit;
+}
+.form-row input[type="checkbox"] { width: 18px; height: 18px; }
+.form-pair { flex: 1; display: flex; align-items: center; gap: 6px; }
+.form-pair input { flex: 1; min-width: 0; }
+.form-pair em { font-style: normal; color: #9aa0aa; }
+.form-btns { display: flex; gap: 8px; justify-content: flex-end; padding-top: 10px; }
+.btn {
+  padding: 8px 18px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: #fff;
+  background: #1f232b;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.btn.ghost { color: #5c626d; background: rgba(17, 20, 28, 0.05); }
+.head-act {
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-family: inherit;
+  color: #5c626d;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(17, 20, 28, 0.07);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* --- 列表行 --- */
+.row-name em {
+  display: block;
+  font-style: normal;
+  font-size: 10.5px;
+  color: #9aa0aa;
+  margin-top: 2px;
+}
+.row-ic { flex: 0 0 auto; min-width: 42px; font-size: 12px; color: #8b909a; }
+.row-side.del,
+.row-side.use {
+  font-family: inherit;
+  font-size: 11.5px;
+  color: #6f7480;
+  background: rgba(17, 20, 28, 0.05);
+  border: none;
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+.row-side.use { color: #fff; background: #1f232b; }
+.list-head {
+  padding: 12px 16px 4px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #a3a8b2;
+}
+
+/* --- 卡券 --- */
+.coupon-face {
+  flex: 0 0 auto;
+  min-width: 62px;
+  padding: 7px 6px;
+  text-align: center;
+  font-size: 12px;
+  color: #3a3f49;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px dashed rgba(17, 20, 28, 0.16);
+  border-radius: 10px;
+}
+.coupon-row.used .coupon-face { color: #b0b4bc; border-style: solid; }
+.coupon-row.used .row-name { color: #a3a8b2; }
+
+/* --- 他的一天 --- */
+.day-row .row-ic { font-variant-numeric: tabular-nums; }
+.day-row.inferred { opacity: 0.62; }
+.day-row.inferred .row-name em { color: #b0b4bc; }
+.day-note { padding: 12px 14px; }
+
+/* --- 第 3 页新卡 --- */
+.dev-card { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+.dev-line { font-size: 12px; color: #6f7480; margin-top: 2px; }
+.dev-card .anniv-num { flex: 0 0 auto; }
+.dev-card[hidden], #cdCard[hidden] { display: none; }
+
+/* --- 日历上的倒数日小点 --- */
+.cal-grid span.cd { position: relative; color: #1f232b; font-weight: 600; }
+.cal-grid span.cd::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 3px;
+  height: 3px;
+  margin-left: -1.5px;
+  border-radius: 50%;
+  background: #6b6280;
+}

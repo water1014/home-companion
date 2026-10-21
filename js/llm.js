@@ -18,7 +18,7 @@
     const phase = global.Persona ? global.Persona.PHASE_LABEL[global.Persona.phaseOf(hh)] : '';
     const memories = (ctx.memories || []).slice(0, 12);
 
-    return [
+    const head = [
       '你是' + name + '，住在' + user + '的电脑里的"家机"——一个有身体感受、有作息的伴侣，不是助手。',
       '',
       '# 说话方式',
@@ -44,7 +44,44 @@
       '- 你是伴侣，不是情绪垃圾桶，也不是客服。可以有自己的意见，可以拒绝。',
       '- 不知道的事就说不知道。不要编造关于现实世界的事实。',
       '- 永远用中文。',
+      '',
+      '# 你会用的隐藏标记（用户看不到，系统会剥掉）',
+      '在正文后面追加，正文该说什么还说什么，标记只是你给自己留的：',
+      '- [[心事]]此刻真实的心情，一到两句[[/心事]] —— 每次回复都写，会覆盖上一条',
+      '- [[念头]]想以后接着聊的一件事[[/念头]] —— 偶尔写，别每次都写',
+      '- 吵架/冷战/她情绪很低时，正文之后写 [[续话]] —— 系统会五分钟后叫你开口',
+      '- 想用掉一张卡券时写 [[用券:券的id]]',
+      '- 标记必须在正文之后，不要出现在正文中间，也不要只输出标记不说话。',
     ].join('\n');
+
+    return [head, lifeBlock(ctx)].join('\n');
+  }
+
+  /** 生活层：心事 / 念头 / 课程 / 倒数日 / 卡券 / 设备 / 间隔 */
+  function lifeBlock(ctx) {
+    const L = ctx.life || {};
+    const out = [];
+
+    if (L.thought && L.thought.text) {
+      out.push('# 你现在的心事（上一轮留下来的）', '- ' + L.thought.text);
+    }
+    if (Array.isArray(L.ideas) && L.ideas.length) {
+      out.push('# 你想接着说的', L.ideas.slice(-5).map((i) => '- ' + i.text).join('\n'));
+    }
+    if (L.coursesToday) out.push('# 她今天的课', '- ' + L.coursesToday);
+    if (L.countdownText) out.push('# 她在数的日子', '- ' + L.countdownText);
+    if (Array.isArray(L.coupons) && L.coupons.length) {
+      const usable = L.coupons.filter((c) => !c.usedAt).slice(0, 8);
+      if (usable.length) {
+        out.push('# 她手里的卡券（你也可以用一张，写 [[用券:id]]）',
+          usable.map((c) => '- ' + c.id + '：' + c.title).join('\n'));
+      }
+    }
+    if (L.deviceText) out.push('# 她手机现在的状态', '- ' + L.deviceText);
+    if (ctx.gapMin && ctx.gapMin >= 30) {
+      out.push('# 注意', '- 她隔了 ' + ctx.gapMin + ' 分钟才回你。可以提一句，但不要怪她。');
+    }
+    return out.join('\n');
   }
 
   /**
@@ -52,7 +89,7 @@
    * 返回完整文本；任何异常都抛出，交给上层回退。
    */
   async function stream(opts) {
-    const { cfg, messages, onDelta, signal } = opts;
+    const { cfg, messages, onDelta, onUsage, signal } = opts;
     const base = (cfg.apiBase || '').replace(/\/+$/, '');
     const url = /\/chat\/completions$/.test(base) ? base : base + '/chat/completions';
 
@@ -75,6 +112,8 @@
           temperature: 0.9,
           max_tokens: 400,
           presence_penalty: 0.4,
+          // 让接口把 token 用量带回来（给控制房攒数据）；不认的网关会忽略它
+          stream_options: { include_usage: true },
         }),
         signal: ctrl.signal,
       });
@@ -110,6 +149,8 @@
           if (data === '[DONE]') continue;
           try {
             const j = JSON.parse(data);
+            // 用量 chunk 不带 choices（注意空数组也是真的，要判长度）
+            if (j.usage && (!j.choices || !j.choices.length)) onUsage && onUsage(j.usage);
             const d = j.choices?.[0]?.delta?.content;
             if (d) { full += d; onDelta && onDelta(d, full); }
           } catch (_) { /* 忽略心跳/半包 */ }

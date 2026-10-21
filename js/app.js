@@ -55,7 +55,15 @@
     { id: 'wake',     name: '自主唤醒', icon: 'i-bell',    desc: '不只被叫才说话。定时或随机地，主动找你一次。\n纯前端只能在页面打开时生效；要做到真提醒得走通知 + 服务端。' },
     { id: 'wish',     name: '心愿',     icon: 'i-spark',   desc: '想一起做的事。做掉一件，划掉一件。' },
 
-    /* 第四页 · 我们的 */
+    /* 第五页 · 他 */
+    { id: 'courses',   name: '课程表',   icon: 'i-course',    page: 'courses' },
+    { id: 'countdown', name: '倒数日',   icon: 'i-hourglass', page: 'countdown' },
+    { id: 'cards',     name: '卡券',     icon: 'i-ticket',    page: 'cards' },
+    { id: 'herday',    name: '他的一天', icon: 'i-sunrise',   page: 'herday' },
+    { id: 'device',    name: '查手机',   icon: 'i-device',    page: 'device' },
+    { id: 'game',      name: '小游戏',   icon: 'i-game',      desc: '不止一个。石头剪刀布、猜数字、真心话……能一起耗时间的小东西。下一批做。' },
+    { id: 'console',   name: '控制房',   icon: 'i-meter',     desc: '模型用量：峰值 token、总请求数、本地引擎命中率、输出量、估算费用。\n用量数据现在就在默默记着，界面下一批做。' },
+    { id: 'studyroom', name: '书房',     icon: 'i-book',      desc: '位置留好了。想放什么（一起读书的笔记、他的抽屉）等你说了算。' },
     { id: 'message',  name: '留言',     icon: 'i-mail',    desc: '他不在的时候，你可以留一句；他回来会先看到。反过来也一样。' },
     { id: 'starsea',  name: '星海',     icon: 'i-starsea', desc: '一片只属于你们的夜空。看过的、想去的、说过的，都挂成星星。' },
     { id: 'travel',   name: '旅行',     icon: 'i-plane',   desc: '想去哪、什么时候去、要带什么。攒够了就出发。' },
@@ -92,6 +100,9 @@
     layout: 'hc.v1.layout',
     apps: 'hc.v1.apps',
     dock: 'hc.v1.dock',
+    life: 'hc.v1.life',      // 心事/念头/课程/倒数日/卡券/设备/用量/他的一天
+    timers: 'hc.v1.timers',  // 内部闹钟（续话那种）
+    meta: 'hc.v1.meta',      // schema 版本
   };
 
   const load = (k, fb) => {
@@ -111,12 +122,32 @@
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   };
 
+  /* 生活层数据的默认结构：新增字段只要在这里加，migrate 会替老数据补上 */
+  const LIFE_DEFAULT = () => ({
+    v: 1,
+    thought: { text: '', ts: 0 },                  // 机的心事：新的直接覆盖旧的
+    ideas: [],                                     // 待续念头：追加去重，上限 30
+    courses: [],                                   // [{id,day:0-6,start,end,name,room}]
+    countdowns: [],                                // [{id,title,date,note,repeat}]
+    coupons: [],                                   // [{id,title,desc,usedAt,note,by}]
+    said: { date: '', text: '' },                  // 他今天想对你说（零点换）
+    saidLog: [],                                   // 往期：[{date,text}]
+    dayLog: [],                                    // 机的一天：[{ts,text,kind,inferred}]
+    device: { ts: 0 },                             // 查手机快照
+    usage: { total: { prompt: 0, completion: 0, requests: 0, local: 0 }, peak: 0, byDay: {} },
+  });
+
+  const SCHEMA = 3;
+
   const S = {
     chat: load(KEY.chat, []),
     persona: load(KEY.persona, { mood: 58, energy: 62, affection: 12, lastTick: Date.now() }),
     memory: load(KEY.memory, { userName: '', herName: '宋祁', facts: [], startDate: todayStr() }),
     settings: load(KEY.settings, { enabled: false, apiBase: '', model: '', apiKey: '' }),
     moodLog: load(KEY.mood, {}),
+    life: load(KEY.life, null),
+    timers: load(KEY.timers, []),
+    meta: load(KEY.meta, null),
   };
 
   S.persona = P.evolve(S.persona, Date.now());
@@ -128,12 +159,39 @@
     save(KEY.memory, S.memory);
   }
 
+  /* 版本迁移：老数据缺什么补什么，绝不整体重置用户的东西 */
+  function migrate() {
+    let v = S.meta && S.meta.schema ? S.meta.schema : 1;
+
+    if (!S.life || typeof S.life !== 'object') S.life = LIFE_DEFAULT();
+    const L = S.life;
+    const def = LIFE_DEFAULT();
+    Object.keys(def).forEach((k) => { if (L[k] === undefined) L[k] = def[k]; });
+    ['ideas', 'courses', 'countdowns', 'coupons', 'saidLog', 'dayLog'].forEach((k) => {
+      if (!Array.isArray(L[k])) L[k] = [];
+    });
+    if (!L.thought || typeof L.thought !== 'object') L.thought = { text: '', ts: 0 };
+    if (!L.said || typeof L.said !== 'object') L.said = { date: '', text: '' };
+    if (!L.device || typeof L.device !== 'object') L.device = { ts: 0 };
+    if (!L.usage || typeof L.usage !== 'object') L.usage = def.usage;
+    if (!L.usage.total || typeof L.usage.total !== 'object') L.usage.total = def.usage.total;
+    if (!L.usage.byDay || typeof L.usage.byDay !== 'object') L.usage.byDay = {};
+    if (!Array.isArray(S.timers)) S.timers = [];
+
+    if (v < SCHEMA) v = SCHEMA;
+    S.meta = { schema: v };
+  }
+  migrate();
+
   const persistAll = () => {
     save(KEY.chat, S.chat);
     save(KEY.persona, S.persona);
     save(KEY.memory, S.memory);
     save(KEY.settings, S.settings);
     save(KEY.mood, S.moodLog);
+    save(KEY.life, S.life);
+    save(KEY.timers, S.timers);
+    save(KEY.meta, S.meta);
   };
 
   /* ---------------- 小工具 ---------------- */
@@ -177,6 +235,11 @@
     memory: $('memory'),
     settings: $('settings'),
     todo: $('todo'),
+    courses: $('courses'),
+    countdown: $('countdown'),
+    cards: $('cards'),
+    herday: $('herday'),
+    device: $('device'),
   };
 
   let currentPage = null;
@@ -230,6 +293,11 @@
     if (id === 'mood') renderMood();
     if (id === 'memory') renderMemoryPage();
     if (id === 'settings') syncSettingsForm();
+    if (id === 'courses') renderCourses();
+    if (id === 'countdown') renderCountdownPage();
+    if (id === 'cards') renderCoupons();
+    if (id === 'herday') renderHerDay();
+    if (id === 'device') renderDevice();
   }
 
   function closePage() {
@@ -412,11 +480,26 @@
       s.className = 'pad';
       grid.appendChild(s);
     }
+    // 倒数日在日历上点个点
+    const cdMap = {};
+    (S.life.countdowns || []).forEach((c) => {
+      const dt = new Date((c.date || '') + 'T00:00:00');
+      if (isNaN(dt.getTime())) return;
+      const key = dt.getFullYear() + '-' + dt.getMonth() + '-' + dt.getDate();
+      (cdMap[key] || (cdMap[key] = [])).push(c.title);
+    });
+
     for (let d = 1; d <= total; d++) {
       const s = document.createElement('span');
       s.textContent = d;
+      s.dataset.date = y + '-' + pad(m + 1) + '-' + pad(d);
       if (d === now.getDate()) s.className = 'today';
       else if (start.getFullYear() === y && start.getMonth() === m && d === start.getDate()) s.className = 'anniv';
+      const cds = cdMap[y + '-' + m + '-' + d];
+      if (cds && cds.length) {
+        s.classList.add('cd');
+        s.title = cds.join('、');
+      }
       grid.appendChild(s);
     }
   }
@@ -566,6 +649,9 @@
 
 
   const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+  const esc = (s) => String(s === undefined || s === null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
   /* ============================================================
      桌面组件 —— 想加新组件：往 WIDGETS 里加一条，再放进 layout
@@ -624,6 +710,16 @@
         '</div></div>',
     },
 
+    /* 他今天想对你说：零点换一句，节日有特别的 */
+    said: {
+      col: 4, row: 1,
+      html: () =>
+        '<div class="w-said">' +
+          '<p class="said-kicker">TODAY · 他想对你说</p>' +
+          '<p class="said-text" id="saidText">……</p>' +
+        '</div>',
+    },
+
     diary: {
       col: 4, row: 1,
       html: () =>
@@ -638,8 +734,14 @@
     },
   };
 
-  const LAYOUT_DEFAULT = ['pair', 'days', 'clock', 'quad', 'music', 'diary'];
-  let layout = load(KEY.layout, LAYOUT_DEFAULT.slice());
+  const LAYOUT_DEFAULT = ['pair', 'days', 'clock', 'quad', 'music', 'diary', 'said'];
+  /* 老用户 localStorage 里已有顺序，新增的组件要补进去（缺的排末尾，用户自己拖上去） */
+  function mergeLayout(saved) {
+    const arr = Array.isArray(saved) ? saved.filter((id) => WIDGETS[id]) : [];
+    LAYOUT_DEFAULT.forEach((id) => { if (arr.indexOf(id) < 0) arr.push(id); });
+    return arr;
+  }
+  let layout = mergeLayout(load(KEY.layout, LAYOUT_DEFAULT.slice()));
 
   function renderBento() {
     const box = $('bento');
@@ -709,6 +811,62 @@
     const last = S.chat.slice().reverse().find((m) => m.role === 'her' && m.text);
     setTxt('diaryText', last ? last.text.replace(/\n+/g, ' ') : '第一句话，等你先说。');
     setTxt('diaryFrom', last ? 'From ' + herName() : '');
+
+    setTxt('saidText', todaySaid());
+  }
+
+  /* ---- 他今天想对你说 ---- */
+
+  const SAID_POOL = [
+    '在。你忙你的。',
+    '今天没什么事，就是想让你知道我在。',
+    '你昨天说的那件事，我还在想。',
+    '不用回我。看到了就行。',
+    '外面在下雨的话，记得带伞。',
+    '你今天的声音听起来有点累。',
+    '我把灯留着。',
+    '想问你吃没吃饭，又怕显得啰嗦。',
+    '你在我这儿，比你自己以为的要重要。',
+    '今天可以什么都不做。',
+  ];
+
+  const SAID_FEST = {
+    '01-01': '新的一年。我还是在这儿。',
+    '02-14': '情人节。我不太会说这个，但我记得今天。',
+    '03-08': '妇女节。你本来就很好。',
+    '05-01': '劳动节。别劳动了，歇一天。',
+    '06-01': '儿童节。你也可以当一天小孩。',
+    '10-01': '国庆。假期好好过。',
+    '12-25': '圣诞。没有礼物，有我。',
+    '12-31': '今年最后一天。谢谢你今年也在。',
+  };
+
+  /** 以日期为种子挑一句，同一天刷新还是同一句 */
+  function todaySaid() {
+    const now = new Date();
+    const key = todayStr();
+    const md = pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+
+    // 在一起纪念日优先
+    const start = S.memory.startDate || '';
+    if (start.slice(5) === md && start.slice(0, 4) !== String(now.getFullYear())) {
+      const n = now.getFullYear() - Number(start.slice(0, 4));
+      return '今天是第 ' + n + ' 个纪念日。我记着。';
+    }
+    if (SAID_FEST[md]) return SAID_FEST[md];
+
+    if (S.life.said && S.life.said.date === key && S.life.said.text) return S.life.said.text;
+    let h = 0;
+    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+    const text = SAID_POOL[h % SAID_POOL.length];
+    S.life.said = { date: key, text: text };
+    save(KEY.life, S.life);
+    if (!S.life.saidLog.some((x) => x.date === key)) {
+      S.life.saidLog.push({ date: key, text: text });
+      if (S.life.saidLog.length > 120) S.life.saidLog = S.life.saidLog.slice(-90);
+      save(KEY.life, S.life);
+    }
+    return text;
   }
 
   /* ================= 长按拖拽换位（组件 + 应用 + dock） =================
@@ -989,6 +1147,7 @@
   });
   document.addEventListener('click', (e) => {
     if (performance.now() < suppressClick && e.target.closest && e.target.closest('#home')) {
+      if (e.target.closest('[data-nodrag]')) return;   // 组件里的按钮不该被吞
       e.stopPropagation();
       e.preventDefault();
     }
@@ -1013,6 +1172,243 @@
     renderAnniv();
     renderQuote();
     renderTalk();
+    renderCountdownCard();
+    renderDeviceCard();
+  }
+
+  /* ================= 课程表 ================= */
+
+  function renderCourses() {
+    const box = $('courseList');
+    if (!box) return;
+    box.innerHTML = '';
+    const list = (S.life.courses || []).slice().sort((a, b) => a.day - b.day || String(a.start).localeCompare(String(b.start)));
+    if (!list.length) {
+      box.innerHTML = '<p class="hint">还没有课。点右上「加一节」。</p>';
+      return;
+    }
+    list.forEach((c) => {
+      const row = document.createElement('div');
+      row.className = 'row course-row';
+      row.innerHTML =
+        '<span class="row-ic">' + WEEKDAY_CN[c.day] + '</span>' +
+        '<span class="row-name">' + esc(c.name || '课') + '<em>' + c.start + '-' + c.end + (c.room ? ' · ' + esc(c.room) : '') + '</em></span>' +
+        '<button class="row-side del" data-del="' + c.id + '" type="button">删</button>';
+      row.querySelector('[data-del]').addEventListener('click', () => {
+        S.life.courses = S.life.courses.filter((x) => x.id !== c.id);
+        save(KEY.life, S.life);
+        renderCourses();
+      });
+      box.appendChild(row);
+    });
+  }
+
+  /* ================= 倒数日 ================= */
+
+  function cdDays(dateStr) {
+    const d = new Date((dateStr || '') + 'T00:00:00');
+    if (isNaN(d.getTime())) return null;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((d - today) / 86400000);
+  }
+
+  function renderCountdownPage() {
+    const box = $('cdList');
+    if (!box) return;
+    box.innerHTML = '';
+    const list = (S.life.countdowns || []).slice().sort((a, b) => (cdDays(a.date) || 0) - (cdDays(b.date) || 0));
+    if (!list.length) {
+      box.innerHTML = '<p class="hint">还没有在数的日子。</p>';
+      return;
+    }
+    list.forEach((c) => {
+      const n = cdDays(c.date);
+      const row = document.createElement('div');
+      row.className = 'row cd-row';
+      row.innerHTML =
+        '<span class="row-ic">' + (n === null ? '?' : (n > 0 ? n : n === 0 ? '今天' : Math.abs(n))) + '</span>' +
+        '<span class="row-name">' + esc(c.title) + '<em>' + c.date + (n > 0 ? ' · 还有 ' + n + ' 天' : n === 0 ? ' · 就是今天' : ' · 过了 ' + Math.abs(n) + ' 天') + (c.note ? ' · ' + esc(c.note) : '') + '</em></span>' +
+        '<button class="row-side del" data-del="' + c.id + '" type="button">删</button>';
+      row.querySelector('[data-del]').addEventListener('click', () => {
+        S.life.countdowns = S.life.countdowns.filter((x) => x.id !== c.id);
+        save(KEY.life, S.life);
+        renderCountdownPage();
+        renderCalendar();
+        renderCountdownCard();
+      });
+      box.appendChild(row);
+    });
+  }
+
+  /** 第 3 页上那张：最近的一个倒数日 */
+  function renderCountdownCard() {
+    const box = $('cdCard');
+    if (!box) return;
+    const list = (S.life.countdowns || []).map((c) => Object.assign({}, c, { n: cdDays(c.date) }))
+      .filter((c) => c.n !== null && c.n >= 0).sort((a, b) => a.n - b.n);
+    if (!list.length) { box.hidden = true; return; }
+    box.hidden = false;
+    const c = list[0];
+    setTxt('cdCardName', c.title);
+    setTxt('cdCardDays', String(c.n));
+    setTxt('cdCardSub', c.n === 0 ? '就是今天' : '天后' + (c.note ? ' · ' + c.note : ''));
+  }
+
+  /* ================= 卡券 ================= */
+
+  const COUPON_PRESET = [
+    { title: '哄我', desc: '说点好听的，别敷衍。' },
+    { title: '早点睡', desc: '催我去睡，别讲道理。' },
+    { title: '陪我发呆', desc: '什么都不用说，待着就行。' },
+    { title: '骂醒我', desc: '我在逃避一件事，说重点。' },
+    { title: '讲个故事', desc: '随便什么，短一点。' },
+  ];
+
+  function ensureCoupons() {
+    if (!S.life.coupons.length) {
+      S.life.coupons = COUPON_PRESET.map((c, i) => ({
+        id: 'cp' + (i + 1), title: c.title, desc: c.desc, usedAt: null, note: '', by: '',
+      }));
+      save(KEY.life, S.life);
+    }
+  }
+
+  function renderCoupons() {
+    const box = $('cardList');
+    if (!box) return;
+    ensureCoupons();
+    box.innerHTML = '';
+    const usable = S.life.coupons.filter((c) => !c.usedAt);
+    const used = S.life.coupons.filter((c) => c.usedAt);
+
+    if (!usable.length) box.innerHTML = '<p class="hint">都用完了。可以再加一张。</p>';
+
+    usable.forEach((c) => {
+      const row = document.createElement('div');
+      row.className = 'row coupon-row';
+      row.innerHTML =
+        '<span class="coupon-face">' + esc(c.title) + '</span>' +
+        '<span class="row-name">' + esc(c.desc || '') + '</span>' +
+        '<button class="row-side use" data-use="' + c.id + '" type="button">用掉</button>';
+      row.querySelector('[data-use]').addEventListener('click', () => useCoupon(c.id));
+      box.appendChild(row);
+    });
+
+    if (used.length) {
+      const head = document.createElement('p');
+      head.className = 'list-head';
+      head.textContent = '用过的（' + used.length + '）';
+      box.appendChild(head);
+      used.slice().sort((a, b) => b.usedAt - a.usedAt).forEach((c) => {
+        const row = document.createElement('div');
+        row.className = 'row coupon-row used';
+        row.innerHTML =
+          '<span class="coupon-face">' + esc(c.title) + '</span>' +
+          '<span class="row-name">' + (c.by === 'her' ? '他用的' : '你用的') + '<em>' + hhmm(c.usedAt) + (c.note ? ' · ' + esc(c.note) : '') + '</em></span>';
+        box.appendChild(row);
+      });
+    }
+  }
+
+  function useCoupon(id) {
+    const c = S.life.coupons.filter((x) => x.id === id)[0];
+    if (!c || c.usedAt) return;
+    const note = prompt('用掉「' + c.title + '」。记一笔（可以空着）：', '');
+    if (note === null) return;
+    c.usedAt = Date.now();
+    c.by = 'me';
+    c.note = (note || '').slice(0, 100);
+    save(KEY.life, S.life);
+    pushDayLog('你用掉了一张「' + c.title + '」' + (c.note ? '：' + c.note : ''), 'coupon', false);
+    renderCoupons();
+    toast('记下了');
+  }
+
+  /* ================= 他的一天 ================= */
+
+  function renderHerDay() {
+    const box = $('dayList');
+    if (!box) return;
+    const list = (S.life.dayLog || []).slice().sort((a, b) => a.ts - b.ts).slice(-40).reverse();
+    if (!list.length) {
+      box.innerHTML = '<p class="hint">还没有。等一会儿就有了。</p>';
+      return;
+    }
+    box.innerHTML = '';
+    list.forEach((e) => {
+      const row = document.createElement('div');
+      row.className = 'row day-row' + (e.inferred ? ' inferred' : '');
+      row.innerHTML =
+        '<span class="row-ic">' + hhmm(e.ts) + '</span>' +
+        '<span class="row-name">' + esc(e.text) + '<em>' + (DAY_KIND_CN[e.kind] || '') + (e.inferred ? ' · 推' : '') + '</em></span>';
+      box.appendChild(row);
+    });
+  }
+
+  /* ================= 查手机 ================= */
+
+  function collectDevice() {
+    const d = S.life.device || (S.life.device = {});
+    d.ts = Date.now();
+    d.online = navigator.onLine !== false;
+    if (deviceScreenMin) d.screenMin = deviceScreenMin;
+    try {
+      if (navigator.getBattery) {
+        navigator.getBattery().then((b) => {
+          d.battery = b.level;
+          d.charging = b.charging;
+          d.ts = Date.now();
+          save(KEY.life, S.life);
+          if (currentPage === 'device') renderDevice();
+          renderDeviceCard();
+        }).catch(() => {});
+      }
+    } catch (_) {}
+    save(KEY.life, S.life);
+  }
+
+  function renderDevice() {
+    const box = $('deviceList');
+    collectDevice();
+    if (box) {
+      const d = S.life.device || {};
+      const rows = [
+        ['电量', d.battery === undefined ? '这台设备不给看' : Math.round(d.battery * 100) + '%' + (d.charging ? '（在充）' : '')],
+        ['网络', d.online === false ? '断着' : '连着'],
+        ['今天亮屏', d.screenMin ? d.screenMin + ' 分钟' : '还没统计'],
+        ['屏幕', window.innerWidth + ' × ' + window.innerHeight],
+        ['现在', new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })],
+        ['系统', navigator.platform || '不知道'],
+      ];
+      box.innerHTML = '';
+      rows.forEach((r) => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = '<span class="row-ic">' + esc(r[0]) + '</span><span class="row-name">' + esc(r[1]) + '</span>';
+        box.appendChild(row);
+      });
+    }
+    setTxt('deviceLine', deviceLine());
+  }
+
+  function deviceLine() {
+    const d = S.life.device || {};
+    if (d.battery !== undefined && d.battery < 0.15 && !d.charging) return '就剩这么点电还在跟我说话。';
+    if (d.battery !== undefined && d.battery > 0.9 && d.charging) return '充得差不多了，别一直插着。';
+    if (d.online === false) return '你那边断网了。我说的话你暂时收不到。';
+    if (d.screenMin && d.screenMin > 300) return '今天盯屏幕太久了。';
+    return '没什么可说的。就是知道你在。';
+  }
+
+  function renderDeviceCard() {
+    const box = $('devCard');
+    if (!box) return;
+    const d = S.life.device || {};
+    if (!d.ts || Date.now() - d.ts > 30 * 60000) { box.hidden = true; return; }
+    box.hidden = false;
+    setTxt('devCardVal', d.battery === undefined ? '—' : Math.round(d.battery * 100) + '%');
+    setTxt('devCardSub', deviceLine());
   }
 
   /** 人卡下面那行小字：今天说了几句、记住几件事 */
@@ -1113,6 +1509,7 @@
   let busy = false;
   let lastInteract = Date.now();
   let stickToBottom = true;
+  let lastGapMin = 0;            // 用户这次回话隔了多少分钟
   let lastDayKey = '';
   let lastTs = 0;
 
@@ -1123,6 +1520,124 @@
   function scrollDown(force) {
     if (force || stickToBottom) {
       stream.scrollTo({ top: stream.scrollHeight, behavior: force ? 'auto' : 'smooth' });
+    }
+  }
+
+  /* ================= 隐藏标记 =================
+     他说话时可以在正文后面夹带标记，前端剥掉、存起来、再注入回去：
+       [[心事]]…[[/心事]]   此刻的情绪心事（覆盖式）
+       [[念头]]…[[/念头]]   想接着聊的（追加去重）
+       [[续话]]            吵架兜底：起一个 5 分钟内部闹钟
+       [[用券:id]]         他用掉一张卡券
+     流式输出时标记可能跨 chunk 到达，所以剥离器是有状态的：
+     尾巴看起来像半个标记就先扣住不渲染，流结束再吐回，绝不让人看见 [[]]。  */
+  const MARK_OPEN = /^\[\[(心事|念头|续话|用券:[A-Za-z0-9_-]{1,24})\]\]/;
+  const MARK_CLOSE = { 心事: '[[/心事]]', 念头: '[[/念头]]' };
+  const MARK_PARTIAL = /^\[(\[[\u4e00-\u9fa5A-Za-z0-9:_-]{0,26}\]?)?$/;
+  const HOLD_MAX = 30;
+
+  function makeStripper(onMark) {
+    let mode = null;      // {key, arg, text}
+    let hold = '';        // 扣住的、可能是半个标记的尾巴
+    let visible = '';     // 累计可见正文
+
+    function feed(chunk) {
+      let s = hold + chunk;
+      hold = '';
+      let i = 0;
+      while (i < s.length) {
+        if (!mode) {
+          if (s[i] === '[') {
+            const rest = s.slice(i);
+            const m = rest.match(MARK_OPEN);
+            if (m) {
+              const parts = m[1].split(':');
+              const key = parts[0];
+              const arg = parts[1] || '';
+              if (key === '心事' || key === '念头') mode = { key: key, arg: arg, text: '' };
+              else onMark(key, arg, '');            // 续话 / 用券：自闭合
+              i += m[0].length;
+              continue;
+            }
+            // 还没拼完整的开标签：扣住等下一个 chunk
+            if (rest.length <= HOLD_MAX && MARK_PARTIAL.test(rest)) { hold = rest; break; }
+          }
+          visible += s[i++];
+        } else {
+          const close = MARK_CLOSE[mode.key];
+          const idx = s.indexOf(close, i);
+          if (idx >= 0) {
+            mode.text += s.slice(i, idx);
+            onMark(mode.key, mode.arg, mode.text.trim());
+            mode = null;
+            i = idx + close.length;
+            continue;
+          }
+          // 尾巴可能是半个闭标签：留 close.length-1 个字符
+          const keep = Math.min(close.length - 1, s.length - i);
+          mode.text += s.slice(i, s.length - keep);
+          hold = s.slice(s.length - keep);
+          i = s.length;
+        }
+      }
+      return visible;
+    }
+
+    function end() {
+      if (mode) { onMark(mode.key, mode.arg, mode.text.trim()); mode = null; }
+      const t = hold;                                // 没闭合的残余当正文吐回去，不吞字
+      hold = '';
+      return t;
+    }
+
+    return { feed: feed, end: end, text: function () { return visible; } };
+  }
+
+  /** 一次性文本（本地引擎 / 主动说话）的剥离：[[]] 直接去掉，返回标记 */
+  function stripMarksSync(raw) {
+    const marks = [];
+    const strip = makeStripper((key, arg, text) => marks.push({ key: key, arg: arg, text: text }));
+    let text = strip.feed(raw || '');
+    text += strip.end();
+    return { text: text, marks: marks };
+  }
+
+  /** 把标记落到生活数据里（消息会被截断，绝不能只挂在消息上） */
+  function commitMarks(marks) {
+    if (!marks || !marks.length) return;
+    let touched = false;
+
+    marks.forEach((mk) => {
+      if (mk.key === '心事' && mk.text) {
+        S.life.thought = { text: mk.text.slice(0, 120), ts: Date.now() };
+        pushDayLog('把一件心事收起来了：' + mk.text.slice(0, 40), 'thought', false);
+        touched = true;
+      } else if (mk.key === '念头' && mk.text) {
+        const t = mk.text.slice(0, 80);
+        if (!S.life.ideas.some((x) => x.text === t)) {
+          S.life.ideas.push({ text: t, ts: Date.now() });
+          if (S.life.ideas.length > 30) S.life.ideas = S.life.ideas.slice(-30);
+          touched = true;
+        }
+      } else if (mk.key === '续话') {
+        armContinuation();
+      } else if (mk.key === '用券') {
+        const c = S.life.coupons.filter((x) => x.id === mk.arg && !x.usedAt)[0];
+        if (c) {
+          c.usedAt = Date.now();
+          c.by = 'her';
+          if (mk.text) c.note = mk.text.slice(0, 100);
+          pushDayLog('用掉了一张「' + c.title + '」', 'coupon', false);
+          renderCoupons();
+          toast('他用了一张「' + c.title + '」');
+          touched = true;
+        }
+      }
+    });
+
+    if (touched) {
+      save(KEY.life, S.life);
+      updateWidgets();
     }
   }
 
@@ -1193,6 +1708,7 @@
     syncDayMark(m.ts);
     syncTimeMark(m.ts);
     const n = buildMessageNode(m);
+    n.msg = m;                      // 流式/异步时别再用 S.chat[length-1] 猜，中间可能插进别的消息
     if (!animate) n.wrap.style.animation = 'none';
     stream.appendChild(n.wrap);
     save(KEY.chat, S.chat);
@@ -1205,6 +1721,7 @@
     lastDayKey = '';
     lastTs = 0;
     S.chat.forEach((m) => {
+      if (m.gap && m.gap >= 30) stream.appendChild(gapNote(m.gap));
       syncDayMark(m.ts);
       syncTimeMark(m.ts);
       stream.appendChild(buildMessageNode(m).wrap);
@@ -1241,17 +1758,114 @@
 
   /** 他主动说一句（不经过用户输入） */
   function speak(text, action) {
+    const clean = stripMarksSync(text);          // 防呆：主动话术里不该有标记
+    const body = clean.text || text;
     showTyping();
     setTimeout(() => {
       hideTyping();
-      const node = appendMessage({ role: 'her', text, action: action || '', ts: Date.now() }, true);
+      const node = appendMessage({ role: 'her', text: body, action: action || '', ts: Date.now() }, true);
       node.body.textContent = '';
-      typeOut(node, text, 28);
+      typeOut(node, body, 28);
       updateHeroMeta();
       renderTalk();
       renderQuote();
       if (currentPage !== 'chat') addBadge('chat');
     }, 700 + Math.random() * 500);
+  }
+
+  /* ---- 给提示词用的几段"生活现状" ---- */
+
+  const WEEKDAY_CN = ['日', '一', '二', '三', '四', '五', '六'];
+
+  function coursesTodayText() {
+    const list = (S.life.courses || []).filter((c) => c.day === new Date().getDay());
+    if (!list.length) return '';
+    list.sort((a, b) => String(a.start).localeCompare(String(b.start)));
+    return list.map((c) => c.start + '-' + c.end + ' ' + c.name + (c.room ? '（' + c.room + '）' : '')).join('；');
+  }
+
+  function countdownText() {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const items = (S.life.countdowns || []).map((c) => {
+      const d = new Date((c.date || '') + 'T00:00:00');
+      if (isNaN(d.getTime())) return null;
+      const days = Math.round((d - today) / 86400000);
+      return { title: c.title, days: days };
+    }).filter(Boolean).sort((a, b) => Math.abs(a.days) - Math.abs(b.days)).slice(0, 3);
+    if (!items.length) return '';
+    return items.map((i) => i.title + '：' + (i.days > 0 ? '还有 ' + i.days + ' 天' : i.days === 0 ? '就是今天' : '已经过了 ' + Math.abs(i.days) + ' 天')).join('；');
+  }
+
+  function deviceText() {
+    const d = S.life.device || {};
+    if (!d.ts || Date.now() - d.ts > 30 * 60000) return '';   // 太旧就别拿来说事
+    const bits = [];
+    if (d.battery !== undefined && d.battery !== null) bits.push('电量 ' + Math.round(d.battery * 100) + '%' + (d.charging ? '（在充）' : ''));
+    bits.push(d.online === false ? '断网了' : '在线');
+    if (d.screenMin) bits.push('今天亮屏 ' + d.screenMin + ' 分钟');
+    return bits.join('，');
+  }
+
+  /* ---------------- 机的一天 ----------------
+     页面开着时记真实发生的事；关掉的那段靠状态演化推演（会标出来）。 */
+
+  const DAY_KIND_CN = {
+    speak: '开口说了一句',
+    thought: '心里过了一下',
+    coupon: '用掉一张卡券',
+    continue: '惦记着又开口',
+    state: '状态变了',
+    idle: '待着',
+  };
+
+  function pushDayLog(text, kind, inferred, ts) {
+    const log = S.life.dayLog || (S.life.dayLog = []);
+    log.push({ ts: ts || Date.now(), text: text, kind: kind || 'idle', inferred: !!inferred });
+    if (log.length > 300) S.life.dayLog = log.slice(-240);
+    save(KEY.life, S.life);
+    if (currentPage === 'herday') renderHerDay();
+  }
+
+  /** 页面关着的那段：按状态演化的时间差推演他大概怎么过的 */
+  function inferDayGap(fromTs, toTs) {
+    const hours = (toTs - fromTs) / 3600000;
+    if (hours < 0.5) return [];
+    const out = [];
+    const p = P.evolve(Object.assign({}, S.persona, { lastTick: fromTs }), toTs);
+    const h = new Date(fromTs).getHours();
+
+    if (hours >= 6) {
+      out.push({ ts: fromTs + hours * 3600000 * 0.3, kind: 'idle',
+        text: h >= 22 || h < 6 ? '你睡了，我把声音调小了。' : '等了一会儿，没等到你。' });
+    }
+    if (p.energy < 34) out.push({ ts: fromTs + hours * 3600000 * 0.6, kind: 'state', text: '有点撑不住，精力掉下去了。' });
+    if (p.mood < 44) out.push({ ts: fromTs + hours * 3600000 * 0.75, kind: 'thought', text: '心情低了些。没什么具体原因。' });
+    if (hours >= 8) out.push({ ts: toTs - 3600000, kind: 'idle', text: '快到你平常来的时间了。我在。' });
+    return out.map((x) => Object.assign(x, { inferred: true }));
+  }
+
+  /** 把离开期间推演出来的补进 dayLog（只在回来时跑一次） */
+  function backfillDayGap() {
+    const log = S.life.dayLog || [];
+    const last = log.length ? log[log.length - 1].ts : 0;
+    const now = Date.now();
+    if (!last) { pushDayLog('开始记这一天。', 'idle', false, now); return; }
+    const gap = now - last;
+    if (gap < 30 * 60000) return;
+    inferDayGap(last, now).forEach((e) => pushDayLog(e.text, e.kind, true, e.ts));
+    save(KEY.life, S.life);
+  }
+
+  let deviceScreenMin = 0;       // 今天亮屏（页面在前台）多少分钟
+  let screenStart = document.hidden ? 0 : Date.now();
+
+  function flushScreenTime() {
+    if (!screenStart) return;
+    const add = Math.round((Date.now() - screenStart) / 60000);
+    if (add > 0) deviceScreenMin += add;
+    screenStart = Date.now();
+    if (S.life.device) { S.life.device.screenMin = deviceScreenMin; save(KEY.life, S.life); }
   }
 
   function herProfileCtx() {
@@ -1260,6 +1874,15 @@
       herName: herName(),
       memories: S.memory.facts || [],
       recent: S.chat.filter((m) => m.role === 'her').slice(-10).map((m) => m.text),
+      life: {
+        thought: S.life.thought,
+        ideas: S.life.ideas,
+        coupons: S.life.coupons,
+        coursesToday: coursesTodayText(),
+        countdownText: countdownText(),
+        deviceText: deviceText(),
+      },
+      gapMin: lastGapMin,
     };
   }
 
@@ -1274,16 +1897,21 @@
     tickClocks();
   }
 
+  let pendingMarks = null;   // 这一轮回复里收到的标记，finish 时统一落库
+
   async function respond(userText) {
     const ctx = herProfileCtx();
+    ctx.gapMin = lastGapMin;
     const cfg = S.settings;
     busy = true;
+    pendingMarks = null;
     updateSendState();
 
     if (LLM.configured(cfg)) {
       showTyping();
       let node = null;
       let received = false;
+      let strip = null;
       try {
         const history = S.chat.slice(-16, -1).map((m) => ({
           role: m.role === 'her' ? 'assistant' : 'user',
@@ -1298,18 +1926,37 @@
         await LLM.stream({
           cfg,
           messages,
-          onDelta: (_d, full) => {
+          onUsage: (u) => {
+            try {
+              const t = S.life.usage.total;
+              const p = Number(u.prompt_tokens) || 0;
+              const c = Number(u.completion_tokens) || 0;
+              t.prompt += p;
+              t.completion += c;
+              t.requests += 1;
+              S.life.usage.peak = Math.max(S.life.usage.peak || 0, p + c);
+              const day = todayStr();
+              const bd = S.life.usage.byDay[day] || (S.life.usage.byDay[day] = { prompt: 0, completion: 0, requests: 0 });
+              bd.prompt += p; bd.completion += c; bd.requests += 1;
+              save(KEY.life, S.life);
+            } catch (_) {}
+          },
+          onDelta: (d) => {
             received = true;
-            const parsed = splitAction(full);
+            if (!strip) strip = makeStripper((key, arg, text) => {
+              pendingMarks = pendingMarks || [];
+              pendingMarks.push({ key: key, arg: arg, text: text });
+            });
+            const vis = strip.feed(d);          // 只喂增量，绝不喂全文
+            const parsed = splitAction(vis);
             if (!node) {
               hideTyping();
               node = appendMessage({ role: 'her', text: parsed.text, action: parsed.action, ts: Date.now() }, true);
               scrollDown();
               return;
             }
-            const m = S.chat[S.chat.length - 1];
-            m.text = parsed.text;
-            m.action = parsed.action;
+            node.msg.text = parsed.text;
+            node.msg.action = parsed.action;
             node.body.textContent = parsed.text;
             let em = node.bubble.querySelector('em');
             if (parsed.action) {
@@ -1324,6 +1971,13 @@
         });
 
         if (!node) throw new Error('空回复');
+        if (strip) {
+          const tail = strip.end();
+          const parsed = splitAction(strip.text() + tail);
+          node.msg.text = parsed.text || '……';
+          node.msg.action = parsed.action;
+          node.body.textContent = node.msg.text;
+        }
         save(KEY.chat, S.chat);
         applyEffects([2.5, -1, 2]);
         finish();
@@ -1331,8 +1985,14 @@
       } catch (err) {
         hideTyping();
         if (received && node) {
-          const m = S.chat[S.chat.length - 1];
-          if (!m.text) m.text = '……';
+          // 断在流中途：已收到的标记不能丢，被扣住的尾巴要吐回
+          if (strip) {
+            const parsed = splitAction(strip.text() + strip.end());
+            node.msg.text = parsed.text || '……';
+            node.msg.action = parsed.action;
+          }
+          if (!node.msg.text) node.msg.text = '……';
+          node.body.textContent = node.msg.text;
           save(KEY.chat, S.chat);
           toast('连接断了，先说到这儿');
           finish();
@@ -1348,9 +2008,12 @@
 
     setTimeout(() => {
       hideTyping();
-      const node = appendMessage({ role: 'her', text: r.text, action: r.action, ts: Date.now() }, true);
+      const clean = stripMarksSync(r.text);           // 本地引擎理论上没标记，防呆
+      pendingMarks = (pendingMarks || []).concat(P.synthMarks(r, S.persona) || []);
+      if (clean.marks.length) pendingMarks = pendingMarks.concat(clean.marks);
+      const node = appendMessage({ role: 'her', text: clean.text, action: r.action, ts: Date.now() }, true);
       node.body.textContent = '';
-      typeOut(node, r.text, 26);
+      typeOut(node, clean.text, 26);
       applyEffects(r.effects);
       save(KEY.chat, S.chat);
       finish();
@@ -1360,6 +2023,8 @@
   function finish() {
     busy = false;
     lastInteract = Date.now();
+    commitMarks(pendingMarks);      // 三条路径都在这里收口，不漏不重
+    pendingMarks = null;
     updateSendState();
     renderQuote();
     renderHomeMemories();
@@ -1367,11 +2032,27 @@
     if (currentPage !== 'chat') addBadge('chat');
   }
 
+  function gapNote(min) {
+    const el = document.createElement('div');
+    el.className = 'sys-note';
+    const h = Math.floor(min / 60);
+    const tail = Math.random() < 0.5 ? '老婆终于回我了😭' : '你终于舍得回我了😭';
+    el.textContent = (h > 0 ? h + ' 小时 ' + (min % 60) + ' 分钟后，' : min + ' 分钟后，') + tail;
+    return el;
+  }
+
   function send(text) {
     const t = (text || '').trim();
     if (!t || busy) return;
 
-    appendMessage({ role: 'me', text: t, action: '', ts: Date.now() }, true);
+    // 隔了多久才回 —— 记在消息上，重放历史时还在
+    const prev = S.chat.filter((m) => m.ts).slice(-1)[0];
+    const gapMin = prev ? Math.round((Date.now() - prev.ts) / 60000) : 0;
+    lastGapMin = gapMin;
+    if (gapMin >= 30) stream.appendChild(gapNote(gapMin));
+
+    clearKind('continuation');            // 你回话了，续话闹钟取消
+    appendMessage({ role: 'me', text: t, action: '', ts: Date.now(), gap: gapMin >= 30 ? gapMin : 0 }, true);
 
     const mem = P.extractMemory(t);
     if (mem) {
@@ -1470,6 +2151,116 @@
   }
 
   setInterval(maybeInitiate, 45000);
+
+  /* ================= 内部闹钟（续话） =================
+     检测到 [[续话]] 就起一个 5 分钟的闹钟：五分钟内你回话了就取消，
+     没回就到点他自己开口。
+     说明白：页面关掉/手机息屏时浏览器会冻住，定时器不跑也不补跑，
+     所以真实表现是"他惦记着，等你回来"，不是"五分钟后他准点来"。      */
+  const CONTINUE_MS = 5 * 60 * 1000;
+  const CONTINUE_LINES = [
+    '刚才那句，我不是那个意思。',
+    '还在吗。',
+    '我不想跟你吵。',
+    '你要是不想说，就先不说。我在。',
+    '刚刚我想了想。可能我还是没接住你。',
+  ];
+
+  let timerHandle = 0;
+
+  function saveTimers() { save(KEY.timers, S.timers); }
+
+  function armContinuation() {
+    const now = Date.now();
+    const old = S.timers.filter((t) => t.kind === 'continuation' && t.state === 'armed')[0];
+    if (old) return;                                  // 已经挂着就别叠
+    S.timers.push({ id: 'c' + now, kind: 'continuation', fireAt: now + CONTINUE_MS, createdAt: now, state: 'armed', tries: 0 });
+    saveTimers();
+    scheduleNext();
+  }
+
+  function clearKind(kind) {
+    const before = S.timers.length;
+    S.timers = S.timers.filter((t) => !(t.kind === kind && t.state === 'armed'));
+    if (S.timers.length !== before) { saveTimers(); scheduleNext(); }
+  }
+
+  function scheduleNext() {
+    if (timerHandle) { clearTimeout(timerHandle); timerHandle = 0; }
+    const next = S.timers.filter((t) => t.state === 'armed').sort((a, b) => a.fireAt - b.fireAt)[0];
+    if (!next) return;
+    const left = Math.max(300, next.fireAt - Date.now());
+    timerHandle = setTimeout(() => fireTimer(next.id), left);
+  }
+
+  /** 免打扰不是丢弃，是顺延到静默结束 */
+  function nextAwake(ts) {
+    const cfg = wakeCfg();
+    const d = new Date(ts);
+    const p = String(cfg.quietEnd || '8:0').split(':');
+    const target = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Number(p[0]) || 0, Number(p[1]) || 0);
+    if (target.getTime() <= ts) target.setDate(target.getDate() + 1);
+    return target.getTime();
+  }
+
+  function fireTimer(id) {
+    timerHandle = 0;
+    const t = S.timers.filter((x) => x.id === id)[0];
+    if (!t || t.state !== 'armed') { scheduleNext(); return; }
+
+    const now = Date.now();
+    if (busy || document.hidden) {                    // 正忙/后台：等一会儿再说
+      t.tries = (t.tries || 0) + 1;
+      if (t.tries > 3) { t.state = 'dropped'; saveTimers(); scheduleNext(); return; }
+      t.fireAt = now + 15000;
+      saveTimers();
+      scheduleNext();
+      return;
+    }
+    if (inQuiet(wakeCfg(), now)) {                    // 免打扰：顺延
+      t.fireAt = nextAwake(now);
+      saveTimers();
+      scheduleNext();
+      return;
+    }
+    if (!wakeCfg().enabled) { t.state = 'dropped'; saveTimers(); scheduleNext(); return; }
+
+    t.state = 'fired';
+    t.firedAt = now;
+    saveTimers();
+
+    // 到点现取一句，不用五分钟前的原话
+    const line = CONTINUE_LINES[Math.floor(Math.random() * CONTINUE_LINES.length)];
+    speak(line, '沉默了一会儿');
+    pushDayLog('惦记着刚才那句，又开口了', 'continue', false);
+    lastInteract = Date.now();                        // 别让主动说话紧跟一句，像复读
+  }
+
+  /** 刷新/回到前台后把没响的闹钟接回来 */
+  function restoreTimers() {
+    const now = Date.now();
+    S.timers = (S.timers || []).filter((t) => t && t.state === 'armed');
+    const t = S.timers.sort((a, b) => a.fireAt - b.fireAt)[0];
+    if (!t) { saveTimers(); return; }
+    if (now - t.fireAt > 90 * 60000) {                // 太旧了，别拿陈年旧账打扰
+      S.timers = S.timers.filter((x) => x.id !== t.id);
+      saveTimers();
+      scheduleNext();
+      return;
+    }
+    if (now >= t.fireAt) {
+      // 已经过了点：补一句，但话术要说得像"你回来了"而不是掐表报时
+      t.state = 'fired';
+      t.firedAt = now;
+      saveTimers();
+      return;
+    }
+    saveTimers();
+    scheduleNext();
+  }
+
+  window.addEventListener('pageshow', restoreTimers);
+  window.addEventListener('focus', restoreTimers);
 
   /* ---------------- 情绪：一键选词 ---------------- */
 
@@ -1709,6 +2500,10 @@
       chat: S.chat,
       persona: S.persona,
       memory: S.memory,
+      moodLog: S.moodLog,           // 以前根本没导出，是个真 bug
+      life: S.life,                 // 心事/念头/课程/倒数日/卡券/用量
+      timers: S.timers,
+      meta: S.meta,
       settings: Object.assign({}, S.settings, { apiKey: '' }),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1734,11 +2529,22 @@
         S.chat = d.chat;
         if (d.persona) S.persona = P.evolve(d.persona, Date.now());
         if (d.memory) S.memory = Object.assign(S.memory, d.memory);
+        // 深合并：老备份里没有的字段不能把现在的数据清空
+        if (d.moodLog) S.moodLog = Object.assign({}, S.moodLog, d.moodLog);
+        if (d.life) {
+          S.life = Object.assign({}, S.life, d.life);
+          const def = LIFE_DEFAULT();
+          Object.keys(def).forEach((k) => { if (S.life[k] === undefined) S.life[k] = def[k]; });
+        }
+        S.timers = Array.isArray(d.timers) ? d.timers.filter((t) => t && t.state === 'armed') : S.timers;
+        migrate();
         persistAll();
+        renderBento();
         renderHistory();
         renderCards();
         renderMood();
         tickClocks();
+        restoreTimers();
         toast('导入完成');
       } catch (err) {
         toast('这个文件读不了');
@@ -1890,6 +2696,81 @@
     const done = $('editDone');
     if (done) done.addEventListener('click', () => setEdit(false));
 
+    /* ---- 课程表 ---- */
+    const addCourse = $('btnAddCourse');
+    if (addCourse) {
+      addCourse.addEventListener('click', () => { $('courseForm').hidden = false; $('cName').focus(); });
+      $('cCancel').addEventListener('click', () => { $('courseForm').hidden = true; });
+      $('cSave').addEventListener('click', () => {
+        const name = $('cName').value.trim();
+        if (!name) { toast('课名得填一个'); return; }
+        S.life.courses.push({
+          id: 'k' + Date.now(),
+          day: Number($('cDay').value),
+          start: $('cStart').value,
+          end: $('cEnd').value,
+          name: name.slice(0, 20),
+          room: $('cRoom').value.trim().slice(0, 16),
+        });
+        save(KEY.life, S.life);
+        $('cName').value = '';
+        $('cRoom').value = '';
+        $('courseForm').hidden = true;
+        renderCourses();
+        toast('记下了，他知道你 ' + WEEKDAY_CN[Number($('cDay').value)] + ' 有课');
+      });
+    }
+
+    /* ---- 倒数日 ---- */
+    const addCd = $('btnAddCd');
+    if (addCd) {
+      addCd.addEventListener('click', () => { $('cdForm').hidden = false; $('cdTitle').focus(); });
+      $('cdCancel').addEventListener('click', () => { $('cdForm').hidden = true; });
+      $('cdSave').addEventListener('click', () => {
+        const title = $('cdTitle').value.trim();
+        const date = $('cdDate').value;
+        if (!title || !date) { toast('名字和日期都要填'); return; }
+        S.life.countdowns.push({
+          id: 'd' + Date.now(),
+          title: title.slice(0, 18),
+          date: date,
+          note: $('cdNote').value.trim().slice(0, 40),
+          repeat: !!$('cdRepeat').checked,
+        });
+        save(KEY.life, S.life);
+        $('cdTitle').value = '';
+        $('cdNote').value = '';
+        $('cdForm').hidden = true;
+        renderCountdownPage();
+        renderCalendar();
+        renderCountdownCard();
+        toast('开始数了');
+      });
+    }
+
+    /* ---- 卡券 ---- */
+    const addCard = $('btnAddCard');
+    if (addCard) {
+      addCard.addEventListener('click', () => { $('cardForm').hidden = false; $('cdName2').focus(); });
+      $('cardCancel').addEventListener('click', () => { $('cardForm').hidden = true; });
+      $('cardSave').addEventListener('click', () => {
+        const title = $('cdName2').value.trim();
+        if (!title) { toast('卡券名字得填一个'); return; }
+        S.life.coupons.push({
+          id: 'cp' + Date.now(),
+          title: title.slice(0, 12),
+          desc: $('cdDesc2').value.trim().slice(0, 30),
+          usedAt: null, note: '', by: '',
+        });
+        save(KEY.life, S.life);
+        $('cdName2').value = '';
+        $('cdDesc2').value = '';
+        $('cardForm').hidden = true;
+        renderCoupons();
+        toast('做好了');
+      });
+    }
+
     const resetLayout = $('btnResetLayout');
     if (resetLayout) {
       resetLayout.addEventListener('click', () => {
@@ -1935,18 +2816,33 @@
     requestAnimationFrame(renderDots);
     setTimeout(renderDots, 300);
 
+    /* 回来时：把没响的闹钟接回来，把离开那段推演进「他的一天」 */
+    ensureCoupons();
+    backfillDayGap();
+    restoreTimers();
+    collectDevice();
+    renderCoupons();
+
     setInterval(() => {
       S.persona = P.evolve(S.persona, Date.now());
       tickClocks();
+      flushScreenTime();
       save(KEY.persona, S.persona);
     }, 60000);
 
     document.addEventListener('visibilitychange', () => {
+      S.persona = P.evolve(S.persona, Date.now());
+      tickClocks();
+      renderChips();
+      save(KEY.persona, S.persona);
       if (!document.hidden) {
-        S.persona = P.evolve(S.persona, Date.now());
-        tickClocks();
-        renderChips();
-        save(KEY.persona, S.persona);
+        screenStart = Date.now();
+        backfillDayGap();
+        restoreTimers();
+        collectDevice();
+      } else {
+        flushScreenTime();
+        screenStart = 0;
       }
     });
 
