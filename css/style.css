@@ -3442,3 +3442,144 @@ body[data-wall="photo"] .bg {
 /* 她的话多行时行距松一点，像连发的短句 */
 .msg.her .body { line-height: 1.9; }
 .think-ic svg { fill: none !important; stroke: var(--ink-3, #a0a5ad) !important; stroke-width: 1.7 !important; }
+
+/* ============================================================
+   相册 + 朋友圈（ins 简约：近白卡、潮青点缀、大留白）
+   ============================================================ */
+.album-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-bottom: 30px;
+}
+.album-cell {
+  margin: 0;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 0 6px 18px rgba(70, 78, 90, 0.06);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.album-cell:active { transform: scale(0.97); }
+.album-cell img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  background: #eef0f3;
+}
+.album-cell figcaption {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--ink-3, #a0a5ad);
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.album-cell.confirm { outline: 2px solid #e08c8c; }
+
+.moment-composer {
+  position: sticky;
+  bottom: 10px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 20px;
+  z-index: 5;
+}
+.moment-composer textarea {
+  width: 100%;
+  border: none;
+  background: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink-1, #3f434a);
+  outline: none;
+  line-height: 1.6;
+}
+.moment-composer img {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin: 8px 0 4px;
+}
+.moment-row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+.moment-btn {
+  border: none;
+  background: none;
+  font-size: 12px;
+  color: var(--ink-3, #a0a5ad);
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 0;
+}
+.moment-send {
+  border: none;
+  background: var(--tide, #6f9d97);
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 8px 18px;
+  border-radius: 16px;
+  cursor: pointer;
+}
+.moment-send:active { opacity: 0.75; }
+
+.moment-card {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  position: relative;
+}
+.moment-head { display: flex; align-items: center; gap: 10px; }
+.moment-name { margin: 0; font-size: 13px; font-weight: 600; color: var(--ink-1, #3f434a); }
+.moment-text {
+  margin: 10px 0 0;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--ink-1, #3f434a);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.moment-img {
+  width: 100%;
+  border-radius: 14px;
+  margin-top: 10px;
+  display: block;
+}
+.moment-foot {
+  margin-top: 10px;
+  font-size: 10px;
+  color: var(--ink-3, #a0a5ad);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+.moment-reply {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-left: 2.5px solid var(--tide, #6f9d97);
+  border-radius: 6px;
+  background: rgba(111, 157, 151, 0.07);
+  font-size: 13px;
+  color: var(--ink-2, #6b7078);
+  line-height: 1.6;
+}
+.moment-reply.pending { font-style: normal; color: var(--ink-3, #a0a5ad); }
+.moment-del {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  border: none;
+  background: none;
+  font-size: 10.5px;
+  color: var(--ink-3, #a0a5ad);
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.05em;
+}
+.moment-del.confirm { color: #e08c8c; }

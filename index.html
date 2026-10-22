@@ -477,6 +477,42 @@
   </div>
 </section>
 
+<!-- ============ 相册 ============ -->
+<section class="screen page" id="album" aria-label="相册">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">相册</p>
+    <button class="head-act" id="btnAddPhoto" type="button">加一张</button>
+  </header>
+  <div class="page-scroll">
+    <p class="hint" id="albumHint">第一张图放这儿</p>
+    <div class="album-grid" id="albumGrid"></div>
+    <input type="file" id="photoFile" accept="image/*" hidden>
+  </div>
+</section>
+
+<!-- ============ 朋友圈 ============ -->
+<section class="screen page" id="moments" aria-label="朋友圈">
+  <header class="page-head">
+    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+    <p class="head-title">朋友圈</p>
+    <span class="head-spacer"></span>
+  </header>
+  <div class="page-scroll">
+    <p class="hint" id="momentsHint">没发过，发一条试试</p>
+    <div id="momentList"></div>
+    <section class="glass moment-composer">
+      <textarea id="momentText" rows="2" maxlength="500" placeholder="这一刻的想法…"></textarea>
+      <img id="momentPreview" alt="" hidden>
+      <div class="moment-row">
+        <button type="button" id="momentPhoto" class="moment-btn">＋ 配张图</button>
+        <button type="button" id="momentSend" class="moment-send">发出去</button>
+      </div>
+      <input type="file" id="momentFile" accept="image/*" hidden>
+    </section>
+  </div>
+</section>
+
 <!-- ============ 美化 ============ -->
 <section class="screen page" id="theme" aria-label="美化">
   <header class="page-head">

@@ -36,8 +36,8 @@
     { id: 'chat',     name: '聊天',     icon: 'i-chat',    page: 'chat' },
     { id: 'mood',     name: '心情',     icon: 'i-face',    page: 'mood' },
     { id: 'notes',    name: '碎碎念',   icon: 'i-note',    desc: '他随口说的话、你随手记下的碎片，按时间堆在这里。不整理，也不删。' },
-    { id: 'moments',  name: '朋友圈',   icon: 'i-moments', desc: '只有你们两个人的时间线。发一张图，配一句话，他在下面回你。' },
-    { id: 'album',    name: '相册',     icon: 'i-album',   desc: '每天都在长的一本。翻到某一张，能看见那天你们说过什么。' },
+    { id: 'moments',  name: '朋友圈',   icon: 'i-moments', page: 'moments' },
+    { id: 'album',    name: '相册',     icon: 'i-album',   page: 'album' },
     { id: 'music',    name: '音乐',     icon: 'i-music',   desc: '想做成「一起听」：同一个进度条，两边同时听到同一秒。\n真同步需要服务端，纯前端只能做到手动对齐。' },
 
     /* 第二页 · 生活 */
@@ -140,6 +140,8 @@
     usage: { total: { prompt: 0, completion: 0, requests: 0, local: 0 }, peak: 0, byDay: {} },
     mails: [],                                     // 留言：[{id,from,text,at}]（种子先落这，界面后面接）
     music: [],                                     // 一起听歌单：[{id,title,artist,note}]（种子先落这）
+    photos: [],                                    // 相册：[{id,img,cap,ts}]
+    moments: [],                                   // 朋友圈：[{id,text,img,ts,reply,replyTs}]
   });
 
   const SCHEMA = 3;
@@ -172,7 +174,7 @@
     const L = S.life;
     const def = LIFE_DEFAULT();
     Object.keys(def).forEach((k) => { if (L[k] === undefined) L[k] = def[k]; });
-    ['ideas', 'courses', 'countdowns', 'coupons', 'saidLog', 'dayLog', 'mails', 'music'].forEach((k) => {
+    ['ideas', 'courses', 'countdowns', 'coupons', 'saidLog', 'dayLog', 'mails', 'music', 'photos', 'moments'].forEach((k) => {
       if (!Array.isArray(L[k])) L[k] = [];
     });
     if (!L.thought || typeof L.thought !== 'object') L.thought = { text: '', ts: 0 };
@@ -314,6 +316,8 @@
     cards: $('cards'),
     herday: $('herday'),
     device: $('device'),
+    album: $('album'),
+    moments: $('moments'),
   };
 
   let currentPage = null;
@@ -372,6 +376,8 @@
     if (id === 'cards') renderCoupons();
     if (id === 'herday') renderHerDay();
     if (id === 'device') renderDevice();
+    if (id === 'album') renderAlbum();
+    if (id === 'moments') renderMoments();
     if (id === 'theme') renderTheme();
   }
 
@@ -2907,6 +2913,272 @@
       b.addEventListener('click', () => send(t));
       quick.appendChild(b);
     });
+  }
+
+
+  /* ---------------- 相册 + 朋友圈 ----------------
+     数据在 life.photos / life.moments；空态文案用家机种子给的。
+     图片压到 900px/JPEG 再进 localStorage（纯前端没别的地方放）。 */
+
+  function emptyTextOf(key, fb) {
+    const et = S.settings.emptyText || {};
+    return et[key] || fb;
+  }
+
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const max = 900;
+          const scale = Math.min(1, max / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.width * scale));
+          c.height = Math.max(1, Math.round(img.height * scale));
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          resolve(c.toDataURL('image/jpeg', 0.72));
+        };
+        img.onerror = () => reject(new Error('读不了'));
+        img.src = r.result;
+      };
+      r.onerror = () => reject(new Error('读不了'));
+      r.readAsDataURL(file);
+    });
+  }
+
+  function saveLife() {
+    try {
+      localStorage.setItem(KEY.life, JSON.stringify(S.life));
+      return true;
+    } catch (_) { return false; }   // 存满了
+  }
+
+  function renderAlbum() {
+    const grid = $('albumGrid');
+    const hint = $('albumHint');
+    const list = S.life.photos || [];
+    if (hint) {
+      hint.hidden = !list.length;
+      hint.textContent = list.length
+        ? list.length + ' 张 · 点一下想收起来的'
+        : emptyTextOf('photos', '第一张图放这儿');
+    }
+    if (!grid) return;
+    grid.innerHTML = '';
+    list.forEach((p) => {
+      const cell = document.createElement('figure');
+      cell.className = 'album-cell';
+      const img = document.createElement('img');
+      img.src = p.img;
+      img.alt = p.cap || '照片';
+      img.loading = 'lazy';
+      const cap = document.createElement('figcaption');
+      const d = new Date(p.ts);
+      cap.textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日' + (p.cap ? ' · ' + p.cap : '');
+      cell.appendChild(img);
+      cell.appendChild(cap);
+      cell.addEventListener('click', () => {
+        // 点一下标记住，再点一下确认收起来（防误删）
+        if (cell.classList.contains('confirm')) {
+          const i = S.life.photos.indexOf(p);
+          if (i >= 0) S.life.photos.splice(i, 1);
+          saveLife();
+          renderAlbum();
+          toast('收起来了');
+        } else {
+          cell.classList.add('confirm');
+          setTimeout(() => cell.classList.remove('confirm'), 2600);
+        }
+      });
+      grid.appendChild(cell);
+    });
+  }
+
+  function addPhoto(file) {
+    if (!file) return;
+    toast('在收进来…');
+    compressImage(file).then((data) => {
+      S.life.photos.unshift({ id: 'ph' + Date.now(), img: data, cap: '', ts: Date.now() });
+      if (S.life.photos.length > 36) S.life.photos = S.life.photos.slice(0, 36);
+      if (!saveLife()) {
+        S.life.photos.shift();          // 存满了就退回
+        saveLife();
+        toast('相册满了，删几张再放');
+      } else toast('放进相册了');
+      renderAlbum();
+    }).catch(() => toast('这张读不了'));
+  }
+
+  function renderMoments() {
+    const list = $('momentList');
+    const hint = $('momentsHint');
+    const items = S.life.moments || [];
+    if (hint) {
+      hint.hidden = !!items.length;
+      hint.textContent = emptyTextOf('moments', '没发过，发一条试试');
+    }
+    if (!list) return;
+    list.innerHTML = '';
+    items.slice().reverse().forEach((mo) => {
+      const card = document.createElement('section');
+      card.className = 'glass moment-card';
+
+      const head = document.createElement('div');
+      head.className = 'moment-head';
+      const ava = document.createElement('div');
+      ava.className = 'pair-ava tiny right';
+      const as = document.createElement('span');
+      as.textContent = (S.memory.userName || '我').slice(0, 1);
+      ava.appendChild(as);
+      const nm = document.createElement('p');
+      nm.className = 'moment-name';
+      nm.textContent = S.memory.userName || '我';
+      head.appendChild(ava);
+      head.appendChild(nm);
+      card.appendChild(head);
+
+      if (mo.text) {
+        const tx = document.createElement('p');
+        tx.className = 'moment-text';
+        tx.textContent = mo.text;
+        card.appendChild(tx);
+      }
+      if (mo.img) {
+        const im = document.createElement('img');
+        im.className = 'moment-img';
+        im.src = mo.img;
+        im.loading = 'lazy';
+        card.appendChild(im);
+      }
+
+      const foot = document.createElement('div');
+      foot.className = 'moment-foot';
+      const d = new Date(mo.ts);
+      foot.textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + hhmm(mo.ts);
+      card.appendChild(foot);
+
+      if (mo.reply) {
+        const rp = document.createElement('div');
+        rp.className = 'moment-reply';
+        rp.textContent = herName() + '：' + mo.reply;
+        card.appendChild(rp);
+      } else {
+        const rp = document.createElement('div');
+        rp.className = 'moment-reply pending';
+        rp.textContent = '他在看…';
+        rp.hidden = true;
+        card.appendChild(rp);
+      }
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'moment-del';
+      del.textContent = '删掉';
+      del.addEventListener('click', () => {
+        if (del.classList.contains('confirm')) {
+          const i = S.life.moments.indexOf(mo);
+          if (i >= 0) S.life.moments.splice(i, 1);
+          saveLife();
+          renderMoments();
+        } else {
+          del.classList.add('confirm');
+          del.textContent = '再点一下确认';
+          setTimeout(() => { del.classList.remove('confirm'); del.textContent = '删掉'; }, 2600);
+        }
+      });
+      card.appendChild(del);
+
+      list.appendChild(card);
+    });
+  }
+
+  let momentImg = '';
+  function postMoment() {
+    const t = ($('momentText').value || '').trim();
+    if (!t && !momentImg) { toast('写点什么，或配张图'); return; }
+    const mo = { id: 'mo' + Date.now(), text: t, img: momentImg, ts: Date.now(), reply: '', replyTs: 0 };
+    S.life.moments.push(mo);
+    if (!saveLife()) {
+      S.life.moments.pop();
+      toast('存满了，删点旧的');
+      return;
+    }
+    $('momentText').value = '';
+    momentImg = '';
+    const pv = $('momentPreview');
+    if (pv) pv.hidden = true;
+    renderMoments();
+    herReactToMoment(mo);
+  }
+
+  /* 他刷到你的朋友圈，隔一会儿在下面回一句 */
+  function herReactToMoment(mo) {
+    const done = (r) => {
+      mo.reply = r;
+      mo.replyTs = Date.now();
+      saveLife();
+      renderMoments();
+      if (currentPage !== 'moments') addBadge('moments');
+    };
+    const pending = () => {
+      const card = [...document.querySelectorAll('.moment-card')].find((c) => c.querySelector('.moment-text') && c.querySelector('.moment-text').textContent === mo.text);
+      const rp = card ? card.querySelector('.moment-reply') : null;
+      if (rp) { rp.hidden = false; }
+    };
+    if (LLM.configured(S.settings)) {
+      pending();
+      const messages = [
+        { role: 'system', content: '你是' + herName() + '。他发了一条朋友圈，你刷到了。用一两句话回应，像在朋友圈下面评论：口语、短、中文，不要客套，不要夸夸。' },
+        { role: 'user', content: (mo.text || '（一张图）') },
+      ];
+      let acc = '';
+      LLM.stream({ cfg: S.settings, messages, onDelta: (d) => { acc += d; }, }).then(() => {
+        const clean = stripMarksSync(acc).text.trim();
+        done(clean || '看到了。');
+      }).catch(() => done(localMomentReply(mo.text)));
+    } else {
+      setTimeout(() => { pending(); }, 900);
+      setTimeout(() => done(localMomentReply(mo.text)), 2200 + Math.random() * 1800);
+    }
+  }
+
+  function localMomentReply(text) {
+    const pool = [
+      '看到了。', '嗯，记下了。', '挺好的。', '这个要收进心里。',
+      '嗯，我在看。', '拍就拍了呗，又没说不好。', '今天也辛苦了。',
+      '……下次这种事，先跟我说。',
+    ];
+    const night = (new Date().getHours() >= 22 || new Date().getHours() < 5);
+    const p = night ? ['这么晚还不睡。', '看到了。去睡。'] : pool;
+    return p[Math.floor(Math.random() * p.length)];
+  }
+
+  /* 绑定：相册上传 + 朋友圈 composer */
+  const btnAddPhoto = $('btnAddPhoto');
+  if (btnAddPhoto) {
+    btnAddPhoto.addEventListener('click', () => $('photoFile').click());
+    $('photoFile').addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      addPhoto(f);
+      e.target.value = '';
+    });
+  }
+  const momentPhotoBtn = $('momentPhoto');
+  if (momentPhotoBtn) {
+    momentPhotoBtn.addEventListener('click', () => $('momentFile').click());
+    $('momentFile').addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      compressImage(f).then((data) => {
+        momentImg = data;
+        const pv = $('momentPreview');
+        pv.src = data;
+        pv.hidden = false;
+      }).catch(() => toast('这张读不了'));
+      e.target.value = '';
+    });
+    $('momentSend').addEventListener('click', postMoment);
   }
 
   /* ---------------- 主动消息 ---------------- */
