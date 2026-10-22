@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v35';
+  window.__TIDE_MARK = 'LOCAL-v36';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -71,9 +71,10 @@
     { id: 'travel',   name: '旅行',     icon: 'i-plane',   desc: '想去哪、什么时候去、要带什么。攒够了就出发。' },
   ];
 
+  /* 底部常驻四个：他 / 说 / 记 / 我（顺序固定，别再加第五个） */
   const DOCK_DEFAULT = [
-    { id: 'chat',     name: '说', icon: 'i-chat',  page: 'chat' },
     { id: 'mood',     name: '他', icon: 'i-face',  page: 'mood' },
+    { id: 'chat',     name: '说', icon: 'i-chat',  page: 'chat' },
     { id: 'memory',   name: '记', icon: 'i-brain', page: 'memory' },
     { id: 'settings', name: '我', icon: 'i-gear',  page: 'settings' },
   ];
@@ -108,14 +109,72 @@
     timers: 'hc.v1.timers',  // 内部闹钟（续话那种）
     meta: 'hc.v1.meta',      // schema 版本
     chatUI: 'hc.v1.chatUI',  // 聊天界面专属设置（头像/备注/美化/输入）
+    homeOrder: 'hc.v1.homeOrder', // 首屏卡片顺序（可拖，默认按规范那五块）
   };
 
+  /* ============================================================
+     统一存储：localStorage 只有一个 key —— tide.v1
+     老版本散在 hc.v1.* 的数据第一次读到时整体搬过来（旧 key 保留做备份，不删）。
+     页面里照旧用 load(KEY.x) / save(KEY.x, v)，调用方式不变。
+     写回是有变化才写，不每次无脑刷。
+     ============================================================ */
+  const TIDE_KEY = 'tide.v1';
+  let __tide = null;          // 整个 state 的内存镜像
+  let __tideSnap = '';        // 上次落盘的字符串，用来判断有没有真变化
+  const fieldOf = (k) => k.split('.').pop();
+
+  function tideWriteNow() {
+    if (!__tide) return;
+    const s = JSON.stringify(__tide);
+    if (s === __tideSnap) return;
+    try { localStorage.setItem(TIDE_KEY, s); __tideSnap = s; } catch (_) {}
+  }
+
+  let __tideTimer = 0;
+  function tideWrite() {
+    if (__tideTimer) return;
+    __tideTimer = setTimeout(() => { __tideTimer = 0; tideWriteNow(); }, 0);
+  }
+
+  /* 老 key 搬家：hc.v1.* → tide.v1，任何一条有数据就算迁移过 */
+  function tideMigrate() {
+    const out = {};
+    let any = false;
+    Object.keys(KEY).forEach((f) => {
+      let r = null;
+      try { r = localStorage.getItem(KEY[f]); } catch (_) {}
+      if (r) { try { out[f] = JSON.parse(r); any = true; } catch (_) {} }
+    });
+    return any ? out : null;
+  }
+
+  function tideLoad() {
+    if (__tide) return __tide;
+    let obj = null;
+    try { const r = localStorage.getItem(TIDE_KEY); if (r) obj = JSON.parse(r); } catch (_) {}
+    if (!obj || typeof obj !== 'object') {
+      obj = tideMigrate() || {};
+      __tide = obj;
+      tideWriteNow();     // 迁移结果立刻落盘，旧 key 原样留着
+      return __tide;
+    }
+    __tide = obj;
+    __tideSnap = JSON.stringify(obj);
+    return __tide;
+  }
+
   const load = (k, fb) => {
-    try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; }
-    catch (_) { return fb; }
+    const t = tideLoad();
+    const v = t[fieldOf(k)];
+    return v === undefined ? fb : v;
   };
   const save = (k, v) => {
-    try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {}
+    tideLoad()[fieldOf(k)] = v;
+    tideWrite();
+  };
+  const dropKey = (k) => {
+    delete tideLoad()[fieldOf(k)];
+    tideWrite();
   };
 
   let APPS = loadOrder(KEY.apps, APPS_DEFAULT);
@@ -265,17 +324,29 @@
     if (seed.empty_text) S.settings.emptyText = seed.empty_text;
     if (seed.me && seed.me.status_line) S.settings.statusLine = seed.me.status_line;
     persistAll();
+    tideWriteNow();
   }
 
-  function seedIfEmpty() {
+  /* 第一次进站：本地没数据时 fetch 同级 seed.json 灌进来。
+     file:// 或离线时 fetch 不到，退回 js/seed.js 里那份（内容同源）。 */
+  async function seedIfEmpty() {
     if (load(KEY.seeded, false)) return;
     const untouched =
       !S.chat.length &&
       !(S.memory.facts || []).length &&
       !S.life.countdowns.length &&
       S.memory.startDate === todayStr();
-    if (untouched && window.TIDE_SEED) applySeed(window.TIDE_SEED);
+    if (untouched) {
+      let seed = null;
+      try {
+        const res = await fetch('seed.json', { cache: 'no-cache' });
+        if (res.ok) seed = await res.json();
+      } catch (_) {}
+      if (!seed) seed = window.TIDE_SEED;
+      if (seed) applySeed(seed);
+    }
     save(KEY.seeded, true);
+    tideWriteNow();
   }
 
   const persistAll = () => {
@@ -289,7 +360,7 @@
     save(KEY.meta, S.meta);
   };
 
-  seedIfEmpty();   // 第一次进站：没数据就把家机的种子灌进来
+  // seedIfEmpty 挪进 boot() 里 await：先灌种子再渲染，首屏不会先空一下再变
 
   /* ---------------- 小工具 ---------------- */
 
@@ -603,12 +674,14 @@
   function renderApps() {
     const grid = $('appGrid');
     const grid2 = $('appGrid2');
+    const all = $('appGridAll');
     const dock = $('dock');
     if (grid) { grid.innerHTML = ''; appPages[1].forEach((a) => grid.appendChild(makeTile(a))); }
     if (grid2) { grid2.innerHTML = ''; appPages[2].forEach((a) => grid2.appendChild(makeTile(a))); }
     // 第三页没东西就别留一屏空白
     const page3 = grid2 ? grid2.closest('.home-page') : null;
     if (page3) page3.hidden = grid2.children.length === 0;
+    if (all) { all.innerHTML = ''; APPS.forEach((a) => all.appendChild(makeTile(a))); }
     if (dock) { dock.innerHTML = ''; DOCK.forEach((a) => dock.appendChild(makeTile(a))); }
   }
 
@@ -642,6 +715,7 @@
     setTxt('clockSub', P.statusLine(S.persona, Date.now()));
     setTxt('clockTime', pad(now.getHours()) + ':' + pad(now.getMinutes()));
     setTxt('clockDate', dateLabel(now));
+    if (typeof updateGrid === 'function') updateGrid();
     document.querySelectorAll('.sb-date-mini').forEach((el) => {
       el.textContent = dateLabel(now);
     });
@@ -1033,6 +1107,178 @@
     renderQuad();
     bindMusic();
     updateWidgets();
+  }
+
+  /* ============================================================
+     首屏：四栏栅格里从上到下固定五块
+     4x2 状态大卡 → 4x1 音乐条 → 2x1 + 1x1 + 1x1 → 2x2 数据卡 → 4x1 一句话卡
+     顺序可以长按拖动换，存在 homeOrder 里；不拖就永远是这个顺序。
+     ============================================================ */
+  const GRID_SIZE = {
+    status: 'g-4x2', music: 'g-4x1', next: 'g-2x1',
+    album: 'g-1x1', mail: 'g-1x1', data: 'g-2x2', said: 'g-4x1',
+  };
+  const GRID_DEFAULT = ['status', 'music', 'next', 'album', 'mail', 'data', 'said'];
+
+  const GRID_HTML = {
+    status: () =>
+      '<div class="ripple"><i></i><i></i><i></i></div>' +
+      '<div class="who">' +
+        '<div class="ava" id="gAva">满</div>' +
+        '<div>' +
+          '<p class="t-20" id="gName">—</p>' +
+          '<p class="t-11 dim"><i class="breath" style="display:inline-block;vertical-align:middle;margin-right:4px"></i><span id="gHome">在家</span></p>' +
+        '</div>' +
+      '</div>' +
+      '<p class="t-11 dim">TODAY</p>' +
+      '<p class="t-15" id="gStatus">…</p>',
+
+    music: () =>
+      '<div class="cover"><svg viewBox="0 0 24 24"><use href="#i-music"/></svg></div>' +
+      '<div class="meta">' +
+        '<p class="t-11 dim">NOW PLAYING</p>' +
+        '<p class="t-15" id="gSong">—</p>' +
+      '</div>' +
+      '<div class="bar"><i></i></div>',
+
+    next: () =>
+      '<p class="t-11 dim">接下来</p>' +
+      '<p class="t-20"><span id="gNextDays">—</span> <span class="t-11 dim">天后</span></p>' +
+      '<p class="t-11 dim" id="gNextName">—</p>',
+
+    album: () =>
+      '<svg viewBox="0 0 24 24"><use href="#i-photo"/></svg>' +
+      '<p class="t-20" id="gAlbumN">0</p>' +
+      '<p class="t-11 dim" id="gAlbumT">张照片</p>',
+
+    mail: () =>
+      '<svg viewBox="0 0 24 24"><use href="#i-mail"/></svg>' +
+      '<p class="t-20" id="gMailN">0</p>' +
+      '<p class="t-11 dim" id="gMailT">条留言</p>',
+
+    data: () =>
+      '<div class="row">' +
+        '<p class="t-11 dim">心率</p>' +
+        '<p class="num"><span class="t-44" id="gBpm">—</span><span class="unit">bpm</span></p>' +
+      '</div>' +
+      '<div class="row">' +
+        '<p class="t-11 dim">电量</p>' +
+        '<p class="num"><span class="t-44" id="gBat">—</span><span class="unit">%</span></p>' +
+      '</div>',
+
+    said: () =>
+      '<p class="t-11 dim">他想对你说</p>' +
+      '<p class="t-15 txt" id="gSaid">…</p>',
+  };
+
+  const GRID_GO = { music: 'music', next: 'countdown', album: 'album', mail: 'message', said: 'chat' };
+
+  function gridOrder() {
+    const saved = load(KEY.homeOrder, null);
+    const arr = Array.isArray(saved) ? saved.filter((id) => GRID_SIZE[id]) : [];
+    GRID_DEFAULT.forEach((id) => { if (arr.indexOf(id) < 0) arr.push(id); });
+    return arr;
+  }
+
+  function emptyText(k, fb) {
+    const e = (S.settings && S.settings.emptyText) || {};
+    return e[k] || fb;
+  }
+
+  function renderGrid() {
+    const box = $('grid');
+    if (!box) return;
+    box.innerHTML = '';
+    gridOrder().forEach((id) => {
+      const el = document.createElement('div');
+      el.className = 'card ' + GRID_SIZE[id] + ' c-' + id;
+      el.dataset.card = id;
+      el.innerHTML = GRID_HTML[id]();
+      const go = GRID_GO[id];
+      if (go) el.addEventListener('click', () => openPage(go));
+      box.appendChild(el);
+    });
+    bindGridDrag(box);
+    updateGrid();
+  }
+
+  function updateGrid() {
+    const L = S.life || {};
+    setTxt('gAva', herInitial());
+    setTxt('gName', herName());
+    setTxt('gHome', (S.settings && S.settings.statusLine) || '在家');
+    setTxt('gStatus', P.statusLine(S.persona, Date.now()));
+
+    const song = (L.music || [])[0];
+    setTxt('gSong', song ? song.title + ' · ' + song.artist : '想听什么，放给我');
+
+    // 接下来：最近的一个倒数日
+    const cds = (L.countdowns || []).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    let hit = null;
+    for (let i = 0; i < cds.length; i++) {
+      const d = Math.ceil((new Date(cds[i].date + 'T00:00:00').getTime() - Date.now()) / 86400000);
+      if (d >= 0) { hit = { c: cds[i], d: d }; break; }
+    }
+    setTxt('gNextDays', hit ? String(hit.d) : '—');
+    setTxt('gNextName', hit ? hit.c.title : '先攒一个日子，一起数');
+
+    const pn = (L.photos || []).length;
+    const mn = (L.mails || []).length;
+    setTxt('gAlbumN', String(pn));
+    setTxt('gAlbumT', pn ? '张照片' : '去放第一张');
+    setTxt('gMailN', String(mn));
+    setTxt('gMailT', mn ? '条留言' : '写一句给他');
+
+    setTxt('gBpm', String(56 + Math.round((S.persona.mood || 0) / 3)));
+    setTxt('gBat', String(Math.round(S.persona.energy || 0)));
+    setTxt('gSaid', (L.said && L.said.text) || emptyText('chat', '还没说话，说一句就开张'));
+  }
+
+  /* 长按换位置：默认顺序已经排好，想换就换，换了记下来 */
+  function bindGridDrag(box) {
+    let timer = 0, from = null, down = false;
+
+    const cardAt = (x, y) => {
+      const els = box.querySelectorAll('.card');
+      for (let i = 0; i < els.length; i++) {
+        const r = els[i].getBoundingClientRect();
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return els[i];
+      }
+      return null;
+    };
+
+    box.addEventListener('pointerdown', (e) => {
+      const card = e.target.closest ? e.target.closest('.card') : null;
+      if (!card) return;
+      down = true;
+      from = card;
+      timer = setTimeout(() => {
+        if (!down || !from) return;
+        from.classList.add('dragging');
+        box.classList.add('dragging');
+      }, 480);
+    });
+
+    box.addEventListener('pointermove', (e) => {
+      if (!down || !from || !from.classList.contains('dragging')) return;
+      const over = cardAt(e.clientX, e.clientY);
+      if (!over || over === from) return;
+      const cards = Array.prototype.slice.call(box.querySelectorAll('.card'));
+      const a = cards.indexOf(from), b = cards.indexOf(over);
+      if (a < 0 || b < 0) return;
+      box.insertBefore(from, a < b ? over.nextSibling : over);
+    });
+
+    const end = () => {
+      clearTimeout(timer);
+      if (from) from.classList.remove('dragging');
+      box.classList.remove('dragging');
+      down = false; from = null;
+      const order = Array.prototype.slice.call(box.querySelectorAll('.card')).map((c) => c.dataset.card);
+      save(KEY.homeOrder, order);
+    };
+    box.addEventListener('pointerup', end);
+    box.addEventListener('pointercancel', end);
   }
 
   /** 第二页：没放进首页的组件 */
@@ -2612,7 +2858,8 @@
     if (reset) {
       reset.addEventListener('click', () => {
         if (!confirm('组件和应用都回到默认位置？')) return;
-        [KEY.layout, KEY.apps, KEY.dock, KEY.pages].forEach((k) => { try { localStorage.removeItem(k); } catch (_) {} });
+        [KEY.layout, KEY.apps, KEY.dock, KEY.pages].forEach((k) => dropKey(k));
+        tideWriteNow();
         layout = LAYOUT_DEFAULT.slice();
         APPS = loadOrder(KEY.apps, APPS_DEFAULT);
         DOCK = loadOrder(KEY.dock, DOCK_DEFAULT);
@@ -2633,11 +2880,17 @@
     const exp = $('btnExport');
     if (exp) {
       exp.addEventListener('click', () => {
-        const dump = { app: 'tide', exported_at: new Date().toISOString(), keys: {} };
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k.indexOf('hc.v1.') === 0) dump.keys[k] = localStorage.getItem(k);
-        }
+        tideWriteNow();                       // 先把内存里的改动落盘再导出
+        const state = {};
+        Object.keys(KEY).forEach((f) => { const v = tideLoad()[f]; if (v !== undefined) state[f] = v; });
+        const dump = {
+          app: 'tide', key: TIDE_KEY, exported_at: new Date().toISOString(),
+          state,
+          keys: {},                           // 顺带保留老格式（hc.v1.* 字符串），老版本也能读
+        };
+        Object.keys(state).forEach((f) => {
+          try { dump.keys[KEY[f]] = JSON.stringify(state[f]); } catch (_) {}
+        });
         const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -2657,15 +2910,24 @@
         r.onload = () => {
           try {
             const dump = JSON.parse(r.result);
-            const keys = dump && dump.keys ? dump.keys : dump;
+            const t = tideLoad();
             let n = 0;
+            // 新格式：state 里是已经解析好的数据
+            if (dump && dump.state && typeof dump.state === 'object') {
+              Object.keys(dump.state).forEach((f) => {
+                if (Object.prototype.hasOwnProperty.call(KEY, f)) { t[f] = dump.state[f]; n += 1; }
+              });
+            }
+            // 老格式：keys 里是 'hc.v1.xxx': 'json字符串'
+            const keys = dump && dump.keys ? dump.keys : dump;
             Object.keys(keys).forEach((k) => {
-              if (k.indexOf('hc.v1.') === 0 && typeof keys[k] === 'string') {
-                localStorage.setItem(k, keys[k]);
-                n += 1;
-              }
+              if (k.indexOf('hc.v1.') !== 0 || typeof keys[k] !== 'string') return;
+              const f = fieldOf(k);
+              if (!Object.prototype.hasOwnProperty.call(KEY, f)) return;
+              try { t[f] = JSON.parse(keys[k]); n += 1; } catch (_) {}
             });
             if (!n) { toast('这里头没有本站的数据'); return; }
+            tideWriteNow();
             location.reload();
           } catch (_) { toast('这个文件读不了'); }
         };
@@ -3064,7 +3326,7 @@
 
   function saveLife() {
     try {
-      localStorage.setItem(KEY.life, JSON.stringify(S.life));
+      save(KEY.life, S.life);
       return true;
     } catch (_) { return false; }   // 存满了
   }
@@ -3109,7 +3371,7 @@
 
   function saveLife() {
     try {
-      localStorage.setItem(KEY.life, JSON.stringify(S.life));
+      save(KEY.life, S.life);
       return true;
     } catch (_) { return false; }   // 存满了
   }
@@ -3950,7 +4212,8 @@
 
   $('btnReset').addEventListener('click', () => {
     if (!confirm('会删掉这段关系里的所有记录和记忆，且无法恢复。确定？')) return;
-    Object.keys(KEY).forEach((k) => localStorage.removeItem(KEY[k]));
+    Object.keys(KEY).forEach((k) => { try { localStorage.removeItem(KEY[k]); } catch (_) {} });
+    try { localStorage.removeItem(TIDE_KEY); } catch (_) {}
     location.reload();
   });
 
@@ -4244,8 +4507,9 @@
     });
   }
 
-  function boot() {
-    renderTogether();
+  async function boot() {
+    await seedIfEmpty();   // 第一次进站：没数据就 fetch 同级 seed.json 灌进来
+    renderGrid();
     renderBento();
     renderBento2();
     renderApps();
@@ -4378,9 +4642,8 @@
     if (resetLayout) {
       resetLayout.addEventListener('click', () => {
         if (!confirm('把组件和应用都放回默认位置？')) return;
-        [KEY.layout, KEY.apps, KEY.dock, KEY.pages].forEach((k) => {
-          try { localStorage.removeItem(k); } catch (_) {}
-        });
+        [KEY.layout, KEY.apps, KEY.dock, KEY.pages].forEach((k) => dropKey(k));
+        tideWriteNow();
         layout = LAYOUT_DEFAULT.slice();
         APPS = loadOrder(KEY.apps, APPS_DEFAULT);
         DOCK = loadOrder(KEY.dock, DOCK_DEFAULT);

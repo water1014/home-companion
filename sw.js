@@ -1,4 +1,4 @@
-const CACHE = 'xiaoman-v35';
+const CACHE = 'xiaoman-v36';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   './js/llm.js',
   './js/app.js',
   './js/seed.js',
+  './seed.json',
   './manifest.webmanifest',
   './icons/icon.svg',
   './icons/wall.jpg',

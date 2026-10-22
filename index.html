@@ -77,43 +77,17 @@
 
   <div class="home-pager" id="homePager">
 
-    <!-- ===== 第一页 · 组件 ===== -->
-    <section class="home-page" aria-label="桌面">
+    <!-- 只有一屏，上下滚动 -->
+    <section class="home-page active" aria-label="桌面">
       <div class="statusbar">
         <span id="sbDate">7月11日 星期六</span>
         <span class="sb-right"><i class="sb-dot"></i><span id="sbState">他在家</span></span>
       </div>
 
-      <p class="together-line" id="togetherLine"></p>
-      <div class="bento" id="bento"></div>
-    </section>
+      <!-- 首屏：四栏栅格，从上到下固定五块 -->
+      <div class="grid" id="grid" aria-label="首屏"></div>
 
-    <!-- ===== 第二页 · 组件（续）+ 应用 ===== -->
-    <section class="home-page" aria-label="应用">
-      <div class="statusbar">
-        <span class="sb-date-mini">10月21日 星期三</span>
-        <span class="page-label">应用</span>
-      </div>
-      <div class="bento" id="bento2"></div>
-      <nav class="app-grid app-grid-all" id="appGrid" aria-label="全部应用"></nav>
-    </section>
-
-    <!-- ===== 第三页 · 应用（续） ===== -->
-    <section class="home-page" aria-label="应用续">
-      <div class="statusbar">
-        <span class="sb-date-mini">10月21日 星期三</span>
-        <span class="page-label">应用 · 剩下的</span>
-      </div>
-      <nav class="app-grid app-grid-all" id="appGrid2" aria-label="剩下的应用"></nav>
-    </section>
-
-    <!-- ===== 第三页 · 我们的 ===== -->
-    <section class="home-page" aria-label="我们的">
-      <div class="statusbar">
-        <span class="sb-date-mini">10月21日 星期三</span>
-        <span class="page-label">我们的</span>
-      </div>
-
+      <!-- 再往下滚：我们的（日历 / 纪念日 / 这一周 / 统计） -->
       <section class="cal-card glass" id="calCard">
         <header class="cal-head">
           <h2 id="calTitle">2026 · 十月</h2>
@@ -161,11 +135,7 @@
 
   </div>
 
-  <div class="pager-dots" id="pagerDots" aria-label="页面切换"></div>
-
-
-
-  <div class="page-dots-hint" id="editHint" hidden>拖动换位置 · 悬到两侧箭头停一下翻页</div>
+  <div class="page-dots-hint" id="editHint" hidden>长按卡片可换位置</div>
   <button class="edit-done" id="editDone" type="button" hidden>完成</button>
 
   <nav class="dock glass" id="dock" aria-label="常驻"></nav>
@@ -383,6 +353,12 @@
         <p class="profile-sub" id="setMoodLine">这台手机里住着一个人。</p>
       </div>
       <p class="profile-note">他的备注<b id="setNoteHer">宋祁</b></p>
+    </section>
+
+    <!-- 全部应用（原应用页的图标都收在这） -->
+    <section class="glass set-apps-card">
+      <header class="card-head"><h3>全部应用</h3></header>
+      <nav class="app-grid app-grid-all" id="appGridAll" aria-label="全部应用"></nav>
     </section>
 
     <section class="glass list-card">
