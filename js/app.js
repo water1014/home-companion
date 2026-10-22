@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v37';
+  window.__TIDE_MARK = 'LOCAL-v38';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -32,43 +32,60 @@
   }
 
   const APP_VER = '23';   // 版本号会显示在编辑提示里，方便确认手机上跑的是哪版
+  /* 五类：now 现在 / past 过去 / next 将来 / between 之间 / me 我
+     cat 决定它落在「全部应用」的哪一组；名字统一两个字 */
   const APPS_DEFAULT = [
-    /* 第一页 · 日常 */
-    { id: 'chat',     name: '聊天',     icon: 'i-chat',    page: 'chat' },
-    { id: 'mood',     name: '心情',     icon: 'i-face',    page: 'mood' },
-    { id: 'notes',    name: '碎碎念',   icon: 'i-note',    desc: '他随口说的话、你随手记下的碎片，按时间堆在这里。不整理，也不删。' },
-    { id: 'moments',  name: '朋友圈',   icon: 'i-moments', page: 'moments' },
-    { id: 'album',    name: '相册',     icon: 'i-album',   page: 'album' },
-    { id: 'music',    name: '音乐',     icon: 'i-music',   desc: '想做成「一起听」：同一个进度条，两边同时听到同一秒。\n真同步需要服务端，纯前端只能做到手动对齐。' },
+    /* 【现在】当下正在发生的事 */
+    { id: 'chat',     name: '聊天', icon: 'i-chat',    cat: 'now', page: 'chat' },
+    { id: 'mood',     name: '状态', icon: 'i-face',    cat: 'now', page: 'mood' },
+    { id: 'partnerday', name: '一天', icon: 'i-sunrise', cat: 'now', page: 'partnerday' },
+    { id: 'device',   name: '设备', icon: 'i-device',  cat: 'now', page: 'device' },
+    { id: 'health',   name: '健康', icon: 'i-health',  cat: 'now', desc: '睡眠、喝水、久坐。数字旁边会跟一句人话，比如「今天只走了 800 步，坐太久了」。' },
+    { id: 'weather',  name: '天气', icon: 'i-sun',     cat: 'now', desc: '今天的温度、有没有雨。不接 API 就先手动记，接了就自动。' },
+    { id: 'voice',    name: '声音', icon: 'i-wave',    cat: 'now', desc: '让他读出来，或者发一条语音。先在本地合成，不联网也能响。' },
+    { id: 'music',    name: '音乐', icon: 'i-music',   cat: 'now', desc: '想做成「一起听」：同一个进度条，两边同时听到同一秒。\n真同步需要服务端，纯前端只能做到手动对齐。' },
 
-    /* 第二页 · 生活 */
-    { id: 'health',   name: '健康',     icon: 'i-health',  desc: '睡眠、喝水、久坐。数字旁边会跟一句人话，比如「今天只走了 800 步，坐太久了」。' },
-    { id: 'weather',  name: '天气',     icon: 'i-sun',     desc: '今天的温度、有没有雨。不接 API 就先手动记，接了就自动。' },
-    { id: 'ledger',   name: '记账本',   icon: 'i-ledger',  desc: '一起花的钱，一笔一笔。他也可以记下自己「想要」的东西。' },
-    { id: 'quota',    name: '额度',     icon: 'i-quota',   desc: '不显示还剩多少钱，显示还能陪你几次。' },
-    { id: 'study',    name: '学习',     icon: 'i-book',    desc: '一起背单词、番茄钟。他在旁边看着，你走神他会说一句。' },
-    { id: 'calendar', name: '日历',     icon: 'i-cal',     desc: '纪念日、约定、他的作息。点某一天，能看见那天发生了什么。' },
+    /* 【过去】已经存下来的东西 */
+    { id: 'memory',   name: '记忆', icon: 'i-brain',   cat: 'past', page: 'memory' },
+    { id: 'album',    name: '相册', icon: 'i-album',   cat: 'past', page: 'album' },
+    { id: 'moments',  name: '朋友圈', icon: 'i-moments', cat: 'past', page: 'moments' },
+    { id: 'notes',    name: '记录', icon: 'i-note',    cat: 'past', desc: '聊天记录导出、日记流水，按时间堆在这里。' },
+    { id: 'travel',   name: '旅行', icon: 'i-plane',   cat: 'past', desc: '想去哪、什么时候去、要带什么。攒够了就出发。' },
+    { id: 'starsea',  name: '星海', icon: 'i-starsea', cat: 'past', desc: '一片只属于你们的夜空。看过的、想去的、说过的，都挂成星星。' },
+    { id: 'studyroom', name: '书房', icon: 'i-book',   cat: 'past', desc: '位置留好了。想放什么（一起读书的笔记、他的抽屉）等你说了算。' },
 
-    /* 第三页 · 他 */
-    { id: 'memory',   name: '记忆库',   icon: 'i-brain',   page: 'memory' },
-    { id: 'image',    name: '生图',     icon: 'i-magic',   desc: '打字出图。他的样子、你们想去的地方、今天的心情。\n需要一个画图的 API Key，接在哪由你定。' },
-    { id: 'voice',    name: '声音',     icon: 'i-wave',    desc: '让他读出来，或者发一条语音。先在本地合成，不联网也能响。' },
-    { id: 'theme',    name: '美化',     icon: 'i-palette', page: 'theme' },
-    { id: 'wake',     name: '自主唤醒', icon: 'i-bell',    desc: '不只被叫才说话。定时或随机地，主动找你一次。\n纯前端只能在页面打开时生效；要做到真提醒得走通知 + 服务端。' },
-    { id: 'wish',     name: '心愿',     icon: 'i-spark',   desc: '想一起做的事。做掉一件，划掉一件。' },
+    /* 【将来】还没到的时间 */
+    { id: 'courses',  name: '课程', icon: 'i-course',  cat: 'next', page: 'courses' },
+    { id: 'countdown', name: '倒数', icon: 'i-hourglass', cat: 'next', page: 'countdown' },
+    { id: 'anniv',    name: '纪念日', icon: 'i-heart', cat: 'next', desc: '从倒数里分出来的一页：在一起多少天，以及每年要过的那几个日子。页面下一步做。' },
+    { id: 'calendar', name: '日历', icon: 'i-cal',     cat: 'next', desc: '纪念日、约定、他的作息。点某一天，能看见那天发生了什么。' },
 
-    /* 第五页 · 他 */
-    { id: 'courses',   name: '课程表',   icon: 'i-course',    page: 'courses' },
-    { id: 'countdown', name: '倒数日',   icon: 'i-hourglass', page: 'countdown' },
-    { id: 'cards',     name: '卡券',     icon: 'i-ticket',    page: 'cards' },
-    { id: 'partnerday',    name: '他的一天', icon: 'i-sunrise',   page: 'partnerday' },
-    { id: 'device',    name: '查手机',   icon: 'i-device',    page: 'device' },
-    { id: 'game',      name: '小游戏',   icon: 'i-game',      desc: '不止一个。石头剪刀布、猜数字、真心话……能一起耗时间的小东西。下一批做。' },
-    { id: 'console',   name: '控制房',   icon: 'i-meter',     desc: '模型用量：峰值 token、总请求数、本地引擎命中率、输出量、估算费用。\n用量数据现在就在默默记着，界面下一批做。' },
-    { id: 'studyroom', name: '书房',     icon: 'i-book',      desc: '位置留好了。想放什么（一起读书的笔记、他的抽屉）等你说了算。' },
-    { id: 'message',  name: '留言',     icon: 'i-mail',    desc: '他不在的时候，你可以留一句；他回来会先看到。反过来也一样。' },
-    { id: 'starsea',  name: '星海',     icon: 'i-starsea', desc: '一片只属于你们的夜空。看过的、想去的、说过的，都挂成星星。' },
-    { id: 'travel',   name: '旅行',     icon: 'i-plane',   desc: '想去哪、什么时候去、要带什么。攒够了就出发。' },
+    /* 【之间】两个人互相给的东西 */
+    { id: 'cards',    name: '卡券', icon: 'i-ticket',  cat: 'between', page: 'cards' },
+    { id: 'message',  name: '留言', icon: 'i-mail',    cat: 'between', page: 'message' },
+    { id: 'letter',   name: '信',   icon: 'i-mail',    cat: 'between', desc: '写了但不急着让你看到的，攒着。到点才拆。' },
+    { id: 'wish',     name: '心愿', icon: 'i-spark',   cat: 'between', desc: '想一起做的事。做掉一件，划掉一件。' },
+    { id: 'game',     name: '游戏', icon: 'i-game',    cat: 'between', desc: '不止一个。石头剪刀布、猜数字、真心话……能一起耗时间的小东西。下一批做。' },
+    { id: 'ledger',   name: '记账', icon: 'i-ledger',  cat: 'between', desc: '一起花的钱，一笔一笔。他也可以记下自己「想要」的东西。' },
+    { id: 'quota',    name: '额度', icon: 'i-quota',   cat: 'between', desc: '不显示还剩多少钱，显示还能陪你几次。' },
+
+    /* 【我】设置和家当 */
+    { id: 'theme',    name: '美化', icon: 'i-palette', cat: 'me', page: 'theme' },
+    { id: 'data',     name: '数据', icon: 'i-ledger',  cat: 'me', page: 'settings' },
+    { id: 'model',    name: '模型', icon: 'i-meter',   cat: 'me', page: 'settings' },
+    { id: 'wake',     name: '唤醒', icon: 'i-bell',    cat: 'me', desc: '不只被叫才说话。定时或随机地，主动找你一次。\n纯前端只能在页面打开时生效；要做到真提醒得走通知 + 服务端。' },
+    { id: 'image',    name: '生图', icon: 'i-magic',   cat: 'me', desc: '打字出图。他的样子、你们想去的地方、今天的心情。\n需要一个画图的 API Key，接在哪由你定。' },
+    { id: 'console',  name: '用量', icon: 'i-meter',   cat: 'me', desc: '模型用量：峰值 token、总请求数、本地引擎命中率、输出量、估算费用。\n用量数据现在就在默默记着，界面下一批做。' },
+    { id: 'study',    name: '学习', icon: 'i-book',    cat: 'me', desc: '一起背单词、番茄钟。他在旁边看着，你走神他会说一句。' },
+  ];
+
+  /* 全部应用分五组，组间距 24 */
+  const APP_CATS = [
+    { k: 'now',     name: '现在' },
+    { k: 'past',    name: '过去' },
+    { k: 'next',    name: '将来' },
+    { k: 'between', name: '之间' },
+    { k: 'me',      name: '我' },
   ];
 
   /* 底部常驻四个：他 / 说 / 记 / 我（顺序固定，别再加第五个） */
@@ -697,7 +714,25 @@
     // 第三页没东西就别留一屏空白
     const page3 = grid2 ? grid2.closest('.home-page') : null;
     if (page3) page3.hidden = grid2.children.length === 0;
-    if (all) { all.innerHTML = ''; APPS.forEach((a) => all.appendChild(makeTile(a))); }
+    if (all) {
+      all.innerHTML = '';
+      APP_CATS.forEach((c) => {
+        const list = APPS.filter((a) => (a.cat || 'me') === c.k);
+        if (!list.length) return;
+        const sec = document.createElement('section');
+        sec.className = 'app-cat';
+        const h = document.createElement('h4');
+        h.className = 'app-cat-title';
+        h.textContent = c.name;
+        const g = document.createElement('nav');
+        g.className = 'app-grid app-grid-all';
+        g.setAttribute('aria-label', c.name);
+        list.forEach((a) => g.appendChild(makeTile(a)));
+        sec.appendChild(h);
+        sec.appendChild(g);
+        all.appendChild(sec);
+      });
+    }
     if (dock) { dock.innerHTML = ''; DOCK.forEach((a) => dock.appendChild(makeTile(a))); }
   }
 

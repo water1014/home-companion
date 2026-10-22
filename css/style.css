@@ -4238,3 +4238,15 @@ section.home-page .bg-blob { opacity: 0.12; }
 /* 「我」页的全部应用 */
 .set-apps-card { padding: 16px; }
 .set-apps-card .app-grid-all { padding: 4px 0 0; }
+/* 全部应用：五组，组间距 24 */
+.app-cat + .app-cat { margin-top: 24px; }
+.app-cat-title {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+/* 五组的容器纵向排，组内才是网格 */
+#appGridAll { display: block; }
+#appGridAll .app-grid-all { margin-top: 0; }
