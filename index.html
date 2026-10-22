@@ -146,7 +146,7 @@
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
       <div class="head-mid">
-        <div class="pair-ava tiny right" id="chatAvaWrap"><span id="chatAvaHer">满</span></div>
+        <div class="pair-ava tiny right" id="chatAvaWrap"><span id="chatAvaPartner">满</span></div>
         <div>
           <p class="head-name" id="chatName">宋祁</p>
           <p class="head-status" id="chatStatus">…</p>
@@ -180,13 +180,13 @@
       </button>
     </header>
     <div class="cp-scroll">
-      <!-- 她 -->
+      <!-- 他 -->
       <section class="cp-card">
-        <p class="cp-head-t">她</p>
+        <p class="cp-head-t">他</p>
         <div class="cp-ava-row">
           <div class="cp-ava-unit">
             <div class="cp-ava" id="chatHerAvaPrev"><span>宋</span></div>
-            <span class="cp-ava-label">她的头像</span>
+            <span class="cp-ava-label">他的头像</span>
             <div class="cp-ava-acts">
               <button class="cp-link" id="chatHerAvaUp" type="button">换图</button>
               <button class="cp-link dim" id="chatHerAvaClr" type="button" hidden>用首字</button>
@@ -204,7 +204,7 @@
         <input type="file" id="chatHerAvaFile" accept="image/*" hidden />
         <input type="file" id="chatMyAvaFile" accept="image/*" hidden />
         <label class="cp-field">
-          <span class="cp-field-name">聊天里对她的称呼</span>
+          <span class="cp-field-name">聊天里对他的称呼</span>
           <input type="text" id="chatHerAlias" placeholder="用本名「宋祁」" maxlength="12" />
         </label>
         <p class="cp-hint">只在聊天界面生效，不改动他在别处的名字。</p>
@@ -294,7 +294,7 @@
 
   <div class="page-scroll">
     <section class="glass mood-hero">
-      <div class="pair-ava big right"><span id="moodAvaHer">满</span></div>
+      <div class="pair-ava big right"><span id="moodAvaPartner">满</span></div>
       <p class="mood-word" id="moodWord">平静</p>
       <p class="mood-sub" id="moodSub">像一杯放凉了的茶</p>
       <div class="mood-picker" id="moodPicker">
@@ -370,7 +370,7 @@
       <label class="row">
         <svg class="row-ic"><use href="#i-heart"/></svg>
         <span class="row-name">他的名字</span>
-        <input type="text" id="setHerName" placeholder="宋祁" maxlength="12" />
+        <input type="text" id="setPartnerName" placeholder="宋祁" maxlength="12" />
       </label>
       <label class="row">
         <svg class="row-ic"><use href="#i-cal"/></svg>
@@ -535,7 +535,7 @@
 </section>
 
 <!-- ============ 他的一天 ============ -->
-<section class="screen page" id="herday" aria-label="他的一天">
+<section class="screen page" id="partnerday" aria-label="他的一天">
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
     <p class="head-title">他的一天</p>

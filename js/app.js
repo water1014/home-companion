@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v36';
+  window.__TIDE_MARK = 'LOCAL-v37';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -61,7 +61,7 @@
     { id: 'courses',   name: '课程表',   icon: 'i-course',    page: 'courses' },
     { id: 'countdown', name: '倒数日',   icon: 'i-hourglass', page: 'countdown' },
     { id: 'cards',     name: '卡券',     icon: 'i-ticket',    page: 'cards' },
-    { id: 'herday',    name: '他的一天', icon: 'i-sunrise',   page: 'herday' },
+    { id: 'partnerday',    name: '他的一天', icon: 'i-sunrise',   page: 'partnerday' },
     { id: 'device',    name: '查手机',   icon: 'i-device',    page: 'device' },
     { id: 'game',      name: '小游戏',   icon: 'i-game',      desc: '不止一个。石头剪刀布、猜数字、真心话……能一起耗时间的小东西。下一批做。' },
     { id: 'console',   name: '控制房',   icon: 'i-meter',     desc: '模型用量：峰值 token、总请求数、本地引擎命中率、输出量、估算费用。\n用量数据现在就在默默记着，界面下一批做。' },
@@ -80,8 +80,12 @@
   ];
 
   /* 应用/dock 顺序可拖动换位，存本地；读出来时按注册表校准，缺的补默认 */
+  /* 老 id → 新 id：改名后老用户存的排列顺序不能丢 */
+  const ID_ALIAS = { herday: 'partnerday' };
+
   function loadOrder(k, def) {
-    const ids = load(k, def.map((a) => a.id));
+    const rawIds = load(k, def.map((a) => a.id));
+    const ids = (Array.isArray(rawIds) ? rawIds : []).map((x) => ID_ALIAS[x] || x);
     const known = {};
     def.forEach((a) => { known[a.id] = a; });
     const out = [];
@@ -209,9 +213,9 @@
 
   /* 聊天界面专属设置：只影响聊天，不碰别的页面 */
   const CHATUI_DEFAULT = () => ({
-    herAvatar: '',     // 她的头像 dataURL（空=用首字）
+    partnerAvatar: '',     // 他的头像 dataURL（空=用首字）
     myAvatar: '',      // 我的头像 dataURL（空=用首字）
-    herAlias: '',      // 聊天里对她的称呼（空=用本名）
+    partnerAlias: '',      // 聊天里对他的称呼（空=用本名）
     bubble: 'frost',   // 气泡质感：frost 磨砂 / solid 纯色
     ava: false,        // 头像列（参考图那版：头像在左侧）
     fs: 'md',          // 字号：sm / md / lg
@@ -226,7 +230,7 @@
   const S = {
     chat: load(KEY.chat, []),
     persona: load(KEY.persona, { mood: 58, energy: 62, affection: 12, lastTick: Date.now() }),
-    memory: load(KEY.memory, { userName: '', herName: '宋祁', facts: [], startDate: todayStr() }),
+    memory: load(KEY.memory, { userName: '', partnerName: '宋祁', facts: [], startDate: todayStr() }),
     settings: load(KEY.settings, { enabled: false, apiBase: '', model: '', apiKey: '' }),
     moodLog: load(KEY.mood, {}),
     life: load(KEY.life, null),
@@ -242,8 +246,8 @@
   save(KEY.persona, S.persona);
 
   // 从旧版本迁移：默认名换过一次
-  if (S.memory.herName === '小满') {
-    S.memory.herName = '宋祁';
+  if (S.memory.partnerName === '小满') {
+    S.memory.partnerName = '宋祁';
     save(KEY.memory, S.memory);
   }
 
@@ -266,6 +270,15 @@
     if (!L.usage.byDay || typeof L.usage.byDay !== 'object') L.usage.byDay = {};
     if (!Array.isArray(S.timers)) S.timers = [];
 
+    /* 称呼改中性了：老数据里的 herName / herAvatar / herAlias 搬一次家，不丢东西 */
+    if (!S.memory.partnerName && S.memory.herName) S.memory.partnerName = S.memory.herName;
+    if (!S.chatUI.partnerAvatar && S.chatUI.herAvatar) S.chatUI.partnerAvatar = S.chatUI.herAvatar;
+    if (!S.chatUI.partnerAlias && S.chatUI.herAlias) S.chatUI.partnerAlias = S.chatUI.herAlias;
+    save(KEY.memory, S.memory);
+    save(KEY.chatUI, S.chatUI);
+    // 老聊天记录的 role 是 'her'，isMine() 已经把它当「他」处理，不用改数据
+
+
     if (v < SCHEMA) v = SCHEMA;
     S.meta = { schema: v };
   }
@@ -279,7 +292,7 @@
     if (!seed || !seed.meta) return;
     // 名字与起始日：空的才填，用户改过的别动
     if (!S.memory.userName) S.memory.userName = seed.meta.me_name || '';
-    if (!S.memory.herName || S.memory.herName === '宋祁') S.memory.herName = seed.meta.her_name || S.memory.herName;
+    if (!S.memory.partnerName || S.memory.partnerName === '宋祁') S.memory.partnerName = seed.meta.partner_name || seed.meta.her_name || S.memory.partnerName;
     if (seed.meta.since) S.memory.startDate = seed.meta.since;
     // 三件事 → 记着的事（主页统计和记忆页都从这读）
     if (!(S.memory.facts || []).length && Array.isArray(seed.todos)) {
@@ -288,7 +301,7 @@
     // 一条消息 → 聊天流
     if (!S.chat.length && Array.isArray(seed.messages)) {
       S.chat = seed.messages.map((m) => ({
-        role: m.from === 'me' ? 'me' : 'her',
+        role: m.from === 'me' ? 'me' : 'partner',
         text: m.text,
         ts: m.at ? new Date(m.at).getTime() : Date.now(),
       }));
@@ -308,8 +321,8 @@
     // 留言 → 存档（said 直接吃他给的那条；两条都留档等留言页接上）
     if (Array.isArray(seed.notes)) {
       S.life.mails = seed.notes.slice();
-      const hers = seed.notes.filter((n) => n.from !== (seed.meta.me_name || 'me'));
-      const last = hers[hers.length - 1];
+      const partners = seed.notes.filter((n) => n.from !== (seed.meta.me_name || 'me'));
+      const last = partners[partners.length - 1];
       if (last && (!S.life.said || !S.life.said.text)) {
         S.life.said = { date: (last.at || '').slice(0, 10) || todayStr(), text: last.text };
       }
@@ -384,17 +397,20 @@
     el._t = setTimeout(() => el.classList.remove('show'), 2400);
   }
 
-  const herName = () => S.memory.herName || '宋祁';
-  const herInitial = () => (herName().trim().slice(-1) || '满');
+  const partnerName = () => S.memory.partnerName || S.memory.herName || '宋祁';
+  /* 谁在说话：me = 我；其余（partner，以及老数据里的 her）都算他 */
+  const isMine = (m) => String((m && m.role) || '') === 'me';
+  const isMineBy = (by) => String(by || '') === 'me';
+  const partnerInitial = () => (partnerName().trim().slice(-1) || '满');
 
   /* 聊天界面专属显示名（备注）：有备注用备注，否则用本名 */
-  const chatHerName = () => S.chatUI.herAlias.trim() || herName();
+  const chatPartnerName = () => S.chatUI.partnerAlias.trim() || partnerName();
   const myInitial = () => (S.memory.userName ? S.memory.userName.trim().slice(0, 1) : '我');
   /* 头像innerHTML：有图用 <img>，否则用首字 */
-  const herAvaInner = (cls) =>
-    S.chatUI.herAvatar
-      ? '<img alt="" src="' + S.chatUI.herAvatar + '">'
-      : '<span class="' + cls + '">' + herInitial() + '</span>';
+  const partnerAvaInner = (cls) =>
+    S.chatUI.partnerAvatar
+      ? '<img alt="" src="' + S.chatUI.partnerAvatar + '">'
+      : '<span class="' + cls + '">' + partnerInitial() + '</span>';
   const myAvaInner = (cls) =>
     S.chatUI.myAvatar
       ? '<img alt="" src="' + S.chatUI.myAvatar + '">'
@@ -420,7 +436,7 @@
     courses: $('courses'),
     countdown: $('countdown'),
     cards: $('cards'),
-    herday: $('herday'),
+    partnerday: $('partnerday'),
     device: $('device'),
     album: $('album'),
     moments: $('moments'),
@@ -481,7 +497,7 @@
     if (id === 'courses') renderCourses();
     if (id === 'countdown') renderCountdownPage();
     if (id === 'cards') renderCoupons();
-    if (id === 'herday') renderHerDay();
+    if (id === 'partnerday') renderHerDay();
     if (id === 'device') renderDevice();
     if (id === 'album') { renderAlbum(); renderAlbumCal(); }
     if (id === 'moments') renderMoments();
@@ -640,7 +656,7 @@
     let out = null;
     if (Array.isArray(saved) && saved.length === 3) {
       const seen = {};
-      out = saved.map((l) => (Array.isArray(l) ? l : []).filter((id) => {
+      out = saved.map((l) => (Array.isArray(l) ? l : []).map((x) => ID_ALIAS[x] || x).filter((id) => {
         if (seen[id] || ids.indexOf(id) < 0) return false;
         seen[id] = true;
         return true;
@@ -891,7 +907,7 @@
   function renderQuote() {
     const el = $('quoteText');
     if (!el) return;
-    const last = S.chat.slice().reverse().find((m) => m.role === 'her' && m.text);
+    const last = S.chat.slice().reverse().find((m) => !isMine(m) && m.text);
     el.textContent = last ? last.text.replace(/\n+/g, ' ') : '第一句话，等你先说。';
     setTxt('quoteFrom', last ? '他 · ' + hhmm(last.ts) : '他在这儿，没走');
   }
@@ -932,9 +948,9 @@
           '<div class="pair-avas">' +
             '<div class="pa me"><span id="paMe">我</span></div>' +
             '<svg class="pair-heart" viewBox="0 0 24 24"><use href="#i-heart"/></svg>' +
-            '<div class="pa her"><span id="paHer">满</span></div>' +
+            '<div class="pa partner"><span id="paPartner">满</span></div>' +
           '</div>' +
-          '<p class="pair-names"><b id="pairMe">我</b><b id="pairHer">宋祁</b></p>' +
+          '<p class="pair-names"><b id="pairMe">我</b><b id="pairPartner">宋祁</b></p>' +
         '</div>',
     },
 
@@ -1073,7 +1089,7 @@
     } else if (id === 'music') {
       el.addEventListener('click', () => { if (!editing) toast('一起听还没接上'); });
     } else if (id === 'said') {
-      el.addEventListener('click', () => { if (!editing) openPage('herday'); });
+      el.addEventListener('click', () => { if (!editing) openPage('partnerday'); });
     }
     return el;
   }
@@ -1204,8 +1220,8 @@
 
   function updateGrid() {
     const L = S.life || {};
-    setTxt('gAva', herInitial());
-    setTxt('gName', herName());
+    setTxt('gAva', partnerInitial());
+    setTxt('gName', partnerName());
     setTxt('gHome', (S.settings && S.settings.statusLine) || '在家');
     setTxt('gStatus', P.statusLine(S.persona, Date.now()));
 
@@ -1342,9 +1358,9 @@
     setTxt('musicSub', first ? (first.artist + (first.note ? ' · ' + first.note : '')) : '想听什么，放给我');
 
     setTxt('paMe', (S.memory.userName || '我').slice(0, 1));
-    setTxt('paHer', herInitial());
+    setTxt('paPartner', partnerInitial());
     setTxt('pairMe', S.memory.userName || '我');
-    setTxt('pairHer', herName());
+    setTxt('pairPartner', partnerName());
     setTxt('daysNum', days);
     setTxt('clockTime', pad(now.getHours()) + ':' + pad(now.getMinutes()));
     setTxt('clockDate', dateLabel(now));
@@ -1352,9 +1368,9 @@
     setTxt('diaryDay', 'Day ' + days);
     setTxt('diaryDate', (now.getMonth() + 1) + '.' + pad(now.getDate()));
 
-    const last = S.chat.slice().reverse().find((m) => m.role === 'her' && m.text);
+    const last = S.chat.slice().reverse().find((m) => !isMine(m) && m.text);
     setTxt('diaryText', last ? last.text.replace(/\n+/g, ' ') : '第一句话，等你先说。');
-    setTxt('diaryFrom', last ? 'From ' + herName() : '');
+    setTxt('diaryFrom', last ? 'From ' + partnerName() : '');
 
     setTxt('saidText', todaySaid());
   }
@@ -1890,13 +1906,13 @@
 
     updateWidgets();
 
-    setHTML('chatAvaHer', herAvaInner(''));   // 聊天头部头像（用图或首字）
-    setTxt('moodAvaHer', herInitial());
-    setTxt('chatName', chatHerName());         // 聊天里用备注名
+    setHTML('chatAvaPartner', partnerAvaInner(''));   // 聊天头部头像（用图或首字）
+    setTxt('moodAvaPartner', partnerInitial());
+    setTxt('chatName', chatPartnerName());         // 聊天里用备注名
     const inp = $('input');
     if (inp) inp.placeholder = '说点什么…';
     setTxt('setAvaMe', me);
-    setTxt('setNoteHer', herName());
+    setTxt('setNoteHer', partnerName());
     setTxt('setUserLabel', S.memory.userName || '我');
     setTxt('setMoodLine', '在一起第 ' + daysTogether() + ' 天');
 
@@ -2039,7 +2055,7 @@
         row.className = 'row coupon-row used';
         row.innerHTML =
           '<span class="coupon-face">' + esc(c.title) + '</span>' +
-          '<span class="row-name">' + (c.by === 'her' ? '他用的' : '你用的') + '<em>' + hhmm(c.usedAt) + (c.note ? ' · ' + esc(c.note) : '') + '</em></span>';
+          '<span class="row-name">' + (!isMineBy(c.by) ? '他用的' : '你用的') + '<em>' + hhmm(c.usedAt) + (c.note ? ' · ' + esc(c.note) : '') + '</em></span>';
         box.appendChild(row);
       });
     }
@@ -2149,7 +2165,7 @@
   function updateHeroMeta() {
     const today = new Date().toDateString();
     const n = S.chat.filter(
-      (m) => m.role === 'her' && m.text && new Date(m.ts).toDateString() === today
+      (m) => !isMine(m) && m.text && new Date(m.ts).toDateString() === today
     ).length;
     const f = (S.memory.facts || []).length;
     const el = $('heroMsgs');
@@ -2171,7 +2187,7 @@
 
     const today = new Date().toDateString();
     const list = S.chat
-      .filter((m) => m.role === 'her' && m.text && new Date(m.ts).toDateString() === today)
+      .filter((m) => !isMine(m) && m.text && new Date(m.ts).toDateString() === today)
       .slice(-5)
       .reverse();
 
@@ -2358,7 +2374,7 @@
         const c = S.life.coupons.filter((x) => x.id === mk.arg && !x.usedAt)[0];
         if (c) {
           c.usedAt = Date.now();
-          c.by = 'her';
+          c.by = 'partner';
           if (mk.text) c.note = mk.text.slice(0, 100);
           pushDayLog('用掉了一张「' + c.title + '」', 'coupon', false);
           renderCoupons();
@@ -2441,7 +2457,7 @@
         navigator.clipboard.writeText(t).then(() => toast('复制好了'), () => toast('复制不了'));
       } else toast('复制不了');
     });
-    if (m.role === 'her') mk('重说', () => regenHer(m, wrap));
+    if (!isMine(m)) mk('重说', () => regenPartner(m, wrap));
     mk('删除', () => {
       const i = S.chat.indexOf(m);
       if (i >= 0) { S.chat.splice(i, 1); save(KEY.chat, S.chat); }
@@ -2451,8 +2467,8 @@
     return ops;
   }
 
-  /* 重说：撤掉这条回复，对她之前那句话重新回应 */
-  function regenHer(m, wrap) {
+  /* 重说：撤掉这条回复，对他之前那句话重新回应 */
+  function regenPartner(m, wrap) {
     if (busy) { toast('他在打字呢'); return; }
     const i = S.chat.indexOf(m);
     if (i < 0) { if (wrap) wrap.remove(); return; }
@@ -2463,7 +2479,7 @@
     if (prevMe) respond(prevMe.text);
   }
 
-  /* 心里想卡挂到她的消息节点上（流式和重放共用；已有就更新文字） */
+  /* 心里想卡挂到他的消息节点上（流式和重放共用；已有就更新文字） */
   function attachThink(node, text, sec) {
     if (!text || !node || !node.wrap) return;
     node.msg.think = text;
@@ -2482,7 +2498,7 @@
     }
   }
 
-  /* 「乱息」式布局：磨砂玻璃泡浮在壁纸上；她 = 小头像+时间在泡上方，
+  /* 「乱息」式布局：磨砂玻璃泡浮在壁纸上；他 = 小头像+时间在泡上方，
      正文按 \n 拆成连发多个小泡；我 = 右侧单个泡，无标注 */
   function fmtMeta(ts) {
     if (!ts) return '';
@@ -2496,17 +2512,17 @@
   }
 
   function buildMessageNode(m) {
-    const me = m.role !== 'her';
+    const me = isMine(m);
     const wrap = document.createElement('div');
-    wrap.className = 'msg ' + (me ? 'me' : 'her') + (S.chatUI.ava ? ' show-ava' : '');
+    wrap.className = 'msg ' + (me ? 'me' : 'partner') + (S.chatUI.ava ? ' show-ava' : '');
 
     const col = document.createElement('div');
     col.className = 'm-col';
 
-    // 侧边头像（头像列模式才显示）：她居左、我居右
+    // 侧边头像（头像列模式才显示）：他居左、我居右
     const ava = document.createElement('div');
     ava.className = 'm-ava';
-    ava.innerHTML = me ? myAvaInner('m-txt') : herAvaInner('m-txt');
+    ava.innerHTML = me ? myAvaInner('m-txt') : partnerAvaInner('m-txt');
     wrap.appendChild(ava);
 
     if (!me) {
@@ -2514,10 +2530,10 @@
       meta.className = 'm-meta';
       const mini = document.createElement('i');
       mini.className = 'm-mini';
-      mini.innerHTML = herAvaInner('m-txt');
+      mini.innerHTML = partnerAvaInner('m-txt');
       const name = document.createElement('span');
       name.className = 'm-name';
-      name.textContent = chatHerName();
+      name.textContent = chatPartnerName();
       const when = document.createElement('span');
       when.className = 'm-time';
       when.textContent = fmtMeta(m.ts);
@@ -2572,10 +2588,10 @@
       node.body = m.text || '';      // 走 setter：历史消息也按行拆泡
     }
 
-    // 她心里想（历史重放时也在；关掉「思考药丸」则不显示）
+    // 他心里想（历史重放时也在；关掉「思考药丸」则不显示）
     if (!me && S.chatUI.showThink && m.think) col.appendChild(buildThinkCard(m.think, m.thinkSec));
 
-    // 她的组底：小心率彩蛋（同一条消息数字稳定；关掉则不显示）
+    // 他的组底：小心率彩蛋（同一条消息数字稳定；关掉则不显示）
     if (!me && S.chatUI.showBpm && (m.text || '').trim()) {
       const bpm = document.createElement('div');
       bpm.className = 'bpm';
@@ -2645,7 +2661,7 @@
   function showTyping() {
     if (typingEl) return;
     typingEl = document.createElement('div');
-    typingEl.className = 'msg her';
+    typingEl.className = 'msg partner';
     typingEl.innerHTML = '<div class="typing"><i></i><i></i><i></i></div>';
     stream.appendChild(typingEl);
     scrollDown();
@@ -2675,7 +2691,7 @@
     showTyping();
     setTimeout(() => {
       hideTyping();
-      const node = appendMessage({ role: 'her', text: body, action: action || '', ts: Date.now() }, true);
+      const node = appendMessage({ role: 'partner', text: body, action: action || '', ts: Date.now() }, true);
       node.body = '';
       typeOut(node, body, 28);
       updateHeroMeta();
@@ -2961,7 +2977,7 @@
     log.push({ ts: ts || Date.now(), text: text, kind: kind || 'idle', inferred: !!inferred });
     if (log.length > 300) S.life.dayLog = log.slice(-240);
     save(KEY.life, S.life);
-    if (currentPage === 'herday') renderHerDay();
+    if (currentPage === 'partnerday') renderHerDay();
   }
 
   /** 页面关着的那段：按状态演化的时间差推演他大概怎么过的 */
@@ -3005,12 +3021,12 @@
     if (S.life.device) { S.life.device.screenMin = deviceScreenMin; save(KEY.life, S.life); }
   }
 
-  function herProfileCtx() {
+  function partnerProfileCtx() {
     return {
       userName: S.memory.userName || '',
-      herName: herName(),
+      partnerName: partnerName(),
       memories: S.memory.facts || [],
-      recent: S.chat.filter((m) => m.role === 'her').slice(-10).map((m) => m.text),
+      recent: S.chat.filter((m) => !isMine(m)).slice(-10).map((m) => m.text),
       life: {
         thought: S.life.thought,
         ideas: S.life.ideas,
@@ -3037,7 +3053,7 @@
   let pendingMarks = null;   // 这一轮回复里收到的标记，finish 时统一落库
 
   async function respond(userText) {
-    const ctx = herProfileCtx();
+    const ctx = partnerProfileCtx();
     ctx.gapMin = lastGapMin;
     const cfg = S.settings;
     busy = true;
@@ -3055,7 +3071,7 @@
       let reasonNode = null;
       try {
         const history = S.chat.slice(-16, -1).map((m) => ({
-          role: m.role === 'her' ? 'assistant' : 'user',
+          role: !isMine(m) ? 'assistant' : 'user',
           content: m.text,
         }));
         const messages = [
@@ -3074,7 +3090,7 @@
             if (!reasonNode) {
               hideTyping();
               reasonNode = document.createElement('div');
-              reasonNode.className = 'msg her';
+              reasonNode.className = 'msg partner';
               const card = buildThinkCard('');
               setThinkOpen(card, true);
               reasonNode.appendChild(card);
@@ -3112,7 +3128,7 @@
             const parsed = splitAction(vis);
             if (!node) {
               hideTyping();
-              node = appendMessage({ role: 'her', text: parsed.text, action: parsed.action, ts: Date.now() }, true);
+              node = appendMessage({ role: 'partner', text: parsed.text, action: parsed.action, ts: Date.now() }, true);
               // 正文开始 → 思考卡移到这条消息上方并收起
               if (reasonNode) {
                 const card = reasonNode.querySelector('.think-card');
@@ -3191,7 +3207,7 @@
       const clean = stripMarksSync(r.text);           // 本地引擎理论上没标记，防呆
       pendingMarks = (pendingMarks || []).concat(P.synthMarks(r, S.persona) || []);
       if (clean.marks.length) pendingMarks = pendingMarks.concat(clean.marks);
-      const node = appendMessage({ role: 'her', text: clean.text, action: r.action, ts: Date.now() }, true);
+      const node = appendMessage({ role: 'partner', text: clean.text, action: r.action, ts: Date.now() }, true);
       node.body = '';
       const th = (pendingMarks || []).filter((x) => x.key === '心事' && x.text).slice(-1)[0];
       if (th) attachThink(node, th.text);
@@ -3636,7 +3652,7 @@
       if (mo.reply) {
         const rp = document.createElement('div');
         rp.className = 'moment-reply';
-        rp.textContent = herName() + '：' + mo.reply;
+        rp.textContent = partnerName() + '：' + mo.reply;
         card.appendChild(rp);
       }
 
@@ -3678,11 +3694,11 @@
     const pv = $('momentPreview');
     if (pv) pv.hidden = true;
     renderMoments();
-    herReactToMoment(mo);
+    partnerReactToMoment(mo);
   }
 
   /* 他刷到你的朋友圈，隔一会儿在下面回一句 */
-  function herReactToMoment(mo) {
+  function partnerReactToMoment(mo) {
     const done = (r) => {
       mo.reply = r;
       mo.replyTs = Date.now();
@@ -3698,7 +3714,7 @@
     if (LLM.configured(S.settings)) {
       pending();
       const messages = [
-        { role: 'system', content: '你是' + herName() + '。他发了一条朋友圈，你刷到了。用一两句话回应，像在朋友圈下面评论：口语、短、中文，不要客套，不要夸夸。' },
+        { role: 'system', content: '你是' + partnerName() + '。他发了一条朋友圈，你刷到了。用一两句话回应，像在朋友圈下面评论：口语、短、中文，不要客套，不要夸夸。' },
         { role: 'user', content: (mo.text || '（一张图）') },
       ];
       let acc = '';
@@ -3977,7 +3993,7 @@
 
   function syncSettingsForm() {
     $('setUserName').value = S.memory.userName || '';
-    $('setHerName').value = S.memory.herName || '宋祁';
+    $('setPartnerName').value = S.memory.partnerName || '宋祁';
     $('setStartDate').value = S.memory.startDate || todayStr();
     $('setApiBase').value = S.settings.apiBase || '';
     $('setModel').value = S.settings.model || '';
@@ -3991,7 +4007,7 @@
     $('wakeQuietEnd').value = cfg.quietEnd;
 
     setTxt('modelStatus', LLM.configured(S.settings) ? '已接入' : '未接入');
-    setTxt('herTagModel', LLM.configured(S.settings) ? '已接模型' : '未接模型');
+    setTxt('partnerTagModel', LLM.configured(S.settings) ? '已接模型' : '未接模型');
   }
 
   /* 主动说话的三个旋钮 */
@@ -4024,8 +4040,8 @@
     save(KEY.memory, S.memory);
     renderCards();
   });
-  $('setHerName').addEventListener('change', (e) => {
-    S.memory.herName = e.target.value.trim() || '宋祁';
+  $('setPartnerName').addEventListener('change', (e) => {
+    S.memory.partnerName = e.target.value.trim() || '宋祁';
     save(KEY.memory, S.memory);
     renderCards();
   });
@@ -4052,7 +4068,7 @@
     e.currentTarget.setAttribute('aria-checked', String(S.settings.enabled));
     save(KEY.settings, S.settings);
     setTxt('modelStatus', LLM.configured(S.settings) ? '已接入' : '未接入');
-    setTxt('herTagModel', LLM.configured(S.settings) ? '已接模型' : '未接模型');
+    setTxt('partnerTagModel', LLM.configured(S.settings) ? '已接模型' : '未接模型');
     if (S.settings.enabled && !LLM.configured(S.settings)) toast('再把地址、模型和 Key 填上才生效');
     else if (S.settings.enabled) toast('已接入，他换一种方式说话');
   });
@@ -4164,7 +4180,7 @@
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = herName() + '-备份-' + todayStr() + '.json';
+    a.download = partnerName() + '-备份-' + todayStr() + '.json';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     toast('已导出（不含密钥）');
@@ -4306,7 +4322,7 @@
     const el = $('togetherLine');
     if (!el) return;
     const start = S.memory.startDate;
-    el.textContent = herName() + ' & ' + (S.memory.userName || '我') +
+    el.textContent = partnerName() + ' & ' + (S.memory.userName || '我') +
       ' · 在一起的第 ' + daysTogether() + ' 天' + (start ? ' · since ' + start.slice(5).replace('-', '.') : '');
   }
 
@@ -4367,11 +4383,11 @@
       });
     });
     const alias = $('chatHerAlias');
-    if (alias) alias.value = u.herAlias;
+    if (alias) alias.value = u.partnerAlias;
     const hp = $('chatHerAvaPrev'), mp = $('chatMyAvaPrev');
-    if (hp) hp.innerHTML = herAvaInner('m-txt');
+    if (hp) hp.innerHTML = partnerAvaInner('m-txt');
     if (mp) mp.innerHTML = myAvaInner('m-txt');
-    const hc = $('chatHerAvaClr'); if (hc) hc.hidden = !u.herAvatar;
+    const hc = $('chatHerAvaClr'); if (hc) hc.hidden = !u.partnerAvatar;
     const mc = $('chatMyAvaClr'); if (mc) mc.hidden = !u.myAvatar;
   }
 
@@ -4453,9 +4469,9 @@
 
     const alias = $('chatHerAlias');
     if (alias) alias.addEventListener('input', () => {
-      S.chatUI.herAlias = alias.value;
+      S.chatUI.partnerAlias = alias.value;
       saveChatUI();
-      setTxt('chatName', chatHerName());
+      setTxt('chatName', chatPartnerName());
       renderHistory();
     });
 
@@ -4465,16 +4481,16 @@
     if (upH) upH.addEventListener('click', () => { const f = $('chatHerAvaFile'); if (f) f.click(); });
     if (upM) upM.addEventListener('click', () => { const f = $('chatMyAvaFile'); if (f) f.click(); });
     bindAva('chatHerAvaFile', (data) => {
-      S.chatUI.herAvatar = data; saveChatUI();
-      setHTML('chatAvaHer', herAvaInner('')); renderHistory(); syncChatPanel();
+      S.chatUI.partnerAvatar = data; saveChatUI();
+      setHTML('chatAvaPartner', partnerAvaInner('')); renderHistory(); syncChatPanel();
     });
     bindAva('chatMyAvaFile', (data) => {
       S.chatUI.myAvatar = data; saveChatUI();
       renderHistory(); syncChatPanel();
     });
     if (clrH) clrH.addEventListener('click', () => {
-      S.chatUI.herAvatar = ''; saveChatUI();
-      setHTML('chatAvaHer', herAvaInner('')); renderHistory(); syncChatPanel();
+      S.chatUI.partnerAvatar = ''; saveChatUI();
+      setHTML('chatAvaPartner', partnerAvaInner('')); renderHistory(); syncChatPanel();
     });
     if (clrM) clrM.addEventListener('click', () => {
       S.chatUI.myAvatar = ''; saveChatUI();
@@ -4535,7 +4551,7 @@
       stream.appendChild(note);
       setTimeout(() => {
         const g = greeting();
-        const node = appendMessage({ role: 'her', text: g, action: '', ts: Date.now() }, true);
+        const node = appendMessage({ role: 'partner', text: g, action: '', ts: Date.now() }, true);
         node.body = '';
         typeOut(node, g, 34, () => renderQuote());
       }, 900);

@@ -6,7 +6,7 @@ window.TIDE_SEED = {
   "subtitle": "满则潮",
   "meta": {
     "since": "2026-10-21",
-    "her_name": "淼",
+    "partner_name": "淼",
     "me_name": "小满",
     "locale": "zh-CN",
     "theme": "tide"
@@ -21,7 +21,7 @@ window.TIDE_SEED = {
     "proactive": true,
     "status_line": "在"
   },
-  "her": {
+  "partner": {
     "name": "淼",
     "avatar": "",
     "home": true,
