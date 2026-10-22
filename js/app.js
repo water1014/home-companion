@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v33';
+  window.__TIDE_MARK = 'LOCAL-v34';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -107,6 +107,7 @@
     life: 'hc.v1.life',      // 心事/念头/课程/倒数日/卡券/设备/用量/他的一天
     timers: 'hc.v1.timers',  // 内部闹钟（续话那种）
     meta: 'hc.v1.meta',      // schema 版本
+    chatUI: 'hc.v1.chatUI',  // 聊天界面专属设置（头像/备注/美化/输入）
   };
 
   const load = (k, fb) => {
@@ -147,6 +148,22 @@
 
   const SCHEMA = 3;
 
+  /* 聊天界面专属设置：只影响聊天，不碰别的页面 */
+  const CHATUI_DEFAULT = () => ({
+    herAvatar: '',     // 她的头像 dataURL（空=用首字）
+    myAvatar: '',      // 我的头像 dataURL（空=用首字）
+    herAlias: '',      // 聊天里对她的称呼（空=用本名）
+    bubble: 'frost',   // 气泡质感：frost 磨砂 / solid 纯色
+    ava: false,        // 头像列（参考图那版：头像在左侧）
+    fs: 'md',          // 字号：sm / md / lg
+    showThink: true,   // 思考药丸
+    showBpm: true,     // 心率彩蛋
+    showDate: true,    // 日期分隔
+    bg: 'wall',        // 聊天背景：wall 桌面壁纸 / light 浅色
+    enterSend: true,   // 回车发送
+    autoScroll: true,  // 新消息自动滚到底
+  });
+
   const S = {
     chat: load(KEY.chat, []),
     persona: load(KEY.persona, { mood: 58, energy: 62, affection: 12, lastTick: Date.now() }),
@@ -156,7 +173,11 @@
     life: load(KEY.life, null),
     timers: load(KEY.timers, []),
     meta: load(KEY.meta, null),
+    chatUI: load(KEY.chatUI, CHATUI_DEFAULT()),
   };
+  const saveChatUI = () => save(KEY.chatUI, S.chatUI);
+  // 字段补全：老数据缺了新加的键也能用
+  S.chatUI = Object.assign(CHATUI_DEFAULT(), S.chatUI);
 
   S.persona = P.evolve(S.persona, Date.now());
   save(KEY.persona, S.persona);
@@ -295,6 +316,19 @@
   const herName = () => S.memory.herName || '宋祁';
   const herInitial = () => (herName().trim().slice(-1) || '满');
 
+  /* 聊天界面专属显示名（备注）：有备注用备注，否则用本名 */
+  const chatHerName = () => S.chatUI.herAlias.trim() || herName();
+  const myInitial = () => (S.memory.userName ? S.memory.userName.trim().slice(0, 1) : '我');
+  /* 头像innerHTML：有图用 <img>，否则用首字 */
+  const herAvaInner = (cls) =>
+    S.chatUI.herAvatar
+      ? '<img alt="" src="' + S.chatUI.herAvatar + '">'
+      : '<span class="' + cls + '">' + herInitial() + '</span>';
+  const myAvaInner = (cls) =>
+    S.chatUI.myAvatar
+      ? '<img alt="" src="' + S.chatUI.myAvatar + '">'
+      : '<span class="' + cls + '">' + myInitial() + '</span>';
+
   function daysTogether() {
     const start = new Date((S.memory.startDate || todayStr()) + 'T00:00:00');
     return Math.max(0, Math.floor((Date.now() - start.getTime()) / 86400000)) + 1;
@@ -367,6 +401,7 @@
 
     if (id === 'chat') {
       clearBadge('chat');
+      applyChatUI();
       scrollDown(true);
     }
     if (id === 'mood') renderMood();
@@ -806,6 +841,7 @@
 
 
   const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+  const setHTML = (id, v) => { const el = $(id); if (el) el.innerHTML = v; };
   const esc = (s) => String(s === undefined || s === null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -1608,9 +1644,9 @@
 
     updateWidgets();
 
-    setTxt('chatAvaHer', herInitial());
+    setHTML('chatAvaHer', herAvaInner(''));   // 聊天头部头像（用图或首字）
     setTxt('moodAvaHer', herInitial());
-    setTxt('chatName', herName());
+    setTxt('chatName', chatHerName());         // 聊天里用备注名
     const inp = $('input');
     if (inp) inp.placeholder = '和' + herName() + '说点什么…';
     setTxt('setAvaMe', me);
@@ -1969,7 +2005,7 @@
   }
 
   function scrollDown(force) {
-    if (force || stickToBottom) {
+    if (force || (stickToBottom && S.chatUI.autoScroll)) {
       stream.scrollTo({ top: stream.scrollHeight, behavior: force ? 'auto' : 'smooth' });
     }
   }
@@ -2186,6 +2222,7 @@
     if (!text || !node || !node.wrap) return;
     node.msg.think = text;
     if (sec) node.msg.thinkSec = sec;
+    if (!S.chatUI.showThink) return;   // 关掉「思考药丸」就不挂卡
     const col = node.wrap.querySelector('.m-col');
     if (!col) return;
     let card = col.querySelector(':scope > .think-card');
@@ -2210,20 +2247,31 @@
   function buildMessageNode(m) {
     const me = m.role !== 'her';
     const wrap = document.createElement('div');
-    wrap.className = 'msg ' + (me ? 'me' : 'her');
+    wrap.className = 'msg ' + (me ? 'me' : 'her') + (S.chatUI.ava ? ' show-ava' : '');
 
     const col = document.createElement('div');
     col.className = 'm-col';
+
+    // 侧边头像（头像列模式才显示）：她居左、我居右
+    const ava = document.createElement('div');
+    ava.className = 'm-ava';
+    ava.innerHTML = me ? myAvaInner('m-txt') : herAvaInner('m-txt');
+    wrap.appendChild(ava);
 
     if (!me) {
       const meta = document.createElement('div');
       meta.className = 'm-meta';
       const mini = document.createElement('i');
       mini.className = 'm-mini';
-      mini.textContent = herInitial();
+      mini.innerHTML = herAvaInner('m-txt');
+      const name = document.createElement('span');
+      name.className = 'm-name';
+      name.textContent = chatHerName();
       const when = document.createElement('span');
+      when.className = 'm-time';
       when.textContent = fmtMeta(m.ts);
       meta.appendChild(mini);
+      meta.appendChild(name);
       meta.appendChild(when);
       col.appendChild(meta);
     }
@@ -2273,11 +2321,11 @@
       node.body = m.text || '';      // 走 setter：历史消息也按行拆泡
     }
 
-    // 她心里想（历史重放时也在）
-    if (!me && m.think) col.appendChild(buildThinkCard(m.think, m.thinkSec));
+    // 她心里想（历史重放时也在；关掉「思考药丸」则不显示）
+    if (!me && S.chatUI.showThink && m.think) col.appendChild(buildThinkCard(m.think, m.thinkSec));
 
-    // 她的组底：小心率彩蛋（同一条消息数字稳定）
-    if (!me && (m.text || '').trim()) {
+    // 她的组底：小心率彩蛋（同一条消息数字稳定；关掉则不显示）
+    if (!me && S.chatUI.showBpm && (m.text || '').trim()) {
       const bpm = document.createElement('div');
       bpm.className = 'bpm';
       bpm.textContent = '♥ ' + (62 + (Number(m.ts) % 29)) + ' bpm';
@@ -2311,6 +2359,7 @@
   }
 
   function syncDayMark(ts) {
+    if (!S.chatUI.showDate) return;   // 关掉日期分隔就不插
     const key = new Date(ts).toDateString();
     if (key === lastDayKey) return;
     lastDayKey = key;
@@ -2951,6 +3000,7 @@
   input.addEventListener('input', () => { autosize(); updateSendState(); });
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      if (!S.chatUI.enterSend) return;   // 关掉回车发送：回车就是换行
       e.preventDefault();
       if (!busy) send(input.value);
     }
@@ -3992,6 +4042,203 @@
       ' · 在一起的第 ' + daysTogether() + ' 天' + (start ? ' · since ' + start.slice(5).replace('-', '.') : '');
   }
 
+  /* ================= 聊天界面设置右栏 ================= */
+
+  const chatPageEl = $('chat');
+  const chatPanel = $('chatPanel');
+  const chatMask = $('chatPanelMask');
+
+  /* 把 chatUI 落到 #chat 的 class 上，纯 CSS 设置即时生效 */
+  function applyChatUI() {
+    if (!chatPageEl) return;
+    const u = S.chatUI;
+    chatPageEl.classList.toggle('bubble-solid', u.bubble === 'solid');
+    chatPageEl.classList.toggle('fs-sm', u.fs === 'sm');
+    chatPageEl.classList.toggle('fs-md', u.fs === 'md');
+    chatPageEl.classList.toggle('fs-lg', u.fs === 'lg');
+    chatPageEl.classList.toggle('bg-light', u.bg === 'light');
+  }
+
+  function openChatPanel() {
+    if (!chatPanel) return;
+    syncChatPanel();
+    chatMask.hidden = false;
+    chatPanel.classList.add('open');
+    chatPanel.setAttribute('aria-hidden', 'false');
+    const btn = $('chatSetBtn');
+    if (btn) btn.setAttribute('aria-expanded', 'true');
+    requestAnimationFrame(() => chatPanel.classList.add('shown'));
+  }
+  function closeChatPanel() {
+    if (!chatPanel) return;
+    chatPanel.classList.remove('shown');
+    chatPanel.setAttribute('aria-hidden', 'true');
+    const btn = $('chatSetBtn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    setTimeout(() => { chatPanel.classList.remove('open'); chatMask.hidden = true; }, 280);
+  }
+
+  function setSwitch(id, on) {
+    const el = $(id);
+    if (el) el.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+
+  function syncChatPanel() {
+    if (!chatPanel) return;
+    const u = S.chatUI;
+    setSwitch('uiAva', u.ava);
+    setSwitch('uiThink', u.showThink);
+    setSwitch('uiBpm', u.showBpm);
+    setSwitch('uiDate', u.showDate);
+    setSwitch('uiEnter', u.enterSend);
+    setSwitch('uiAuto', u.autoScroll);
+    chatPanel.querySelectorAll('.seg[data-ui]').forEach((seg) => {
+      const key = seg.dataset.ui;
+      seg.querySelectorAll('button').forEach((b) => {
+        b.classList.toggle('on', b.dataset.v === u[key]);
+      });
+    });
+    const alias = $('chatHerAlias');
+    if (alias) alias.value = u.herAlias;
+    const hp = $('chatHerAvaPrev'), mp = $('chatMyAvaPrev');
+    if (hp) hp.innerHTML = herAvaInner('m-txt');
+    if (mp) mp.innerHTML = myAvaInner('m-txt');
+    const hc = $('chatHerAvaClr'); if (hc) hc.hidden = !u.herAvatar;
+    const mc = $('chatMyAvaClr'); if (mc) mc.hidden = !u.myAvatar;
+  }
+
+  function bindSwitch(id, key, rerender) {
+    const el = $(id);
+    if (!el) return;
+    el.addEventListener('click', () => {
+      const on = el.getAttribute('aria-checked') !== 'true';
+      el.setAttribute('aria-checked', on ? 'true' : 'false');
+      S.chatUI[key] = on;
+      saveChatUI();
+      if (rerender) renderHistory();
+      else applyChatUI();
+    });
+  }
+
+  function bindSeg(uiKey, rerender) {
+    const seg = chatPanel && chatPanel.querySelector('.seg[data-ui="' + uiKey + '"]');
+    if (!seg) return;
+    seg.querySelectorAll('button').forEach((b) => {
+      b.addEventListener('click', () => {
+        S.chatUI[uiKey] = b.dataset.v;
+        saveChatUI();
+        seg.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+        if (rerender) renderHistory();
+        else applyChatUI();
+      });
+    });
+  }
+
+  /* 上传头像：压成 256 正方形 dataURL（只存这台设备） */
+  function bindAva(fileId, updater) {
+    const inp = $(fileId);
+    if (!inp) return;
+    inp.addEventListener('change', () => {
+      const f = inp.files && inp.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const s = 256;
+          const c = document.createElement('canvas');
+          c.width = c.height = s;
+          const ctx = c.getContext('2d');
+          const side = Math.min(img.width, img.height);
+          ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, s, s);
+          updater(c.toDataURL('image/jpeg', 0.82));
+          inp.value = '';
+        };
+        img.src = r.result;
+      };
+      r.readAsDataURL(f);
+    });
+  }
+
+  function setupChatPanel() {
+    if (!chatPanel) return;
+    const btn = $('chatSetBtn');
+    if (btn) btn.addEventListener('click', openChatPanel);
+    const close = $('chatPanelClose');
+    if (close) close.addEventListener('click', closeChatPanel);
+    if (chatMask) chatMask.addEventListener('click', closeChatPanel);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && chatPanel.classList.contains('open')) closeChatPanel();
+    });
+
+    // 头像列、思考、心率、日期 改的是消息结构，需要重渲
+    bindSwitch('uiAva', 'ava', true);
+    bindSwitch('uiThink', 'showThink', true);
+    bindSwitch('uiBpm', 'showBpm', true);
+    bindSwitch('uiDate', 'showDate', true);
+    // 回车发送、自动滚动 只改行为，不重渲
+    bindSwitch('uiEnter', 'enterSend', false);
+    bindSwitch('uiAuto', 'autoScroll', false);
+    bindSeg('bubble', false);
+    bindSeg('fs', false);
+    bindSeg('bg', false);
+
+    const alias = $('chatHerAlias');
+    if (alias) alias.addEventListener('input', () => {
+      S.chatUI.herAlias = alias.value;
+      saveChatUI();
+      setTxt('chatName', chatHerName());
+      renderHistory();
+    });
+
+    // 头像：换图 / 用首字
+    const upH = $('chatHerAvaUp'), clrH = $('chatHerAvaClr');
+    const upM = $('chatMyAvaUp'), clrM = $('chatMyAvaClr');
+    if (upH) upH.addEventListener('click', () => { const f = $('chatHerAvaFile'); if (f) f.click(); });
+    if (upM) upM.addEventListener('click', () => { const f = $('chatMyAvaFile'); if (f) f.click(); });
+    bindAva('chatHerAvaFile', (data) => {
+      S.chatUI.herAvatar = data; saveChatUI();
+      setHTML('chatAvaHer', herAvaInner('')); renderHistory(); syncChatPanel();
+    });
+    bindAva('chatMyAvaFile', (data) => {
+      S.chatUI.myAvatar = data; saveChatUI();
+      renderHistory(); syncChatPanel();
+    });
+    if (clrH) clrH.addEventListener('click', () => {
+      S.chatUI.herAvatar = ''; saveChatUI();
+      setHTML('chatAvaHer', herAvaInner('')); renderHistory(); syncChatPanel();
+    });
+    if (clrM) clrM.addEventListener('click', () => {
+      S.chatUI.myAvatar = ''; saveChatUI();
+      renderHistory(); syncChatPanel();
+    });
+
+    // 导出 / 清空
+    const exp = $('chatExport');
+    if (exp) exp.addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), messages: S.chat }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '潮-TIDE-聊天记录-' + todayStr() + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast('聊天记录已导出');
+    });
+    const clr = $('chatClear');
+    if (clr) clr.addEventListener('click', () => {
+      if (!window.confirm('清空后这段对话就找不回来了，确定？')) return;
+      S.chat = []; save(KEY.chat, S.chat);
+      stream.innerHTML = '';
+      const note = document.createElement('div');
+      note.className = 'sys-note';
+      note.textContent = '这是你们的房间。对话只留在这台设备上。';
+      stream.appendChild(note);
+      scrollDown(true);
+      toast('聊天空了');
+    });
+  }
+
   function boot() {
     renderTogether();
     renderBento();
@@ -4001,6 +4248,8 @@
     renderMood();
     renderChips();
     renderHistory();
+    applyChatUI();
+    setupChatPanel();
     tickClocks();
     updateSendState();
 

@@ -175,14 +175,16 @@
 <section class="screen page chat-page" id="chat" aria-label="聊天">
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <div class="head-mid">
-      <div class="pair-ava tiny right"><span id="chatAvaHer">满</span></div>
-      <div>
-        <p class="head-name" id="chatName">宋祁</p>
-        <p class="head-status" id="chatStatus">…</p>
+      <div class="head-mid">
+        <div class="pair-ava tiny right" id="chatAvaWrap"><span id="chatAvaHer">满</span></div>
+        <div>
+          <p class="head-name" id="chatName">宋祁</p>
+          <p class="head-status" id="chatStatus">…</p>
+        </div>
       </div>
-    </div>
-    <span class="head-spacer"></span>
+      <button class="chat-set-btn" id="chatSetBtn" type="button" aria-label="聊天设置" aria-expanded="false">
+        <svg viewBox="0 0 24 24"><use href="#i-gear"/></svg>
+      </button>
   </header>
 
   <div class="stream" id="stream" role="log" aria-live="polite"></div>
@@ -197,6 +199,119 @@
       </button>
     </form>
   </div>
+
+  <!-- 聊天设置右栏 -->
+  <div class="chat-panel-mask" id="chatPanelMask" hidden></div>
+  <aside class="chat-panel" id="chatPanel" aria-hidden="true" aria-label="聊天设置">
+    <header class="cp-head">
+      <p class="cp-title">聊天设置</p>
+      <button class="cp-close" id="chatPanelClose" type="button" aria-label="收起">
+        <svg viewBox="0 0 24 24"><use href="#i-back"/></svg>
+      </button>
+    </header>
+    <div class="cp-scroll">
+      <!-- 她 -->
+      <section class="cp-card">
+        <p class="cp-head-t">她</p>
+        <div class="cp-ava-row">
+          <div class="cp-ava-unit">
+            <div class="cp-ava" id="chatHerAvaPrev"><span>宋</span></div>
+            <span class="cp-ava-label">她的头像</span>
+            <div class="cp-ava-acts">
+              <button class="cp-link" id="chatHerAvaUp" type="button">换图</button>
+              <button class="cp-link dim" id="chatHerAvaClr" type="button" hidden>用首字</button>
+            </div>
+          </div>
+          <div class="cp-ava-unit">
+            <div class="cp-ava me" id="chatMyAvaPrev"><span>我</span></div>
+            <span class="cp-ava-label">我的头像</span>
+            <div class="cp-ava-acts">
+              <button class="cp-link" id="chatMyAvaUp" type="button">换图</button>
+              <button class="cp-link dim" id="chatMyAvaClr" type="button" hidden>用首字</button>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="chatHerAvaFile" accept="image/*" hidden />
+        <input type="file" id="chatMyAvaFile" accept="image/*" hidden />
+        <label class="cp-field">
+          <span class="cp-field-name">聊天里对她的称呼</span>
+          <input type="text" id="chatHerAlias" placeholder="用本名「宋祁」" maxlength="12" />
+        </label>
+        <p class="cp-hint">只在聊天界面生效，不改动他在别处的名字。</p>
+      </section>
+
+      <!-- 美化 -->
+      <section class="cp-card">
+        <p class="cp-head-t">美化</p>
+        <div class="cp-line">
+          <span class="cp-line-name">气泡质感</span>
+          <div class="seg" data-ui="bubble">
+            <button type="button" data-v="frost">磨砂</button>
+            <button type="button" data-v="solid">纯色</button>
+          </div>
+        </div>
+        <div class="cp-line switch-line">
+          <span class="cp-line-name">显示头像列<small>参考图那版：头像在左侧</small></span>
+          <button class="switch" id="uiAva" role="switch" aria-checked="false"><i></i></button>
+        </div>
+        <div class="cp-line">
+          <span class="cp-line-name">字号</span>
+          <div class="seg" data-ui="fs">
+            <button type="button" data-v="sm">小</button>
+            <button type="button" data-v="md">中</button>
+            <button type="button" data-v="lg">大</button>
+          </div>
+        </div>
+        <div class="cp-line switch-line">
+          <span class="cp-line-name">显示思考药丸</span>
+          <button class="switch" id="uiThink" role="switch" aria-checked="true"><i></i></button>
+        </div>
+        <div class="cp-line switch-line">
+          <span class="cp-line-name">显示心率彩蛋</span>
+          <button class="switch" id="uiBpm" role="switch" aria-checked="true"><i></i></button>
+        </div>
+        <div class="cp-line switch-line">
+          <span class="cp-line-name">显示日期分隔</span>
+          <button class="switch" id="uiDate" role="switch" aria-checked="true"><i></i></button>
+        </div>
+        <div class="cp-line">
+          <span class="cp-line-name">聊天背景</span>
+          <div class="seg" data-ui="bg">
+            <button type="button" data-v="wall">桌面壁纸</button>
+            <button type="button" data-v="light">浅色</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 输入 -->
+      <section class="cp-card">
+        <p class="cp-head-t">输入</p>
+        <div class="cp-line switch-line">
+          <span class="cp-line-name">回车发送<small>关掉则回车换行</small></span>
+          <button class="switch" id="uiEnter" role="switch" aria-checked="true"><i></i></button>
+        </div>
+        <div class="cp-line switch-line">
+          <span class="cp-line-name">新消息自动滚到底</span>
+          <button class="switch" id="uiAuto" role="switch" aria-checked="true"><i></i></button>
+        </div>
+      </section>
+
+      <!-- 记录 -->
+      <section class="cp-card">
+        <p class="cp-head-t">记录</p>
+        <button class="cp-row" id="chatExport" type="button">
+          <svg class="cp-row-ic"><use href="#i-note"/></svg>
+          <span class="cp-row-name">导出聊天记录</span>
+          <span class="cp-row-side">JSON</span>
+        </button>
+        <button class="cp-row danger" id="chatClear" type="button">
+          <svg class="cp-row-ic"><use href="#i-star"/></svg>
+          <span class="cp-row-name">清空聊天记录</span>
+          <span class="cp-row-side"></span>
+        </button>
+      </section>
+    </div>
+  </aside>
 </section>
 
 <!-- ============ 心情（他的状态） ============ -->
