@@ -831,7 +831,7 @@ button { font-family: inherit; }
 .chat-page .stream {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 20px 6px;
+  padding: 8px 16px 6px;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
   -webkit-overflow-scrolling: touch;
@@ -842,10 +842,11 @@ button { font-family: inherit; }
   justify-content: center;
   text-align: center;
   gap: 0;
-  margin: 20px 0 16px;
+  margin: 26px 0 16px;
   color: var(--ink-3);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  opacity: 0.75;
 }
 .day-mark::before, .day-mark::after { content: none; }
 
@@ -854,7 +855,7 @@ button { font-family: inherit; }
 /* 「乱息」式：磨砂玻璃泡浮在壁纸上 */
 .msg {
   width: fit-content;
-  margin: 0 0 14px;
+  margin: 0 0 18px;
   animation: rise 0.45s var(--ease) both;
 }
 @keyframes rise {
@@ -874,15 +875,16 @@ button { font-family: inherit; }
 }
 .msg.me .m-col { align-items: flex-end; }
 
-/* meta：她的小头像 + 完整时间（泡上方） */
+/* meta：她的小头像 + 时间（泡上方） */
 .msg .m-meta {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin: 0 2px 5px;
+  gap: 6px;
+  margin: 0 1px 5px;
   font-size: 10.5px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: var(--ink-3);
+  opacity: 0.85;
   font-variant-numeric: tabular-nums;
 }
 .msg .m-mini {
@@ -905,16 +907,20 @@ button { font-family: inherit; }
   letter-spacing: 0.012em;
   word-break: break-word;
   white-space: pre-wrap;
-  background: rgba(255, 255, 255, 0.58);
-  -webkit-backdrop-filter: blur(16px) saturate(1.5);
-  backdrop-filter: blur(16px) saturate(1.5);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 16px;
-  box-shadow: 0 8px 22px rgba(120, 110, 130, 0.10);
-  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.62);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(120, 110, 130, 0.06);
+  padding: 9px 14px;
   color: var(--ink);
 }
-.msg .bubble + .bubble { margin-top: 6px; }
+.msg .bubble + .bubble { margin-top: 4px; }
+
+/* 收尾的小角：方向跟着说话的人 */
+.msg.her .bubble:last-child { border-bottom-left-radius: 7px; }
+.msg.me .bubble:last-child  { border-bottom-right-radius: 7px; }
 
 .msg.me .bubble { background: rgba(255, 255, 255, 0.72); }
 
@@ -968,13 +974,13 @@ button { font-family: inherit; }
   flex: 0 0 auto;
   font-size: 12px;
   color: var(--ink-2);
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 999px;
-  padding: 6px 13px;
+  padding: 5px 12px;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 3px 8px rgba(130, 115, 140, 0.08);
+  box-shadow: 0 1px 3px rgba(130, 115, 140, 0.06);
   transition: transform 0.18s var(--ease);
 }
 .chip:active { transform: scale(0.95); }
@@ -3396,34 +3402,39 @@ body[data-wall="photo"] .bg {
   backdrop-filter: blur(14px) saturate(1.4);
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 999px;
-  padding: 7px 13px;
-  margin: 0 0 8px;
+  padding: 6px 12px;
+  margin: 2px 0 8px;
   max-width: 94%;
-  box-shadow: 0 6px 18px rgba(120, 110, 130, 0.08);
+  box-shadow: 0 1px 3px rgba(120, 110, 130, 0.05);
 }
 .think-head {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   border: none;
   background: none;
   padding: 0;
   cursor: pointer;
   font-family: inherit;
+  white-space: nowrap;
+  flex-wrap: nowrap;
 }
+.think-ic { flex: 0 0 auto; }
 .think-ic svg { width: 14px; height: 14px; stroke: var(--ink-3, #a0a5ad); }
 .think-label {
-  font-size: 12px;
-  letter-spacing: 0.12em;
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
   color: var(--ink-2, #6b7078);
+  white-space: nowrap;
 }
 .think-toggle {
-  margin-left: auto;
+  margin-left: 6px;
   font-style: normal;
   font-size: 11px;
   color: var(--ink-3, #a0a5ad);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 .think-body {
   display: none;
@@ -3474,8 +3485,9 @@ body[data-wall="photo"] .bg {
 .album-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding-bottom: 30px;
+  gap: 16px 14px;
+  padding-bottom: 40px;
+  align-items: start;
 }
 .album-cell {
   margin: 0;
@@ -3613,6 +3625,15 @@ body[data-wall="photo"] .bg {
    相册内置三种相框：拍立得 / 手账 / 简约
    点照片出现样式条；每张照片自己记 st。
    ============================================================ */
+/* 相册页：纸的温度（米白，不跟冷灰） */
+#album { background: linear-gradient(180deg, #f8f5ef, #f1ece3); }
+#album .page-head { background: linear-gradient(to bottom, rgba(248, 245, 239, 0.95) 42%, rgba(248, 245, 239, 0)); }
+#album .head-act {
+  background: none;
+  border-color: rgba(17, 20, 28, 0.12);
+  color: #6d6a61;
+  box-shadow: none;
+}
 .album-cell { background: none; box-shadow: none; padding: 0; }
 .album-cell .photo-frame {
   position: relative;
@@ -3622,8 +3643,8 @@ body[data-wall="photo"] .bg {
   box-shadow: 0 6px 18px rgba(70, 78, 90, 0.06);
   transition: transform 0.2s ease;
 }
-.album-cell.tilt-l .photo-frame { transform: rotate(-1.6deg); }
-.album-cell.tilt-r .photo-frame { transform: rotate(1.4deg); }
+.album-cell.tilt-l .photo-frame { transform: rotate(-0.8deg); }
+.album-cell.tilt-r .photo-frame { transform: rotate(0.7deg); }
 .album-cell img {
   width: 100%;
   aspect-ratio: 1 / 1;
@@ -3643,57 +3664,66 @@ body[data-wall="photo"] .bg {
   text-overflow: ellipsis;
 }
 
-/* 拍立得：白框厚下边 + 手写体日期 + 微倾 */
+/* 拍立得：白框厚下边 + 楷体小字 + 微倾 */
 .album-cell.st-polaroid .photo-frame {
-  background: #fdfdfb;
-  padding: 10px 10px 6px;
-  border-radius: 6px;
-  box-shadow: 0 10px 22px rgba(70, 78, 90, 0.14);
+  background: #fdfdfa;
+  padding: 9px 9px 0;
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(90, 80, 70, 0.12);
 }
-.album-cell.st-polaroid img { border-radius: 2px; aspect-ratio: 1 / 1.04; }
+.album-cell.st-polaroid img { border-radius: 1px; aspect-ratio: 1 / 1.06; }
 .album-cell.st-polaroid figcaption {
   font-family: "Kaiti SC", STKaiti, KaiTi, Georgia, serif;
-  font-size: 14px;
-  color: #5d6168;
-  letter-spacing: 0.06em;
-  padding: 4px 0 8px;
+  font-size: 12.5px;
+  color: #6f6a5e;
+  letter-spacing: 0.05em;
+  padding: 9px 2px 13px;
 }
 
-/* 手账：米色格纹底 + 胶带 + 涂鸦心 */
+/* 手账：横线纸底 + 窄胶带 + 图贴白边 */
 .album-cell.st-journal .photo-frame {
   background:
-    radial-gradient(rgba(111, 157, 151, 0.16) 1px, transparent 1.5px),
-    linear-gradient(150deg, #fdf8ee, #fbf3e6);
-  background-size: 12px 12px, 100% 100%;
-  padding: 16px 12px 10px;
-  border-radius: 10px;
-  box-shadow: 0 8px 20px rgba(120, 100, 80, 0.12);
+    repeating-linear-gradient(0deg, transparent, transparent 21px, rgba(111, 157, 151, 0.13) 21px, rgba(111, 157, 151, 0.13) 22px),
+    linear-gradient(160deg, #fdfaf3, #f8f1e4);
+  padding: 15px 11px 11px;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(120, 100, 80, 0.12);
 }
 .album-cell.st-journal .photo-frame::before {
   content: "";
   position: absolute;
-  top: -9px;
+  top: -8px;
   left: 50%;
-  width: 74px;
-  height: 20px;
-  margin-left: -37px;
-  background: rgba(111, 157, 151, 0.32);
+  width: 56px;
+  height: 16px;
+  margin-left: -28px;
+  background: rgba(111, 157, 151, 0.3);
   transform: rotate(-4deg);
-  box-shadow: 0 2px 6px rgba(70, 78, 90, 0.08);
+  box-shadow: 0 1px 4px rgba(70, 78, 90, 0.08);
 }
-.album-cell.st-journal img { border-radius: 4px; border: 3px solid #fff; }
+.album-cell.st-journal img { border-radius: 3px; border: 2px solid #fff; }
 .album-cell.st-journal figcaption::before { content: "♥ "; color: #d98ea6; }
 .album-cell.st-journal figcaption {
   font-family: "Kaiti SC", STKaiti, KaiTi, Georgia, serif;
-  font-size: 13px;
+  font-size: 12.5px;
   color: #7a6a5c;
+  text-align: left;
+  padding: 8px 2px 2px;
 }
 
-/* 简约：白卡（默认那版） */
+/* 简约：薄白卡，quiet 版 */
 .album-cell.st-plain .photo-frame {
-  background: rgba(255, 255, 255, 0.72);
-  padding: 8px;
-  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 6px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(90, 80, 70, 0.07);
+}
+.album-cell.st-plain img { border-radius: 11px; }
+.album-cell.st-plain figcaption {
+  text-align: left;
+  padding: 7px 4px 6px;
+  font-size: 10.5px;
+  color: #8d887c;
 }
 
 /* 样式条 */
@@ -3842,8 +3872,8 @@ body[data-wall="photo"] .bg {
 .acal-days button.on { background: var(--tide, #6f9d97); color: #fff; }
 .acal-days button.on::after { background: #fff; }
 /* 倾斜放外层 cell，rotateY 翻转独占 frame（两者不打架） */
-.album-cell.tilt-l { transform: rotate(-1.6deg); }
-.album-cell.tilt-r { transform: rotate(1.4deg); }
+.album-cell.tilt-l { transform: rotate(-0.8deg); }
+.album-cell.tilt-r { transform: rotate(0.7deg); }
 .album-cell.tilt-l .photo-frame,
 .album-cell.tilt-r .photo-frame { transform: rotateY(0deg); }
 
@@ -3881,13 +3911,13 @@ body[data-wall="photo"] .bg {
 .album-cell .photo-frame::before {
   content: "";
   position: absolute;
-  top: -9px;
+  top: -8px;
   left: 50%;
-  width: 64px;
-  height: 18px;
-  background: rgba(183, 205, 200, 0.55);
+  width: 54px;
+  height: 16px;
+  background: rgba(183, 205, 200, 0.5);
   transform: translateX(-50%) rotate(-3deg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border-radius: 1px;
   z-index: 2;
   pointer-events: none;
@@ -3908,12 +3938,13 @@ body[data-wall="photo"] .bg {
 }
 .together-line:empty { display: none; }
 
-/* 她（他）的心率小彩蛋 */
+/* 她（他）的心率小彩蛋：贴着最后一个泡的左下 */
 .msg .bpm {
-  margin: 7px 2px 0;
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
+  margin: -2px 2px 0 8px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
   color: var(--ink-3);
+  opacity: 0.8;
   font-variant-numeric: tabular-nums;
 }
 .msg .bpm::first-letter { color: #d4708a; }
@@ -4035,7 +4066,9 @@ body[data-wall="photo"] .bg {
 /* ============ 聊天界面设置 → 渲染类 ============ */
 
 /* 聊天背景：默认跟随桌面壁纸色调；浅色模式用纯浅底 */
-#chat { background: var(--wall-grad, #eef0f4); }
+#chat { background: var(--wall-grad, linear-gradient(180deg, #f5f4f1, #eae8e4)); }
+#chat .page-head { background: linear-gradient(to bottom, rgba(255, 255, 255, 0.92) 38%, rgba(255, 255, 255, 0)); }
+#chat .composer-wrap { background: linear-gradient(to top, rgba(255, 255, 255, 0.92) 62%, rgba(255, 255, 255, 0)); border-radius: 0; }
 #chat.bg-light { background: #eef0f3; }
 
 /* 气泡质感：纯色 */

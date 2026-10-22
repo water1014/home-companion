@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v34';
+  window.__TIDE_MARK = 'LOCAL-v35';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -1648,7 +1648,7 @@
     setTxt('moodAvaHer', herInitial());
     setTxt('chatName', chatHerName());         // 聊天里用备注名
     const inp = $('input');
-    if (inp) inp.placeholder = '和' + herName() + '说点什么…';
+    if (inp) inp.placeholder = '说点什么…';
     setTxt('setAvaMe', me);
     setTxt('setNoteHer', herName());
     setTxt('setUserLabel', S.memory.userName || '我');
@@ -2236,11 +2236,16 @@
     }
   }
 
-  /* 「乱息」式布局：磨砂玻璃泡浮在壁纸上；她 = 小头像+完整时间在泡上方，
+  /* 「乱息」式布局：磨砂玻璃泡浮在壁纸上；她 = 小头像+时间在泡上方，
      正文按 \n 拆成连发多个小泡；我 = 右侧单个泡，无标注 */
   function fmtMeta(ts) {
     if (!ts) return '';
     const d = new Date(ts);
+    const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    if (sameDay) return hhmm(ts);
+    const yest = new Date(now.getTime() - 86400000);
+    if (d.toDateString() === yest.toDateString()) return '昨天 ' + hhmm(ts);
     return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + hhmm(ts);
   }
 
@@ -3184,7 +3189,7 @@
       hint.hidden = false;
       hint.textContent = albumFilter
         ? albumFilter.slice(5).replace('-', ' 月 ') + ' 日 · ' + list.length + ' 张 · 再点日历取消'
-        : (all.length ? all.length + ' 张 · 点照片换样式 / 翻面写备注' : emptyTextOf('photos', '第一张图放这儿'));
+        : (all.length ? all.length + ' 张' : emptyTextOf('photos', '第一张图放这儿'));
     }
     if (!grid) return;
     grid.innerHTML = '';

@@ -121,7 +121,7 @@
   function statusLine(state, now) {
     const h = new Date(now).getHours();
     const ph = phaseOf(h);
-    const act = ACTIVITY[ph][0];
+    const act = (ACTIVITY[ph] && ACTIVITY[ph][0] || '').split(/[，,。]/)[0];
     let moodWord = '平静';
     if (state.energy < 22) moodWord = '很困';
     else if (state.mood > 74) moodWord = '心情不错';
