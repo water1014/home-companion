@@ -3846,3 +3846,75 @@ body[data-wall="photo"] .bg {
 .album-cell.tilt-r { transform: rotate(1.4deg); }
 .album-cell.tilt-l .photo-frame,
 .album-cell.tilt-r .photo-frame { transform: rotateY(0deg); }
+
+/* ===== 浅参考：相册分类药丸 + 拍立得胶带 + 在一起天数 + 心率彩蛋 ===== */
+.album-cats {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
+  scrollbar-width: none;
+}
+.album-cats::-webkit-scrollbar { display: none; }
+.cat-pill {
+  flex: 0 0 auto;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.cat-pill.on {
+  background: var(--tide, #6f9d97);
+  border-color: transparent;
+  color: #fff;
+}
+
+/* 拍立得/手账相框顶部的胶带贴 */
+.album-cell .photo-frame::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 64px;
+  height: 18px;
+  background: rgba(183, 205, 200, 0.55);
+  transform: translateX(-50%) rotate(-3deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-radius: 1px;
+  z-index: 2;
+  pointer-events: none;
+}
+.album-cell.tilt-r .photo-frame::before {
+  background: rgba(226, 197, 186, 0.55);
+  transform: translateX(-50%) rotate(2.5deg);
+}
+.album-cell.st-plain .photo-frame::before { display: none; }
+
+/* 桌面：在一起的第 N 天 */
+.together-line {
+  margin: 2px 2px 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.together-line:empty { display: none; }
+
+/* 她（他）的心率小彩蛋 */
+.msg .bpm {
+  margin: 7px 2px 0;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.msg .bpm::first-letter { color: #d4708a; }
+.photo-frame.flipped::before { opacity: 0; }

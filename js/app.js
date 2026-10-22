@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v32';
+  window.__TIDE_MARK = 'LOCAL-v33';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -2276,6 +2276,14 @@
     // 她心里想（历史重放时也在）
     if (!me && m.think) col.appendChild(buildThinkCard(m.think, m.thinkSec));
 
+    // 她的组底：小心率彩蛋（同一条消息数字稳定）
+    if (!me && (m.text || '').trim()) {
+      const bpm = document.createElement('div');
+      bpm.className = 'bpm';
+      bpm.textContent = '♥ ' + (62 + (Number(m.ts) % 29)) + ' bpm';
+      col.appendChild(bpm);
+    }
+
     // 操作行
     col.appendChild(buildOps(m, wrap));
 
@@ -3015,6 +3023,7 @@
   const ALBUM_STYLE_NAME = { polaroid: '拍立得', journal: '手账', plain: '简约' };
   let albumCalMonth = null;   // 日历当前显示的月份（Date，1 号）
   let albumFilter = null;     // 'YYYY-MM-DD' 或 null
+  let albumStyle = null;      // 'polaroid' | 'journal' | 'plain' | null
 
   function emptyTextOf(key, fb) {
     const et = S.settings.emptyText || {};
@@ -3096,7 +3105,31 @@
     const grid = $('albumGrid');
     const hint = $('albumHint');
     const all = S.life.photos || [];
-    const list = albumFilter ? all.filter((p) => dayStr(p.ts) === albumFilter) : all;
+
+    // 分类药丸：按相框样式筛选（和日历日期筛选叠加）
+    const cats = $('albumCats');
+    if (cats) {
+      cats.innerHTML = '';
+      const mk = (key, label, n) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'cat-pill' + ((albumStyle || null) === key ? ' on' : '');
+        b.textContent = label + ' ' + n;
+        b.addEventListener('click', () => {
+          albumStyle = albumStyle === key ? null : key;
+          renderAlbum();
+        });
+        cats.appendChild(b);
+      };
+      mk(null, '全部', all.length);
+      ALBUM_STYLES.forEach((k) => {
+        mk(k, ALBUM_STYLE_NAME[k] || k, all.filter((x) => (ALBUM_STYLES.indexOf(x.st) >= 0 ? x.st : 'plain') === k).length);
+      });
+    }
+
+    let list = all;
+    if (albumFilter) list = list.filter((p) => dayStr(p.ts) === albumFilter);
+    if (albumStyle) list = list.filter((p) => (ALBUM_STYLES.indexOf(p.st) >= 0 ? p.st : 'plain') === albumStyle);
     if (hint) {
       hint.hidden = false;
       hint.textContent = albumFilter
@@ -3951,7 +3984,16 @@
     return '晚上好。\n今天过得怎么样？';
   }
 
+  function renderTogether() {
+    const el = $('togetherLine');
+    if (!el) return;
+    const start = S.memory.startDate;
+    el.textContent = herName() + ' & ' + (S.memory.userName || '我') +
+      ' · 在一起的第 ' + daysTogether() + ' 天' + (start ? ' · since ' + start.slice(5).replace('-', '.') : '');
+  }
+
   function boot() {
+    renderTogether();
     renderBento();
     renderBento2();
     renderApps();
