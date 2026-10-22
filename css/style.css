@@ -3362,3 +3362,71 @@ body[data-wall="photo"] .bg {
 }
 
 
+
+/* ============================================================
+   聊天：她的心里想（虚线折叠卡）+ 消息操作行
+   ============================================================ */
+.think-card {
+  border: 1px dashed rgba(111, 157, 151, 0.55);
+  border-radius: 16px;
+  padding: 8px 12px;
+  margin: 0 0 8px;
+  max-width: 88%;
+  background: rgba(255, 255, 255, 0.4);
+}
+.think-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--ink-3, #a0a5ad);
+}
+.think-head i { font-style: normal; }
+.think-body {
+  display: none;
+  margin: 7px 0 2px;
+  font-size: 12.5px;
+  line-height: 1.75;
+  font-style: italic;
+  color: var(--ink-2, #6b7078);
+  white-space: pre-wrap;
+}
+.think-card.open .think-body { display: block; }
+
+/* 消息操作行：点消息出现 */
+.msg .ops {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0 0;
+  animation: rise 0.3s var(--ease) both;
+}
+.msg.show-ops .ops { display: flex; }
+.msg .ops-time {
+  font-size: 10px;
+  color: var(--ink-3, #a0a5ad);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+.msg .ops button {
+  border: none;
+  background: none;
+  padding: 2px 0;
+  font-size: 11px;
+  color: var(--tide, #6f9d97);
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.06em;
+}
+.msg .ops button:active { opacity: 0.6; }
+
+/* 她的话多行时行距松一点，像连发的短句 */
+.msg.her .body { line-height: 1.9; }

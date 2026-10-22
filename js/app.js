@@ -1604,6 +1604,8 @@
     setTxt('chatAvaHer', herInitial());
     setTxt('moodAvaHer', herInitial());
     setTxt('chatName', herName());
+    const inp = $('input');
+    if (inp) inp.placeholder = '和' + herName() + '说点什么…';
     setTxt('setAvaMe', me);
     setTxt('setNoteHer', herName());
     setTxt('setUserLabel', S.memory.userName || '我');
@@ -2093,6 +2095,87 @@
     return { text: clean, action: acts.join(' · ') };
   }
 
+  /* 「她心里想」折叠卡：[[心事]] 标记的可视化（虚线卡，默认收起） */
+  function buildThinkCard(text) {
+    const card = document.createElement('div');
+    card.className = 'think-card closed';
+    const head = document.createElement('button');
+    head.type = 'button';
+    head.className = 'think-head';
+    const t1 = document.createElement('span');
+    t1.textContent = '她心里想';
+    const t2 = document.createElement('i');
+    t2.textContent = '展开';
+    head.appendChild(t1);
+    head.appendChild(t2);
+    const body = document.createElement('p');
+    body.className = 'think-body';
+    body.textContent = text;
+    head.addEventListener('click', () => {
+      const open = card.classList.toggle('open');
+      t2.textContent = open ? '收起' : '展开';
+    });
+    card.appendChild(head);
+    card.appendChild(body);
+    return card;
+  }
+
+  /* 消息操作行：时间 + 复制/重说/删除（点消息出现，再点收起） */
+  function buildOps(m, wrap) {
+    const ops = document.createElement('div');
+    ops.className = 'ops';
+    const time = document.createElement('span');
+    time.className = 'ops-time';
+    time.textContent = m.ts ? hhmm(m.ts) : '';
+    ops.appendChild(time);
+    const mk = (label, fn) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+      ops.appendChild(b);
+    };
+    mk('复制', () => {
+      const t = (m.action ? m.action + '\n' : '') + (m.text || '');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t).then(() => toast('复制好了'), () => toast('复制不了'));
+      } else toast('复制不了');
+    });
+    if (m.role === 'her') mk('重说', () => regenHer(m, wrap));
+    mk('删除', () => {
+      const i = S.chat.indexOf(m);
+      if (i >= 0) { S.chat.splice(i, 1); save(KEY.chat, S.chat); }
+      wrap.remove();
+      toast('删掉了');
+    });
+    return ops;
+  }
+
+  /* 重说：撤掉这条回复，对她之前那句话重新回应 */
+  function regenHer(m, wrap) {
+    if (busy) { toast('他在打字呢'); return; }
+    const i = S.chat.indexOf(m);
+    if (i < 0) { if (wrap) wrap.remove(); return; }
+    const prevMe = S.chat.slice(0, i).reverse().find((x) => x.role === 'me');
+    S.chat.splice(i, 1);
+    save(KEY.chat, S.chat);
+    if (wrap) wrap.remove();
+    if (prevMe) respond(prevMe.text);
+  }
+
+  /* 心里想卡挂到她的消息节点上（流式和重放共用；已有就更新文字） */
+  function attachThink(node, text) {
+    if (!text || !node || !node.wrap) return;
+    node.msg.think = text;
+    let card = node.wrap.querySelector(':scope > .think-card');
+    if (!card) {
+      card = buildThinkCard(text);
+      node.wrap.insertBefore(card, node.wrap.querySelector(':scope > .ops'));
+    } else {
+      card.querySelector('.think-body').textContent = text;
+    }
+  }
+
   function buildMessageNode(m) {
     const wrap = document.createElement('div');
     wrap.className = 'msg ' + (m.role === 'her' ? 'her' : 'me');
@@ -2112,6 +2195,20 @@
     bubble.appendChild(body);
 
     wrap.appendChild(bubble);
+
+    // 她心里想（历史重放时也在）
+    if (m.role === 'her' && m.think) wrap.appendChild(buildThinkCard(m.think));
+
+    // 操作行
+    wrap.appendChild(buildOps(m, wrap));
+
+    wrap.addEventListener('click', () => {
+      stream.querySelectorAll('.msg.show-ops').forEach((n) => {
+        if (n !== wrap) n.classList.remove('show-ops');
+      });
+      wrap.classList.toggle('show-ops');
+    });
+
     return { wrap, body, bubble };
   }
 
@@ -2564,6 +2661,7 @@
       let node = null;
       let received = false;
       let strip = null;
+      let thinkText = '';
       try {
         const history = S.chat.slice(-16, -1).map((m) => ({
           role: m.role === 'her' ? 'assistant' : 'user',
@@ -2598,6 +2696,10 @@
             if (!strip) strip = makeStripper((key, arg, text) => {
               pendingMarks = pendingMarks || [];
               pendingMarks.push({ key: key, arg: arg, text: text });
+              if (key === '心事' && text) {
+                thinkText = text;                       // 心里想：边流边挂卡
+                if (node) attachThink(node, text);
+              }
             });
             const vis = strip.feed(d);          // 只喂增量，绝不喂全文
             const parsed = splitAction(vis);
@@ -2630,6 +2732,7 @@
           node.msg.action = parsed.action;
           node.body.textContent = node.msg.text;
         }
+        if (thinkText) attachThink(node, thinkText);
         save(KEY.chat, S.chat);
         applyEffects([2.5, -1, 2]);
         finish();
@@ -2645,6 +2748,7 @@
           }
           if (!node.msg.text) node.msg.text = '……';
           node.body.textContent = node.msg.text;
+          if (thinkText) attachThink(node, thinkText);
           save(KEY.chat, S.chat);
           toast('连接断了，先说到这儿');
           finish();
@@ -2665,6 +2769,8 @@
       if (clean.marks.length) pendingMarks = pendingMarks.concat(clean.marks);
       const node = appendMessage({ role: 'her', text: clean.text, action: r.action, ts: Date.now() }, true);
       node.body.textContent = '';
+      const th = (pendingMarks || []).filter((x) => x.key === '心事' && x.text).slice(-1)[0];
+      if (th) attachThink(node, th.text);
       typeOut(node, clean.text, 26);
       applyEffects(r.effects);
       save(KEY.chat, S.chat);
