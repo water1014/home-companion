@@ -30,6 +30,7 @@
     return TINTS[h % TINTS.length];
   }
 
+  const APP_VER = '22';   // 版本号会显示在编辑提示里，方便确认手机上跑的是哪版
   const APPS_DEFAULT = [
     /* 第一页 · 日常 */
     { id: 'chat',     name: '聊天',     icon: 'i-chat',    page: 'chat' },
@@ -1154,9 +1155,13 @@
     const btn = $('editDone');
     if (btn) btn.hidden = !on;
     const hint = $('editHint');
-    if (hint) hint.hidden = !on;
+    if (hint) {
+      hint.textContent = '点一下图标拿起 → 上一页/下一页 · 或直接拖 · v' + APP_VER;
+      hint.hidden = !on;
+    }
     if (!on) {
       killGhost();
+      unpick();
       saveLayouts();
     }
   }
@@ -1257,10 +1262,59 @@
     flipArm(dir);
   }
 
+  /* ---- 编辑态「拿起」：点一下图标拿起，再用按钮跨页 ----
+     拖拽在手机上会被长按/系统手势各种打断，点选这条路零门槛。 */
+  let picked = '';
+  function unpick() {
+    if (picked) {
+      document.querySelectorAll('.tile[data-app="' + picked + '"]').forEach((t) => {
+        if (!t.closest('#quad') && !t.closest('#dock')) t.classList.remove('picked');
+      });
+    }
+    picked = '';
+    const bar = $('pickBar');
+    if (bar) bar.hidden = true;
+  }
+  function pickToggle(id) {
+    if (!id) return;
+    if (picked === id) { unpick(); return; }
+    unpick();
+    const pi = appPages.findIndex((l) => l.some((x) => x.id === id));
+    if (pi < 0) return;
+    picked = id;
+    document.querySelectorAll('.tile[data-app="' + id + '"]').forEach((t) => {
+      if (!t.closest('#quad') && !t.closest('#dock')) t.classList.add('picked');
+    });
+    const app = findApp(id);
+    $('pickName').textContent = app ? app.name : id;
+    $('pickPrev').disabled = pi <= 0;
+    $('pickNext').disabled = pi >= 2;
+    $('pickBar').hidden = false;
+  }
+  function pickMove(dir) {
+    if (!picked) return;
+    const pi = appPages.findIndex((l) => l.some((x) => x.id === picked));
+    const ti = pi + dir;
+    if (pi < 0 || ti < 0 || ti > 2) return;
+    if (appPages[ti].length >= pageCap(ti)) { toast('那页放不下了'); return; }
+    const si = appPages[pi].findIndex((x) => x.id === picked);
+    appPages[ti].push(appPages[pi].splice(si, 1)[0]);
+    pagesSave();
+    unpick();
+    flipAll('.app-row .tile, #appGrid .tile, #appGrid2 .tile', 'app', () => { renderBento(); renderApps(); }, null);
+    toast('挪到' + (ti === 0 ? '首页' : ti === 1 ? '第二页' : '第三页') + '了');
+  }
+  const pickBar = $('pickBar');
+  if (pickBar) {
+    $('pickPrev').addEventListener('click', () => pickMove(-1));
+    $('pickNext').addEventListener('click', () => pickMove(1));
+  }
+
   /* ---- 开始拖 ---- */
   function beginDrag(g) {
     if (!g || !g.dragEl) return;
     if (!editing) setEdit(true);
+    unpick();
     g.mode = 'drag';
     g.dropEl = null;
     g.dropZone = null;
@@ -1458,7 +1512,7 @@
   /* ---- 手势入口 ---- */
   document.addEventListener('pointerdown', (e) => {
     if (e.button > 0) return;
-    if (e.target.closest && e.target.closest('#editDone')) return;
+    if (e.target.closest && (e.target.closest('#editDone') || e.target.closest('#pickBar'))) return;
     clearTimeout(pressTimer);
 
     const de = draggableAt(e);
@@ -1546,6 +1600,15 @@
       if (g.dragEl) g.dragEl.classList.remove('drag-src');
       stopEdge();
       setFlipHints(false);
+      /* 编辑态原地点一下应用图标 = 「拿起」（跨页的稳妥路径，不吃手势）。
+         四格里的和 dock 里的不算——那些不是页名单里的那份。 */
+      if (!g.dragMoved && g.dragEl.classList.contains('tile') &&
+          !g.dragEl.closest('#quad') && !g.dragEl.closest('#dock')) {
+        clearDrop(g);
+        pickToggle(g.dragEl.dataset.app);
+        suppressClick = performance.now() + 400;
+        return;
+      }
       commitDrag(g, gr);
       clearDrop(g);
       suppressClick = performance.now() + 260;
