@@ -30,7 +30,7 @@
     return TINTS[h % TINTS.length];
   }
 
-  const APP_VER = '22';   // 版本号会显示在编辑提示里，方便确认手机上跑的是哪版
+  const APP_VER = '23';   // 版本号会显示在编辑提示里，方便确认手机上跑的是哪版
   const APPS_DEFAULT = [
     /* 第一页 · 日常 */
     { id: 'chat',     name: '聊天',     icon: 'i-chat',    page: 'chat' },
@@ -1156,12 +1156,11 @@
     if (btn) btn.hidden = !on;
     const hint = $('editHint');
     if (hint) {
-      hint.textContent = '点一下图标拿起 → 上一页/下一页 · 或直接拖 · v' + APP_VER;
+      hint.textContent = '拖住图标贴左右边自动翻页 · 点空白收工 · v' + APP_VER;
       hint.hidden = !on;
     }
     if (!on) {
       killGhost();
-      unpick();
       saveLayouts();
     }
   }
@@ -1192,137 +1191,84 @@
     ghost.style.transform = 'translate3d(' + dx + 'px,' + dy + 'px,0) scale(1.05)';
   }
 
-  /* ---- 拖拽时翻页：两侧箭头（主）+ 屏幕边缘停留（辅）----
-     安卓把屏幕左右边缘留给系统返回手势，手指一进边缘区拖拽就被掐断
-     （pointercancel → abortDrag）。所以主路径是拖拽时浮现的两侧箭头：
-     位置避开了系统手势区，图标悬上去停一下就翻页，且压在箭头上时
-     不选中任何落点。边缘停留保留给贴边悬空的情况，但压在图标上
-     （在瞄准）时不起手，防止误翻。 */
-  const EDGE_W = 56;       // 边缘多宽算"想翻页"
-  const FLIP_MS = 320;     // 停多久才翻
+  /* ---- 拖拽翻页：把图标往左右边推，邻页探边预示，停 0.5s 翻页 ----
+     关键是「意图」：只有朝边缘方向的移动才起意——静止摆放、朝中间
+     收回来都不算。深区 56px（系统手势区 ~25px 之外仍有富余），起手
+     位置（边列图标中心 ~66px）在深区外，绝不会一起拖就乱翻。 */
+  const EDGE_W = 56;
+  const FLIP_MS = 500;
   let edgeTimer = 0;
   let edgeDir = 0;
-
-  function setFlipHints(on) {
-    document.querySelectorAll('.flip-hint').forEach((b) => { b.classList.toggle('show', !!on); });
-  }
-  function markBtn(dir) {
-    document.querySelectorAll('.flip-hint').forEach((b) => {
-      b.classList.toggle('armed',
-        (dir === -1 && b.classList.contains('fl')) || (dir === 1 && b.classList.contains('fr')));
-    });
-  }
-  /* 手指是否悬在某个翻页箭头上：-1 左 / 1 右 / 0 没悬 */
-  function flipHover(x, y) {
-    const btns = document.querySelectorAll('.flip-hint.show');
-    for (let i = 0; i < btns.length; i++) {
-      const r = btns[i].getBoundingClientRect();
-      if (r.width && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-        return btns[i].classList.contains('fl') ? -1 : 1;
-      }
-    }
-    return 0;
+  let peekDir = 0;
+  let lastX = null;
+  function peek(dir) {
+    if (!pager || peekDir === dir) return;
+    const w = pager.clientWidth || 1;
+    const base = Math.round(pager.scrollLeft / w) * w;
+    const max = pager.scrollWidth - w;
+    peekDir = dir;
+    pager.scrollTo({ left: Math.max(0, Math.min(max, base - 26 * dir)), behavior: 'smooth' });
   }
   function stopEdge() {
     if (edgeTimer) { clearTimeout(edgeTimer); edgeTimer = 0; }
     edgeDir = 0;
-    markBtn(0);
+    peek(0);
   }
   function flipArm(dir) {
+    const w = pager.clientWidth || 1;
+    const cur = Math.round(pager.scrollLeft / w);
+    const ti = cur + dir;
+    if (ti < 0 || ti * w > pager.scrollWidth - w + 4) { stopEdge(); return; }  // 已是边上那页
     if (edgeDir === dir && edgeTimer) return;
     stopEdge();
     edgeDir = dir;
-    markBtn(dir);
+    peek(dir);
     edgeTimer = setTimeout(() => {
       edgeTimer = 0;
       edgeDir = 0;
-      markBtn(0);
-      const w = pager.clientWidth || 1;
-      const i = Math.round(pager.scrollLeft / w) + dir;
-      const max = pager.scrollWidth - w;
-      pager.scrollTo({ left: Math.max(0, Math.min(max, i * w)), behavior: 'smooth' });
+      peekDir = 0;
+      if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+      pager.scrollTo({ left: ti * w, behavior: 'smooth' });
     }, FLIP_MS);
   }
   function edgeScroll(g, x) {
     if (!editing || !pager) { stopEdge(); return; }
-    const btn = flipHover(x, g.cy || 0);
-    if (btn) { flipArm(btn); return; }
     const r = pager.getBoundingClientRect();
+    const prev = lastX;
+    const rel = x - r.left;
     let dir = 0;
-    if (x < r.left + EDGE_W) dir = -1;
-    else if (x > r.right - EDGE_W) dir = 1;
-    if (!dir || g.dropEl) {          // 压在图标上 = 在瞄准，不起翻页
-      if (edgeTimer && edgeDir) {    // 已在倒计时：允许手指小幅外漂，别动不动就取消
-        const near = edgeDir === -1 ? x < r.left + EDGE_W + 40 : x > r.right - EDGE_W - 40;
-        if (near && !g.dropEl) return;
-      }
-      stopEdge();
-      return;
-    }
-    flipArm(dir);
-  }
+    if (rel < EDGE_W) dir = -1;
+    else if (rel > r.width - EDGE_W) dir = 1;
 
-  /* ---- 编辑态「拿起」：点一下图标拿起，再用按钮跨页 ----
-     拖拽在手机上会被长按/系统手势各种打断，点选这条路零门槛。 */
-  let picked = '';
-  function unpick() {
-    if (picked) {
-      document.querySelectorAll('.tile[data-app="' + picked + '"]').forEach((t) => {
-        if (!t.closest('#quad') && !t.closest('#dock')) t.classList.remove('picked');
-      });
+    if (edgeTimer && edgeDir === dir && dir) {
+      // 已在倒计时：小幅漂移、路过别的图标都不取消——
+      // 唯一取消条件是明显朝中间回走（那是决定摆放了）
+      const centerward = dir === -1 ? (prev !== null && x - prev > 8) : (prev !== null && prev - x > 8);
+      lastX = x;
+      if (centerward) stopEdge();
+      return;                          // 继续等
     }
-    picked = '';
-    const bar = $('pickBar');
-    if (bar) bar.hidden = true;
-  }
-  function pickToggle(id) {
-    if (!id) return;
-    if (picked === id) { unpick(); return; }
-    unpick();
-    const pi = appPages.findIndex((l) => l.some((x) => x.id === id));
-    if (pi < 0) return;
-    picked = id;
-    document.querySelectorAll('.tile[data-app="' + id + '"]').forEach((t) => {
-      if (!t.closest('#quad') && !t.closest('#dock')) t.classList.add('picked');
-    });
-    const app = findApp(id);
-    $('pickName').textContent = app ? app.name : id;
-    $('pickPrev').disabled = pi <= 0;
-    $('pickNext').disabled = pi >= 2;
-    $('pickBar').hidden = false;
-  }
-  function pickMove(dir) {
-    if (!picked) return;
-    const pi = appPages.findIndex((l) => l.some((x) => x.id === picked));
-    const ti = pi + dir;
-    if (pi < 0 || ti < 0 || ti > 2) return;
-    if (appPages[ti].length >= pageCap(ti)) { toast('那页放不下了'); return; }
-    const si = appPages[pi].findIndex((x) => x.id === picked);
-    appPages[ti].push(appPages[pi].splice(si, 1)[0]);
-    pagesSave();
-    unpick();
-    flipAll('.app-row .tile, #appGrid .tile, #appGrid2 .tile', 'app', () => { renderBento(); renderApps(); }, null);
-    toast('挪到' + (ti === 0 ? '首页' : ti === 1 ? '第二页' : '第三页') + '了');
-  }
-  const pickBar = $('pickBar');
-  if (pickBar) {
-    $('pickPrev').addEventListener('click', () => pickMove(-1));
-    $('pickNext').addEventListener('click', () => pickMove(1));
+    lastX = x;
+
+    if (!dir) { stopEdge(); return; }
+    // 朝边缘推的意图：这一下在靠近边缘（不是静止、不是往回摆）。
+    // 不看 dropEl——推向边缘必然路过别的图标，看了就永远翻不了页；
+    // 误翻由「500ms 停留」兜底：放下比它快就是摆放，比它慢就是想翻。
+    const toward = dir === -1 ? (prev !== null && x < prev - 2) : (prev !== null && x > prev + 2);
+    if (!toward) { stopEdge(); return; }
+    flipArm(dir);
   }
 
   /* ---- 开始拖 ---- */
   function beginDrag(g) {
     if (!g || !g.dragEl) return;
     if (!editing) setEdit(true);
-    unpick();
     g.mode = 'drag';
     g.dropEl = null;
     g.dropZone = null;
     g.dragMoved = false;
     makeGhost(g.dragEl);                 // 先克隆，再给原位置打隐藏标记
     g.dragEl.classList.add('drag-src');
-    // 应用图标才给翻页箭头（组件只在组件间换，跨页没意义）
-    setFlipHints(g.dragEl.classList.contains('tile'));
     moveGhost(g, g.cx || g.x0, g.cy || g.y0);   // 半空中启动时直接跟到手指下
     if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} }
   }
@@ -1335,7 +1281,6 @@
 
   function abortDrag(g) {
     stopEdge();
-    setFlipHints(false);
     killGhost();
     if (g && g.dragEl) g.dragEl.classList.remove('drag-src');
     clearDrop(g);
@@ -1349,8 +1294,6 @@
   function updateDrop(g, x, y) {
     const el = g.dragEl;
     const isW = el.classList.contains('w');
-    // 悬在翻页箭头上 = 想翻页，不选中任何落点
-    if (!isW && flipHover(x, y)) { clearDrop(g); return; }
     const under = document.elementFromPoint(x, y);
     if (!under || !under.closest) return;
     let t = isW ? under.closest('.w') : under.closest('.tile');
@@ -1510,20 +1453,29 @@
   }
 
   /* ---- 手势入口 ---- */
+  let blankDown = false;   // 编辑态从空白起手：滑 = 翻页，点一下不动 = 收工
   document.addEventListener('pointerdown', (e) => {
     if (e.button > 0) return;
-    if (e.target.closest && (e.target.closest('#editDone') || e.target.closest('#pickBar'))) return;
+    if (e.target.closest && e.target.closest('#editDone')) return;
     clearTimeout(pressTimer);
 
     const de = draggableAt(e);
     const inHome = home.contains(e.target);
 
-    if (editing && !de) {           // 编辑态点空白处 → 收工
-      if (inHome) setEdit(false);
+    if (editing && !de) {
+      blankDown = inHome;
+      if (inHome) {
+        ges = {
+          pid: e.pointerId, type: e.pointerType,
+          x0: e.clientX, y0: e.clientY, cx: e.clientX, cy: e.clientY,
+          mode: null, dragEl: null, moved: 0, sl0: 0, dragMoved: false,
+        };
+      }
       return;
     }
+    blankDown = false;
     if (!inHome) return;
-    if (!de && e.pointerType !== 'mouse') return;   // 触摸从空白开始 → 交给原生翻页
+    if (!de && e.pointerType !== 'mouse') return;   // 非编辑态触摸从空白开始 → 原生翻页
 
     ges = {
       pid: e.pointerId, type: e.pointerType,
@@ -1558,13 +1510,16 @@
       if (ges.moved > 6) ges.dragMoved = true;
       moveGhost(ges, e.clientX, e.clientY);
       updateDrop(ges, e.clientX, e.clientY);
-      edgeScroll(ges, e.clientX);       // 悬到两侧箭头/屏幕边缘 → 自动翻页
+      edgeScroll(ges, e.clientX);       // 贴近左右边 → 邻页探边 + 自动翻页
       return;
     }
 
-    if (!ges.mode && (Math.abs(dx) > SWIPE_SLOP || Math.abs(dy) > SWIPE_SLOP)) {
-      if (editing || !pager) { ges = null; return; }
-      if (Math.abs(dx) <= Math.abs(dy)) return;     // 竖向：主屏没得滚，继续等长按
+    /* 起手在图标/组件上：漂 24px 以内不算滑——
+       手机上长按时手指必然会漂，10px 阈值会把长按全杀掉 */
+    const slop = ges.dragEl ? 24 : SWIPE_SLOP;
+    if (!ges.mode && (Math.abs(dx) > slop || Math.abs(dy) > slop)) {
+      if (!pager || (editing && ges.dragEl)) { ges = null; return; }
+      if (Math.abs(dx) <= Math.abs(dy)) return;     // 竖向：继续等长按
       ges.mode = 'swipe';
       ges.sl0 = pager.scrollLeft;
       pager.style.scrollSnapType = 'none';
@@ -1589,7 +1544,7 @@
 
   function endGesture(e) {
     clearTimeout(pressTimer);
-    if (!ges) return;
+    if (!ges) { blankDown = false; return; }
     const g = ges;
     ges = null;
     if (e && e.pointerId !== g.pid) return;
@@ -1599,16 +1554,6 @@
       killGhost();
       if (g.dragEl) g.dragEl.classList.remove('drag-src');
       stopEdge();
-      setFlipHints(false);
-      /* 编辑态原地点一下应用图标 = 「拿起」（跨页的稳妥路径，不吃手势）。
-         四格里的和 dock 里的不算——那些不是页名单里的那份。 */
-      if (!g.dragMoved && g.dragEl.classList.contains('tile') &&
-          !g.dragEl.closest('#quad') && !g.dragEl.closest('#dock')) {
-        clearDrop(g);
-        pickToggle(g.dragEl.dataset.app);
-        suppressClick = performance.now() + 400;
-        return;
-      }
       commitDrag(g, gr);
       clearDrop(g);
       suppressClick = performance.now() + 260;
@@ -1619,10 +1564,19 @@
     if (g.mode === 'swipe') {
       snapPager();
       suppressClick = performance.now() + 260;
+      blankDown = false;
+      return;
+    }
+
+    // 编辑态从空白起手、没怎么动 → 点空白收工
+    if (blankDown && editing) {
+      blankDown = false;
+      if (g.moved < 8) setEdit(false);
     }
   }
   document.addEventListener('pointerup', endGesture);
   document.addEventListener('pointercancel', (e) => {
+    blankDown = false;
     if (!ges || e.pointerId !== ges.pid) return;
     const g = ges;
     ges = null;
