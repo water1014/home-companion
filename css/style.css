@@ -3360,3 +3360,40 @@ body[data-wall="photo"] .bg {
   background-size: auto 122% !important;
   background-position: center 34% !important;
 }
+
+/* ============================================================
+   拖拽时的翻页箭头：安卓把屏幕左右边缘留给系统返回手势，
+   边缘停留会被掐断（pointercancel），所以拖应用图标时在两侧
+   （避开手势区的位置）浮现箭头，悬停一下就翻页。纯视觉，
+   pointer-events:none，命中判定在 JS 里做。
+   ============================================================ */
+.flip-hint {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 84px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.8);
+  color: #9aa0a8;
+  font-size: 26px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, color 0.18s ease, background 0.18s ease;
+  box-shadow: 0 8px 24px rgba(70, 78, 90, 0.14);
+  z-index: 60;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+}
+.flip-hint.fl { left: 14px; }
+.flip-hint.fr { right: 14px; }
+.flip-hint.show { opacity: 0.96; }
+.flip-hint.armed {
+  color: var(--tide, #6f9d97);
+  background: rgba(255, 255, 255, 0.98);
+  transform: translateY(-50%) scale(1.06);
+}

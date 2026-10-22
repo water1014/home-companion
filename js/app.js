@@ -1187,33 +1187,74 @@
     ghost.style.transform = 'translate3d(' + dx + 'px,' + dy + 'px,0) scale(1.05)';
   }
 
-  /* ---- 拖到屏幕边缘：自动翻到相邻页（真机桌面就是这个手感）---- */
-  const EDGE_W = 46;       // 边缘多宽算"想翻页"
-  const EDGE_MS = 400;     // 在边缘按住多久才翻
+  /* ---- 拖拽时翻页：两侧箭头（主）+ 屏幕边缘停留（辅）----
+     安卓把屏幕左右边缘留给系统返回手势，手指一进边缘区拖拽就被掐断
+     （pointercancel → abortDrag）。所以主路径是拖拽时浮现的两侧箭头：
+     位置避开了系统手势区，图标悬上去停一下就翻页，且压在箭头上时
+     不选中任何落点。边缘停留保留给贴边悬空的情况，但压在图标上
+     （在瞄准）时不起手，防止误翻。 */
+  const EDGE_W = 56;       // 边缘多宽算"想翻页"
+  const FLIP_MS = 320;     // 停多久才翻
   let edgeTimer = 0;
   let edgeDir = 0;
+
+  function setFlipHints(on) {
+    document.querySelectorAll('.flip-hint').forEach((b) => { b.classList.toggle('show', !!on); });
+  }
+  function markBtn(dir) {
+    document.querySelectorAll('.flip-hint').forEach((b) => {
+      b.classList.toggle('armed',
+        (dir === -1 && b.classList.contains('fl')) || (dir === 1 && b.classList.contains('fr')));
+    });
+  }
+  /* 手指是否悬在某个翻页箭头上：-1 左 / 1 右 / 0 没悬 */
+  function flipHover(x, y) {
+    const btns = document.querySelectorAll('.flip-hint.show');
+    for (let i = 0; i < btns.length; i++) {
+      const r = btns[i].getBoundingClientRect();
+      if (r.width && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+        return btns[i].classList.contains('fl') ? -1 : 1;
+      }
+    }
+    return 0;
+  }
   function stopEdge() {
     if (edgeTimer) { clearTimeout(edgeTimer); edgeTimer = 0; }
     edgeDir = 0;
+    markBtn(0);
   }
-  function edgeScroll(x) {
-    if (!editing || !pager) { stopEdge(); return; }
-    const r = pager.getBoundingClientRect();
-    let dir = 0;
-    if (x < r.left + EDGE_W) dir = -1;
-    else if (x > r.right - EDGE_W) dir = 1;
-    if (!dir) { stopEdge(); return; }
-    if (edgeDir === dir && edgeTimer) return;   // 同一边，等着
+  function flipArm(dir) {
+    if (edgeDir === dir && edgeTimer) return;
     stopEdge();
     edgeDir = dir;
+    markBtn(dir);
     edgeTimer = setTimeout(() => {
       edgeTimer = 0;
       edgeDir = 0;
+      markBtn(0);
       const w = pager.clientWidth || 1;
       const i = Math.round(pager.scrollLeft / w) + dir;
       const max = pager.scrollWidth - w;
       pager.scrollTo({ left: Math.max(0, Math.min(max, i * w)), behavior: 'smooth' });
-    }, EDGE_MS);
+    }, FLIP_MS);
+  }
+  function edgeScroll(g, x) {
+    if (!editing || !pager) { stopEdge(); return; }
+    const btn = flipHover(x, g.cy || 0);
+    if (btn) { flipArm(btn); return; }
+    const r = pager.getBoundingClientRect();
+    let dir = 0;
+    if (x < r.left + EDGE_W) dir = -1;
+    else if (x > r.right - EDGE_W) dir = 1;
+    if (!dir || g.dropEl) {          // 压在图标上 = 在瞄准，不起翻页
+      if (edgeTimer && edgeDir) {    // 已在倒计时：允许手指小幅外漂，别动不动就取消
+        const near = edgeDir === -1 ? x < r.left + EDGE_W + 40 : x > r.right - EDGE_W - 40;
+        if (near && !g.dropEl) return;
+      }
+      stopEdge();
+      return;
+    }
+    flipArm(dir);
   }
 
   /* ---- 开始拖 ---- */
@@ -1226,6 +1267,8 @@
     g.dragMoved = false;
     makeGhost(g.dragEl);                 // 先克隆，再给原位置打隐藏标记
     g.dragEl.classList.add('drag-src');
+    // 应用图标才给翻页箭头（组件只在组件间换，跨页没意义）
+    setFlipHints(g.dragEl.classList.contains('tile'));
     moveGhost(g, g.cx || g.x0, g.cy || g.y0);   // 半空中启动时直接跟到手指下
     if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} }
   }
@@ -1238,6 +1281,7 @@
 
   function abortDrag(g) {
     stopEdge();
+    setFlipHints(false);
     killGhost();
     if (g && g.dragEl) g.dragEl.classList.remove('drag-src');
     clearDrop(g);
@@ -1251,6 +1295,8 @@
   function updateDrop(g, x, y) {
     const el = g.dragEl;
     const isW = el.classList.contains('w');
+    // 悬在翻页箭头上 = 想翻页，不选中任何落点
+    if (!isW && flipHover(x, y)) { clearDrop(g); return; }
     const under = document.elementFromPoint(x, y);
     if (!under || !under.closest) return;
     let t = isW ? under.closest('.w') : under.closest('.tile');
@@ -1458,7 +1504,7 @@
       if (ges.moved > 6) ges.dragMoved = true;
       moveGhost(ges, e.clientX, e.clientY);
       updateDrop(ges, e.clientX, e.clientY);
-      edgeScroll(e.clientX);            // 拖到边缘 → 自动翻页，才能去别的页面
+      edgeScroll(ges, e.clientX);       // 悬到两侧箭头/屏幕边缘 → 自动翻页
       return;
     }
 
@@ -1499,6 +1545,7 @@
       killGhost();
       if (g.dragEl) g.dragEl.classList.remove('drag-src');
       stopEdge();
+      setFlipHints(false);
       commitDrag(g, gr);
       clearDrop(g);
       suppressClick = performance.now() + 260;
