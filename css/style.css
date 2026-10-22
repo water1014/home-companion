@@ -3583,3 +3583,125 @@ body[data-wall="photo"] .bg {
   letter-spacing: 0.05em;
 }
 .moment-del.confirm { color: #e08c8c; }
+
+/* ============================================================
+   相册内置三种相框：拍立得 / 手账 / 简约
+   点照片出现样式条；每张照片自己记 st。
+   ============================================================ */
+.album-cell { background: none; box-shadow: none; padding: 0; }
+.album-cell .photo-frame {
+  position: relative;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 0 6px 18px rgba(70, 78, 90, 0.06);
+  transition: transform 0.2s ease;
+}
+.album-cell.tilt-l .photo-frame { transform: rotate(-1.6deg); }
+.album-cell.tilt-r .photo-frame { transform: rotate(1.4deg); }
+.album-cell img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  background: #eef0f3;
+}
+.album-cell figcaption {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--ink-3, #a0a5ad);
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 拍立得：白框厚下边 + 手写体日期 + 微倾 */
+.album-cell.st-polaroid .photo-frame {
+  background: #fdfdfb;
+  padding: 10px 10px 6px;
+  border-radius: 6px;
+  box-shadow: 0 10px 22px rgba(70, 78, 90, 0.14);
+}
+.album-cell.st-polaroid img { border-radius: 2px; aspect-ratio: 1 / 1.04; }
+.album-cell.st-polaroid figcaption {
+  font-family: "Kaiti SC", STKaiti, KaiTi, Georgia, serif;
+  font-size: 14px;
+  color: #5d6168;
+  letter-spacing: 0.06em;
+  padding: 4px 0 8px;
+}
+
+/* 手账：米色格纹底 + 胶带 + 涂鸦心 */
+.album-cell.st-journal .photo-frame {
+  background:
+    radial-gradient(rgba(111, 157, 151, 0.16) 1px, transparent 1.5px),
+    linear-gradient(150deg, #fdf8ee, #fbf3e6);
+  background-size: 12px 12px, 100% 100%;
+  padding: 16px 12px 10px;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(120, 100, 80, 0.12);
+}
+.album-cell.st-journal .photo-frame::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 74px;
+  height: 20px;
+  margin-left: -37px;
+  background: rgba(111, 157, 151, 0.32);
+  transform: rotate(-4deg);
+  box-shadow: 0 2px 6px rgba(70, 78, 90, 0.08);
+}
+.album-cell.st-journal img { border-radius: 4px; border: 3px solid #fff; }
+.album-cell.st-journal figcaption::before { content: "♥ "; color: #d98ea6; }
+.album-cell.st-journal figcaption {
+  font-family: "Kaiti SC", STKaiti, KaiTi, Georgia, serif;
+  font-size: 13px;
+  color: #7a6a5c;
+}
+
+/* 简约：白卡（默认那版） */
+.album-cell.st-plain .photo-frame {
+  background: rgba(255, 255, 255, 0.72);
+  padding: 8px;
+  border-radius: 18px;
+}
+
+/* 样式条 */
+.album-ops {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  bottom: 14px;
+  z-index: 8;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 22px rgba(70, 78, 90, 0.18);
+  white-space: nowrap;
+}
+.album-cell.show-ops .album-ops {
+  display: flex;
+  animation: rise 0.25s var(--ease) both;
+}
+.album-ops button {
+  border: none;
+  background: none;
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--ink-2, #6b7078);
+  padding: 4px 7px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.album-ops button.on { background: var(--tide, #6f9d97); color: #fff; }
+.album-ops .album-del { color: #c9a0a0; }
+.album-ops .album-del.confirm { color: #e08c8c; }
+.album-cell.show-ops .photo-frame { outline: 2px solid rgba(111, 157, 151, 0.45); }

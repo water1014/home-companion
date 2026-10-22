@@ -2954,6 +2954,10 @@
     } catch (_) { return false; }   // 存满了
   }
 
+  /* 相册内置三种相框：拍立得 / 手账 / 简约。每张照片自己记 st 字段。 */
+  const ALBUM_STYLES = ['polaroid', 'journal', 'plain'];
+  const ALBUM_STYLE_NAME = { polaroid: '拍立得', journal: '手账', plain: '简约' };
+
   function renderAlbum() {
     const grid = $('albumGrid');
     const hint = $('albumHint');
@@ -2961,34 +2965,72 @@
     if (hint) {
       hint.hidden = !list.length;
       hint.textContent = list.length
-        ? list.length + ' 张 · 点一下想收起来的'
+        ? list.length + ' 张 · 点照片换样式'
         : emptyTextOf('photos', '第一张图放这儿');
     }
     if (!grid) return;
     grid.innerHTML = '';
-    list.forEach((p) => {
+    list.forEach((p, idx) => {
+      const st = ALBUM_STYLES.indexOf(p.st) >= 0 ? p.st : 'plain';
       const cell = document.createElement('figure');
-      cell.className = 'album-cell';
+      cell.className = 'album-cell st-' + st + (idx % 2 ? ' tilt-r' : ' tilt-l');
+
+      const frame = document.createElement('div');
+      frame.className = 'photo-frame';
       const img = document.createElement('img');
       img.src = p.img;
       img.alt = p.cap || '照片';
       img.loading = 'lazy';
+      frame.appendChild(img);
       const cap = document.createElement('figcaption');
       const d = new Date(p.ts);
       cap.textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日' + (p.cap ? ' · ' + p.cap : '');
-      cell.appendChild(img);
-      cell.appendChild(cap);
-      cell.addEventListener('click', () => {
-        // 点一下标记住，再点一下确认收起来（防误删）
-        if (cell.classList.contains('confirm')) {
+      frame.appendChild(cap);
+      cell.appendChild(frame);
+
+      // 样式条：点照片出现（换样式 / 删除）
+      const ops = document.createElement('div');
+      ops.className = 'album-ops';
+      ALBUM_STYLES.forEach((s) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = ALBUM_STYLE_NAME[s];
+        if (s === st) b.classList.add('on');
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          p.st = s;
+          saveLife();
+          renderAlbum();
+        });
+        ops.appendChild(b);
+      });
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'album-del';
+      del.textContent = '收起来';
+      del.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (del.classList.contains('confirm')) {
           const i = S.life.photos.indexOf(p);
           if (i >= 0) S.life.photos.splice(i, 1);
           saveLife();
           renderAlbum();
           toast('收起来了');
         } else {
-          cell.classList.add('confirm');
-          setTimeout(() => cell.classList.remove('confirm'), 2600);
+          del.classList.add('confirm');
+          del.textContent = '再点一下';
+          setTimeout(() => { del.classList.remove('confirm'); del.textContent = '收起来'; }, 2600);
+        }
+      });
+      ops.appendChild(del);
+      cell.appendChild(ops);
+
+      cell.addEventListener('click', () => {
+        const open = cell.classList.toggle('show-ops');
+        if (open) {
+          document.querySelectorAll('.album-cell.show-ops').forEach((n) => {
+            if (n !== cell) n.classList.remove('show-ops');
+          });
         }
       });
       grid.appendChild(cell);
@@ -2999,7 +3041,7 @@
     if (!file) return;
     toast('在收进来…');
     compressImage(file).then((data) => {
-      S.life.photos.unshift({ id: 'ph' + Date.now(), img: data, cap: '', ts: Date.now() });
+      S.life.photos.unshift({ id: 'ph' + Date.now(), img: data, cap: '', ts: Date.now(), st: 'polaroid' });
       if (S.life.photos.length > 36) S.life.photos = S.life.photos.slice(0, 36);
       if (!saveLife()) {
         S.life.photos.shift();          // 存满了就退回
