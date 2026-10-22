@@ -3441,3 +3441,4 @@ body[data-wall="photo"] .bg {
 
 /* 她的话多行时行距松一点，像连发的短句 */
 .msg.her .body { line-height: 1.9; }
+.think-ic svg { fill: none !important; stroke: var(--ink-3, #a0a5ad) !important; stroke-width: 1.7 !important; }
