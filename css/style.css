@@ -3705,3 +3705,119 @@ body[data-wall="photo"] .bg {
 .album-ops .album-del { color: #c9a0a0; }
 .album-ops .album-del.confirm { color: #e08c8c; }
 .album-cell.show-ops .photo-frame { outline: 2px solid rgba(111, 157, 151, 0.45); }
+
+/* ============================================================
+   相册：翻面写备注 + 按日历找
+   ============================================================ */
+.album-cell { perspective: 900px; }
+.album-cell .photo-frame {
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+  position: relative;
+}
+.album-cell .photo-frame.flipped { transform: rotateY(180deg); }
+.album-cell .face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.album-cell .face.back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.55)),
+    repeating-linear-gradient(0deg, transparent, transparent 22px, rgba(111, 157, 151, 0.18) 22px, rgba(111, 157, 151, 0.18) 23px),
+    #fdfaf2;
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 20px rgba(70, 78, 90, 0.1);
+}
+.album-cell .back-label {
+  margin: 0 0 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  color: var(--ink-3, #a0a5ad);
+}
+.album-cell .face.back textarea {
+  width: 100%;
+  border: none;
+  background: none;
+  resize: none;
+  outline: none;
+  font-family: "Kaiti SC", STKaiti, KaiTi, Georgia, serif;
+  font-size: 14px;
+  line-height: 23px;
+  color: #4a5560;
+}
+.album-cell .back-save {
+  align-self: flex-end;
+  border: none;
+  background: none;
+  font-size: 11px;
+  color: var(--tide, #6f9d97);
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 0 0;
+  letter-spacing: 0.06em;
+}
+
+/* 日历找 */
+.album-cal {
+  padding: 14px 16px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+}
+.acal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.acal-nav button {
+  border: none;
+  background: none;
+  font-size: 16px;
+  color: var(--tide, #6f9d97);
+  cursor: pointer;
+  padding: 2px 10px;
+  font-family: inherit;
+}
+.acal-nav span { font-size: 12px; letter-spacing: 0.14em; color: var(--ink-2, #6b7078); }
+.acal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
+.acal-week span { text-align: center; font-size: 9.5px; color: var(--ink-3, #a0a5ad); }
+.acal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.acal-days button, .acal-days span {
+  aspect-ratio: 1 / 1;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--ink-2, #6b7078);
+  cursor: default;
+  position: relative;
+  font-variant-numeric: tabular-nums;
+}
+.acal-days button { cursor: pointer; }
+.acal-days button.has { background: rgba(111, 157, 151, 0.16); font-weight: 600; }
+.acal-days button.has::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--tide, #6f9d97);
+}
+.acal-days button.on { background: var(--tide, #6f9d97); color: #fff; }
+.acal-days button.on::after { background: #fff; }
+/* 倾斜放外层 cell，rotateY 翻转独占 frame（两者不打架） */
+.album-cell.tilt-l { transform: rotate(-1.6deg); }
+.album-cell.tilt-r { transform: rotate(1.4deg); }
+.album-cell.tilt-l .photo-frame,
+.album-cell.tilt-r .photo-frame { transform: rotateY(0deg); }

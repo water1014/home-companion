@@ -4,6 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
+  window.__TIDE_MARK = 'LOCAL-v28';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -157,6 +158,7 @@
     meta: load(KEY.meta, null),
   };
 
+  window.__snapLoad = { photos: Array.isArray(S.life.photos) ? S.life.photos.length : 'no-arr', lifeNull: S.life === null };
   S.persona = P.evolve(S.persona, Date.now());
   save(KEY.persona, S.persona);
 
@@ -187,6 +189,7 @@
 
     if (v < SCHEMA) v = SCHEMA;
     S.meta = { schema: v };
+    window.__snapMig = { photos: Array.isArray(S.life.photos) ? S.life.photos.length : 'no-arr', who: (new Error().stack || '').split('\n')[2] };
   }
   migrate();
 
@@ -376,7 +379,7 @@
     if (id === 'cards') renderCoupons();
     if (id === 'herday') renderHerDay();
     if (id === 'device') renderDevice();
-    if (id === 'album') renderAlbum();
+    if (id === 'album') { renderAlbum(); renderAlbumCal(); }
     if (id === 'moments') renderMoments();
     if (id === 'theme') renderTheme();
   }
@@ -2954,19 +2957,102 @@
     } catch (_) { return false; }   // 存满了
   }
 
-  /* 相册内置三种相框：拍立得 / 手账 / 简约。每张照片自己记 st 字段。 */
+  /* ---------------- 相册 + 朋友圈 ----------------
+     数据在 life.photos / life.moments；空态文案用家机种子给的。
+     图片压到 900px/JPEG 再进 localStorage（纯前端没别的地方放）。
+     相册内置三种相框（拍立得/手账/简约），背面能写备注，能按日历找。 */
+
   const ALBUM_STYLES = ['polaroid', 'journal', 'plain'];
   const ALBUM_STYLE_NAME = { polaroid: '拍立得', journal: '手账', plain: '简约' };
+  let albumCalMonth = null;   // 日历当前显示的月份（Date，1 号）
+  let albumFilter = null;     // 'YYYY-MM-DD' 或 null
+
+  function emptyTextOf(key, fb) {
+    const et = S.settings.emptyText || {};
+    return et[key] || fb;
+  }
+
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const max = 900;
+          const scale = Math.min(1, max / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.width * scale));
+          c.height = Math.max(1, Math.round(img.height * scale));
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          resolve(c.toDataURL('image/jpeg', 0.72));
+        };
+        img.onerror = () => reject(new Error('读不了'));
+        img.src = r.result;
+      };
+      r.onerror = () => reject(new Error('读不了'));
+      r.readAsDataURL(file);
+    });
+  }
+
+  function saveLife() {
+    try {
+      localStorage.setItem(KEY.life, JSON.stringify(S.life));
+      return true;
+    } catch (_) { return false; }   // 存满了
+  }
+
+  function dayStr(ts) {
+    const d = new Date(ts);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  /* ---- 日历找：有照片的日子标点，点日期只看那天的 ---- */
+  function renderAlbumCal() {
+    const cal = $('albumCal');
+    if (!cal || cal.hidden) return;
+    if (!albumCalMonth) albumCalMonth = new Date();
+    const y = albumCalMonth.getFullYear();
+    const m = albumCalMonth.getMonth();
+    $('acalTitle').textContent = y + ' 年 ' + (m + 1) + ' 月';
+
+    const counts = {};
+    (S.life.photos || []).forEach((p) => {
+      const k = dayStr(p.ts);
+      counts[k] = (counts[k] || 0) + 1;
+    });
+
+    const box = $('acalDays');
+    box.innerHTML = '';
+    const first = new Date(y, m, 1);
+    const lead = (first.getDay() + 6) % 7;            // 周一开头
+    const days = new Date(y, m + 1, 0).getDate();
+    for (let i = 0; i < lead; i++) box.appendChild(document.createElement('span'));
+    for (let d = 1; d <= days; d++) {
+      const key = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = d;
+      if (counts[key]) b.classList.add('has');
+      if (albumFilter === key) b.classList.add('on');
+      b.addEventListener('click', () => {
+        albumFilter = albumFilter === key ? null : key;
+        renderAlbumCal();
+        renderAlbum();
+      });
+      box.appendChild(b);
+    }
+  }
 
   function renderAlbum() {
     const grid = $('albumGrid');
     const hint = $('albumHint');
-    const list = S.life.photos || [];
+    const all = S.life.photos || [];
+    const list = albumFilter ? all.filter((p) => dayStr(p.ts) === albumFilter) : all;
     if (hint) {
-      hint.hidden = !list.length;
-      hint.textContent = list.length
-        ? list.length + ' 张 · 点照片换样式'
-        : emptyTextOf('photos', '第一张图放这儿');
+      hint.hidden = false;
+      hint.textContent = albumFilter
+        ? albumFilter.slice(5).replace('-', ' 月 ') + ' 日 · ' + list.length + ' 张 · 再点日历取消'
+        : (all.length ? all.length + ' 张 · 点照片换样式 / 翻面写备注' : emptyTextOf('photos', '第一张图放这儿'));
     }
     if (!grid) return;
     grid.innerHTML = '';
@@ -2977,18 +3063,53 @@
 
       const frame = document.createElement('div');
       frame.className = 'photo-frame';
+
+      // 正面：照片 + 日期
+      const front = document.createElement('div');
+      front.className = 'face front';
       const img = document.createElement('img');
       img.src = p.img;
       img.alt = p.cap || '照片';
       img.loading = 'lazy';
-      frame.appendChild(img);
+      front.appendChild(img);
       const cap = document.createElement('figcaption');
       const d = new Date(p.ts);
       cap.textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日' + (p.cap ? ' · ' + p.cap : '');
-      frame.appendChild(cap);
+      front.appendChild(cap);
+      frame.appendChild(front);
+
+      // 背面：备注（写在照片背面）
+      const back = document.createElement('div');
+      back.className = 'face back';
+      const bl = document.createElement('p');
+      bl.className = 'back-label';
+      bl.textContent = '背面';
+      const ta = document.createElement('textarea');
+      ta.rows = 3;
+      ta.maxLength = 120;
+      ta.placeholder = '写点什么，只给以后翻到的人看…';
+      ta.value = p.note || '';
+      ta.addEventListener('click', (e) => e.stopPropagation());
+      ta.addEventListener('keydown', (e) => e.stopPropagation());
+      const bb = document.createElement('button');
+      bb.type = 'button';
+      bb.className = 'back-save';
+      bb.textContent = '存好，翻回去';
+      bb.addEventListener('click', (e) => {
+        e.stopPropagation();
+        p.note = ta.value.trim();
+        saveLife();
+        frame.classList.remove('flipped');
+        toast('写好在背面了');
+      });
+      back.appendChild(bl);
+      back.appendChild(ta);
+      back.appendChild(bb);
+      frame.appendChild(back);
+
       cell.appendChild(frame);
 
-      // 样式条：点照片出现（换样式 / 删除）
+      // 样式条：换样式 / 翻面 / 删除
       const ops = document.createElement('div');
       ops.className = 'album-ops';
       ALBUM_STYLES.forEach((s) => {
@@ -3004,6 +3125,14 @@
         });
         ops.appendChild(b);
       });
+      const flipBtn = document.createElement('button');
+      flipBtn.type = 'button';
+      flipBtn.textContent = '翻面';
+      flipBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        frame.classList.add('flipped');
+      });
+      ops.appendChild(flipBtn);
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'album-del';
@@ -3026,6 +3155,7 @@
       cell.appendChild(ops);
 
       cell.addEventListener('click', () => {
+        if (frame.classList.contains('flipped')) return;   // 背面写字时不动
         const open = cell.classList.toggle('show-ops');
         if (open) {
           document.querySelectorAll('.album-cell.show-ops').forEach((n) => {
@@ -3041,16 +3171,20 @@
     if (!file) return;
     toast('在收进来…');
     compressImage(file).then((data) => {
-      S.life.photos.unshift({ id: 'ph' + Date.now(), img: data, cap: '', ts: Date.now(), st: 'polaroid' });
+      S.life.photos.unshift({ id: 'ph' + Date.now(), img: data, cap: '', ts: Date.now(), st: 'polaroid', note: '' });
       if (S.life.photos.length > 36) S.life.photos = S.life.photos.slice(0, 36);
+      albumFilter = null;                    // 新照片是今天的，别让旧筛选把它藏了
       if (!saveLife()) {
-        S.life.photos.shift();          // 存满了就退回
+        S.life.photos.shift();
         saveLife();
         toast('相册满了，删几张再放');
       } else toast('放进相册了');
+      renderAlbumCal();
       renderAlbum();
     }).catch(() => toast('这张读不了'));
   }
+
+
 
   function renderMoments() {
     const list = $('momentList');
@@ -3105,12 +3239,6 @@
         rp.className = 'moment-reply';
         rp.textContent = herName() + '：' + mo.reply;
         card.appendChild(rp);
-      } else {
-        const rp = document.createElement('div');
-        rp.className = 'moment-reply pending';
-        rp.textContent = '他在看…';
-        rp.hidden = true;
-        card.appendChild(rp);
       }
 
       const del = document.createElement('button');
@@ -3164,9 +3292,9 @@
       if (currentPage !== 'moments') addBadge('moments');
     };
     const pending = () => {
-      const card = [...document.querySelectorAll('.moment-card')].find((c) => c.querySelector('.moment-text') && c.querySelector('.moment-text').textContent === mo.text);
-      const rp = card ? card.querySelector('.moment-reply') : null;
-      if (rp) { rp.hidden = false; }
+      const cards = [...document.querySelectorAll('.moment-card')];
+      const rp = cards.length ? cards[0].querySelector('.moment-reply') : null;
+      if (rp) rp.hidden = false;
     };
     if (LLM.configured(S.settings)) {
       pending();
@@ -3175,28 +3303,25 @@
         { role: 'user', content: (mo.text || '（一张图）') },
       ];
       let acc = '';
-      LLM.stream({ cfg: S.settings, messages, onDelta: (d) => { acc += d; }, }).then(() => {
+      LLM.stream({ cfg: S.settings, messages, onDelta: (d) => { acc += d; } }).then(() => {
         const clean = stripMarksSync(acc).text.trim();
         done(clean || '看到了。');
       }).catch(() => done(localMomentReply(mo.text)));
     } else {
-      setTimeout(() => { pending(); }, 900);
+      setTimeout(pending, 900);
       setTimeout(() => done(localMomentReply(mo.text)), 2200 + Math.random() * 1800);
     }
   }
 
-  function localMomentReply(text) {
-    const pool = [
-      '看到了。', '嗯，记下了。', '挺好的。', '这个要收进心里。',
-      '嗯，我在看。', '拍就拍了呗，又没说不好。', '今天也辛苦了。',
-      '……下次这种事，先跟我说。',
-    ];
-    const night = (new Date().getHours() >= 22 || new Date().getHours() < 5);
-    const p = night ? ['这么晚还不睡。', '看到了。去睡。'] : pool;
-    return p[Math.floor(Math.random() * p.length)];
+  function localMomentReply() {
+    const night = new Date().getHours() >= 22 || new Date().getHours() < 5;
+    const pool = night
+      ? ['这么晚还不睡。', '看到了。去睡。']
+      : ['看到了。', '嗯，记下了。', '挺好的。', '这个要收进心里。', '嗯，我在看。', '今天也辛苦了。'];
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  /* 绑定：相册上传 + 朋友圈 composer */
+  /* 绑定：相册上传 + 日历找 + 朋友圈 composer */
   const btnAddPhoto = $('btnAddPhoto');
   if (btnAddPhoto) {
     btnAddPhoto.addEventListener('click', () => $('photoFile').click());
@@ -3204,6 +3329,23 @@
       const f = e.target.files && e.target.files[0];
       addPhoto(f);
       e.target.value = '';
+    });
+  }
+  const btnAlbumCal = $('btnAlbumCal');
+  if (btnAlbumCal) {
+    btnAlbumCal.addEventListener('click', () => {
+      const cal = $('albumCal');
+      cal.hidden = !cal.hidden;
+      if (!cal.hidden) renderAlbumCal();
+      else if (albumFilter) { albumFilter = null; renderAlbum(); }
+    });
+    $('acalPrev').addEventListener('click', () => {
+      albumCalMonth = new Date(albumCalMonth.getFullYear(), albumCalMonth.getMonth() - 1, 1);
+      renderAlbumCal();
+    });
+    $('acalNext').addEventListener('click', () => {
+      albumCalMonth = new Date(albumCalMonth.getFullYear(), albumCalMonth.getMonth() + 1, 1);
+      renderAlbumCal();
     });
   }
   const momentPhotoBtn = $('momentPhoto');
@@ -3946,14 +4088,16 @@
     applyGap(homeCfg().gap);
 
     setInterval(() => {
-      S.persona = P.evolve(S.persona, Date.now());
+      window.__snapLoad = { photos: Array.isArray(S.life.photos) ? S.life.photos.length : 'no-arr', lifeNull: S.life === null };
+  S.persona = P.evolve(S.persona, Date.now());
       tickClocks();
       flushScreenTime();
       save(KEY.persona, S.persona);
     }, 60000);
 
     document.addEventListener('visibilitychange', () => {
-      S.persona = P.evolve(S.persona, Date.now());
+      window.__snapLoad = { photos: Array.isArray(S.life.photos) ? S.life.photos.length : 'no-arr', lifeNull: S.life === null };
+  S.persona = P.evolve(S.persona, Date.now());
       tickClocks();
       renderChips();
       save(KEY.persona, S.persona);

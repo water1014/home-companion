@@ -482,10 +482,20 @@
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
     <p class="head-title">相册</p>
+    <button class="head-act" id="btnAlbumCal" type="button">日历找</button>
     <button class="head-act" id="btnAddPhoto" type="button">加一张</button>
   </header>
   <div class="page-scroll">
     <p class="hint" id="albumHint">第一张图放这儿</p>
+    <section class="glass album-cal" id="albumCal" hidden>
+      <div class="acal-nav">
+        <button type="button" id="acalPrev">‹</button>
+        <span id="acalTitle">—</span>
+        <button type="button" id="acalNext">›</button>
+      </div>
+      <div class="acal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+      <div class="acal-days" id="acalDays"></div>
+    </section>
     <div class="album-grid" id="albumGrid"></div>
     <input type="file" id="photoFile" accept="image/*" hidden>
   </div>
