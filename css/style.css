@@ -3251,3 +3251,112 @@ body[data-wall="photo"] .bg {
   box-shadow: inset 0 0 0 1.5px rgba(31, 35, 43, 0.35);
   border-radius: 20px;
 }
+
+/* ============================================================
+   ins 简约风（自己的版本）：
+   近白底 · 暖灰墨 · 单一点缀色「潮青」（站名叫潮，色从海里来）
+   细线图标 · 大留白 · 少即是多。只调皮，不动结构。
+   ============================================================ */
+:root {
+  --ink-2: #6b7078;
+  --ink-3: #a0a5ad;
+  --tide: #6f9d97;   /* 潮青 */
+}
+
+/* 卡片：近白、22px 圆角、极软的影，边几乎看不见 */
+.glass,
+.dock.glass,
+.cal-card,
+.anniv-card,
+.week-card,
+.stat-card,
+.dev-card,
+.list-card {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 10px 30px rgba(70, 78, 90, 0.06) !important;
+}
+
+/* 图标：素白托底 + 统一细线，单色系 */
+.tile-ic,
+.dock .tile-ic,
+.app-row .tile-ic,
+.quad .tile-ic {
+  background: rgba(255, 255, 255, 0.62) !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 2px 8px rgba(70, 78, 90, 0.05) !important;
+  border-radius: 16px !important;
+}
+.tile-ic svg,
+.mini-tile svg {
+  stroke: #565b63 !important;
+  stroke-width: 1.5 !important;
+  filter: none !important;
+}
+.tile-name {
+  color: rgba(63, 67, 74, 0.8) !important;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(255, 255, 255, 0.85);
+}
+
+/* 点缀字：小、疏、灰 */
+.days-label,
+.mkicker,
+.clock-sub,
+.diary-date,
+.said-kicker,
+.anniv-label,
+.stat span {
+  letter-spacing: 0.18em;
+  color: var(--ink-3) !important;
+}
+
+/* 数字与时钟：极细、干净的无衬线（去掉斜体衬线） */
+.days-num,
+.clock-time { color: #3f434a !important; }
+.clock-time { font-weight: 200; }
+.days-num {
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 200;
+  font-size: 44px;
+  letter-spacing: 0.02em;
+}
+
+/* 日记/他说正文：回到干净的灰（不用楷体） */
+.diary-text,
+.said-text {
+  font-family: inherit;
+  color: var(--ink-2) !important;
+  font-size: 10.5px;
+}
+.diary-kicker {
+  font-family: inherit;
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--ink-2) !important;
+}
+
+/* 潮青点缀，只给该有的地方：心跳线、进度条、播放键、状态点、心 */
+.pulse-line path { stroke: rgba(111, 157, 151, 0.6) !important; }
+.mbar i { background: var(--tide) !important; }
+.mplay { color: var(--tide) !important; }
+.sb-dot { background: var(--tide) !important; }
+.pair-heart { fill: var(--tide) !important; opacity: 0.8; }
+
+/* 封面托底去彩色，回归中性 */
+.mcover {
+  background: linear-gradient(150deg, #f2f3f5, #e3e6ea) !important;
+  box-shadow: 0 4px 12px rgba(70, 78, 90, 0.08) !important;
+}
+
+/* 壁纸：轻降饱和 + 中性白纱，退成干净的底 */
+body[data-wall="photo"] .bg {
+  filter: saturate(0.85) brightness(1.05);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.48) 42%, rgba(255, 255, 255, 0.62) 100%),
+    url("../icons/wall-soft.jpg") !important;
+  background-size: auto 122% !important;
+  background-position: center 34% !important;
+}
