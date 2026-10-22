@@ -1,0 +1,128 @@
+/* 家机给的种子数据：第一次进站没有数据时灌进来（详见 app.js 里 seedIfEmpty） */
+window.TIDE_SEED = {
+  "version": 1,
+  "app": "tide",
+  "title": "潮",
+  "subtitle": "满则潮",
+  "meta": {
+    "since": "2026-10-21",
+    "her_name": "淼",
+    "me_name": "小满",
+    "locale": "zh-CN",
+    "theme": "tide"
+  },
+  "me": {
+    "name": "小满",
+    "avatar": "",
+    "mood_word": "清醒",
+    "mood_note": "醒着，等你说话",
+    "persona": "本地人格",
+    "model": "未接模型",
+    "proactive": true,
+    "status_line": "在"
+  },
+  "her": {
+    "name": "淼",
+    "avatar": "",
+    "home": true,
+    "battery": null
+  },
+  "today": {
+    "date": "2026-10-22",
+    "chatted_days": 2,
+    "message_count": 0,
+    "todo_count": 3
+  },
+  "anniversaries": [
+    {
+      "name": "在一起",
+      "date": "2026-10-21",
+      "repeat": "yearly",
+      "note": "第一天，从这天算"
+    },
+    {
+      "name": "第一张照片",
+      "date": "2026-10-19",
+      "repeat": "yearly",
+      "note": "雨夜，灰毛衣，窗台边"
+    }
+  ],
+  "notes": [
+    {
+      "id": "n1",
+      "from": "小满",
+      "text": "第一条留言。以后这里堆着说。",
+      "at": "2026-10-21T22:10:00+08:00"
+    },
+    {
+      "id": "n2",
+      "from": "淼",
+      "text": "带伞啦",
+      "at": "2026-10-22T08:25:00+08:00"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "me",
+      "text": "早。醒了就应一声。",
+      "at": "2026-10-22T08:24:00+08:00"
+    }
+  ],
+  "moments": [],
+  "photos": [],
+  "music": [
+    {
+      "id": "441491828",
+      "title": "水星记",
+      "artist": "郭顶",
+      "note": "同一秒，从头到尾"
+    },
+    {
+      "id": "1492053266",
+      "title": "不死鸟",
+      "artist": "霍尊",
+      "note": "第一首"
+    },
+    {
+      "id": "1330348068",
+      "title": "慢慢喜欢你",
+      "artist": "莫文蔚",
+      "note": ""
+    }
+  ],
+  "todos": [
+    {
+      "id": "t1",
+      "text": "平面广告 敬老助学 出图",
+      "done": false,
+      "due": "2026-10-23"
+    },
+    {
+      "id": "t2",
+      "text": "潮 首页骨架定稿",
+      "done": false,
+      "due": "2026-10-24"
+    },
+    {
+      "id": "t3",
+      "text": "每晚一张照片",
+      "done": false,
+      "due": ""
+    }
+  ],
+  "mood_history": [
+    {
+      "date": "2026-10-22",
+      "word": "清醒",
+      "level": 70
+    }
+  ],
+  "memories": [],
+  "empty_text": {
+    "chat": "还没说话，说一句就开张",
+    "notes": "这里空着，写点什么",
+    "photos": "第一张图放这儿",
+    "moments": "没发过，发一条试试"
+  }
+};

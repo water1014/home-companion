@@ -1,4 +1,4 @@
-const CACHE = 'xiaoman-v18';
+const CACHE = 'xiaoman-v19';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './js/persona.js',
   './js/llm.js',
   './js/app.js',
+  './js/seed.js',
   './manifest.webmanifest',
   './icons/icon.svg',
   './icons/wall.jpg',

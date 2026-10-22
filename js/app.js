@@ -101,6 +101,7 @@
     apps: 'hc.v1.apps',
     dock: 'hc.v1.dock',
     pages: 'hc.v1.appPages', // 三页各自的应用名单（自由摆放）
+    seeded: 'hc.v1.seeded',  // 种子已灌过（不管灌没灌成功都标记，防重复）
     life: 'hc.v1.life',      // 心事/念头/课程/倒数日/卡券/设备/用量/他的一天
     timers: 'hc.v1.timers',  // 内部闹钟（续话那种）
     meta: 'hc.v1.meta',      // schema 版本
@@ -136,6 +137,8 @@
     dayLog: [],                                    // 机的一天：[{ts,text,kind,inferred}]
     device: { ts: 0 },                             // 查手机快照
     usage: { total: { prompt: 0, completion: 0, requests: 0, local: 0 }, peak: 0, byDay: {} },
+    mails: [],                                     // 留言：[{id,from,text,at}]（种子先落这，界面后面接）
+    music: [],                                     // 一起听歌单：[{id,title,artist,note}]（种子先落这）
   });
 
   const SCHEMA = 3;
@@ -168,7 +171,7 @@
     const L = S.life;
     const def = LIFE_DEFAULT();
     Object.keys(def).forEach((k) => { if (L[k] === undefined) L[k] = def[k]; });
-    ['ideas', 'courses', 'countdowns', 'coupons', 'saidLog', 'dayLog'].forEach((k) => {
+    ['ideas', 'courses', 'countdowns', 'coupons', 'saidLog', 'dayLog', 'mails', 'music'].forEach((k) => {
       if (!Array.isArray(L[k])) L[k] = [];
     });
     if (!L.thought || typeof L.thought !== 'object') L.thought = { text: '', ts: 0 };
@@ -184,6 +187,72 @@
   }
   migrate();
 
+  /* ---------------- 种子（家机给的 seed.json，编译进 js/seed.js） ----------------
+     约定：这站没有后端，数据只在本机 localStorage。
+     第一次进站先查有没有数据，没有就把种子灌进去，页面才不空；
+     灌过（或本来就有真数据）就只打标记，绝不覆盖。 */
+  function applySeed(seed) {
+    if (!seed || !seed.meta) return;
+    // 名字与起始日：空的才填，用户改过的别动
+    if (!S.memory.userName) S.memory.userName = seed.meta.me_name || '';
+    if (!S.memory.herName || S.memory.herName === '宋祁') S.memory.herName = seed.meta.her_name || S.memory.herName;
+    if (seed.meta.since) S.memory.startDate = seed.meta.since;
+    // 三件事 → 记着的事（主页统计和记忆页都从这读）
+    if (!(S.memory.facts || []).length && Array.isArray(seed.todos)) {
+      S.memory.facts = seed.todos.map((t) => t.text + (t.due ? '（' + t.due.slice(5).replace('-', '.') + ' 前）' : ''));
+    }
+    // 一条消息 → 聊天流
+    if (!S.chat.length && Array.isArray(seed.messages)) {
+      S.chat = seed.messages.map((m) => ({
+        role: m.from === 'me' ? 'me' : 'her',
+        text: m.text,
+        ts: m.at ? new Date(m.at).getTime() : Date.now(),
+      }));
+    }
+    // 两个纪念日 → 倒数日（repeat 在这站是布尔）
+    if (!S.life.countdowns.length && Array.isArray(seed.anniversaries)) {
+      S.life.countdowns = seed.anniversaries.map((a, i) => ({
+        id: 'seed_ann' + i,
+        title: a.name,
+        date: a.date,
+        note: a.note || '',
+        repeat: a.repeat === 'yearly',
+      }));
+    }
+    // 三首歌 → 一起听歌单（小部件显示第一首）
+    if (Array.isArray(seed.music)) S.life.music = seed.music.slice();
+    // 留言 → 存档（said 直接吃他给的那条；两条都留档等留言页接上）
+    if (Array.isArray(seed.notes)) {
+      S.life.mails = seed.notes.slice();
+      const hers = seed.notes.filter((n) => n.from !== (seed.meta.me_name || 'me'));
+      const last = hers[hers.length - 1];
+      if (last && (!S.life.said || !S.life.said.text)) {
+        S.life.said = { date: (last.at || '').slice(0, 10) || todayStr(), text: last.text };
+      }
+    }
+    // 心情轨迹 → moodLog（日期 → 词），情绪值顺到最后一次的 level
+    if (Array.isArray(seed.mood_history)) {
+      seed.mood_history.forEach((h) => { S.moodLog[h.date] = h.word; });
+      const lastM = seed.mood_history[seed.mood_history.length - 1];
+      if (lastM && typeof lastM.level === 'number') S.persona.mood = lastM.level;
+    }
+    // 空态文案 + 状态行
+    if (seed.empty_text) S.settings.emptyText = seed.empty_text;
+    if (seed.me && seed.me.status_line) S.settings.statusLine = seed.me.status_line;
+    persistAll();
+  }
+
+  function seedIfEmpty() {
+    if (load(KEY.seeded, false)) return;
+    const untouched =
+      !S.chat.length &&
+      !(S.memory.facts || []).length &&
+      !S.life.countdowns.length &&
+      S.memory.startDate === todayStr();
+    if (untouched && window.TIDE_SEED) applySeed(window.TIDE_SEED);
+    save(KEY.seeded, true);
+  }
+
   const persistAll = () => {
     save(KEY.chat, S.chat);
     save(KEY.persona, S.persona);
@@ -194,6 +263,8 @@
     save(KEY.timers, S.timers);
     save(KEY.meta, S.meta);
   };
+
+  seedIfEmpty();   // 第一次进站：没数据就把家机的种子灌进来
 
   /* ---------------- 小工具 ---------------- */
 
@@ -523,7 +594,7 @@
     const now = new Date();
     setTxt('lockDate', dateLabel(now));
     setTxt('sbDate', dateLabel(now));
-    setTxt('sbState', '他在家');
+    setTxt('sbState', S.settings.statusLine || '他在家');
     setTxt('chatStatus', P.statusLine(S.persona, Date.now()));
     setTxt('clockSub', P.statusLine(S.persona, Date.now()));
     setTxt('clockTime', pad(now.getHours()) + ':' + pad(now.getMinutes()));
@@ -973,6 +1044,12 @@
   function updateWidgets() {
     const now = new Date();
     const days = daysTogether();
+
+    // 一起听歌单（种子/以后接的数据）：有歌就报第一首
+    const songs = S.life.music || [];
+    const first = songs[0];
+    setTxt('musicTitle', first ? first.title : '还没开始');
+    setTxt('musicSub', first ? (first.artist + (first.note ? ' · ' + first.note : '')) : '想听什么，放给我');
 
     setTxt('paMe', (S.memory.userName || '我').slice(0, 1));
     setTxt('paHer', herInitial());
@@ -2262,6 +2339,50 @@
         renderApps();
         renderTheme();
         toast('回到默认了');
+      });
+    }
+
+    /* 整库导出 / 导入：这站没后端，备份就是全部（家机两边通用一个 json） */
+    const exp = $('btnExport');
+    if (exp) {
+      exp.addEventListener('click', () => {
+        const dump = { app: 'tide', exported_at: new Date().toISOString(), keys: {} };
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k.indexOf('hc.v1.') === 0) dump.keys[k] = localStorage.getItem(k);
+        }
+        const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'tide-backup-' + todayStr() + '.json';
+        a.click();
+        setTimeout(() => { try { URL.revokeObjectURL(a.href); } catch (_) {} }, 4000);
+        toast('导出好了，收好这个 json');
+      });
+    }
+    const imp = $('btnImport');
+    if (imp) {
+      imp.addEventListener('click', () => $('fileImport').click());
+      $('fileImport').addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          try {
+            const dump = JSON.parse(r.result);
+            const keys = dump && dump.keys ? dump.keys : dump;
+            let n = 0;
+            Object.keys(keys).forEach((k) => {
+              if (k.indexOf('hc.v1.') === 0 && typeof keys[k] === 'string') {
+                localStorage.setItem(k, keys[k]);
+                n += 1;
+              }
+            });
+            if (!n) { toast('这里头没有本站的数据'); return; }
+            location.reload();
+          } catch (_) { toast('这个文件读不了'); }
+        };
+        r.readAsText(f);
       });
     }
   }
