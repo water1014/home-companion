@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v28';
+  window.__TIDE_MARK = 'LOCAL-v31';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -158,7 +158,6 @@
     meta: load(KEY.meta, null),
   };
 
-  window.__snapLoad = { photos: Array.isArray(S.life.photos) ? S.life.photos.length : 'no-arr', lifeNull: S.life === null };
   S.persona = P.evolve(S.persona, Date.now());
   save(KEY.persona, S.persona);
 
@@ -189,7 +188,6 @@
 
     if (v < SCHEMA) v = SCHEMA;
     S.meta = { schema: v };
-    window.__snapMig = { photos: Array.isArray(S.life.photos) ? S.life.photos.length : 'no-arr', who: (new Error().stack || '').split('\n')[2] };
   }
   migrate();
 
@@ -1965,7 +1963,6 @@
   let stickToBottom = true;
   let lastGapMin = 0;            // 用户这次回话隔了多少分钟
   let lastDayKey = '';
-  let lastTs = 0;
 
   function nearBottom() {
     return stream.scrollHeight - stream.scrollTop - stream.clientHeight < 140;
@@ -2188,18 +2185,41 @@
   function attachThink(node, text) {
     if (!text || !node || !node.wrap) return;
     node.msg.think = text;
-    let card = node.wrap.querySelector(':scope > .think-card');
+    const col = node.wrap.querySelector('.m-col');
+    if (!col) return;
+    let card = col.querySelector(':scope > .think-card');
     if (!card) {
       card = buildThinkCard(text);
-      node.wrap.insertBefore(card, node.wrap.querySelector(':scope > .ops'));
+      col.insertBefore(card, col.querySelector(':scope > .ops'));
     } else {
       card.querySelector('.think-body').textContent = text;
     }
   }
 
+  /* 参考图布局：头像列 + meta 行（@名字 · 收/发 时间）+ 气泡（她灰、我黑） */
   function buildMessageNode(m) {
+    const me = m.role !== 'her';
     const wrap = document.createElement('div');
-    wrap.className = 'msg ' + (m.role === 'her' ? 'her' : 'me');
+    wrap.className = 'msg ' + (me ? 'me' : 'her');
+
+    const ava = document.createElement('div');
+    ava.className = 'm-ava';
+    ava.textContent = me
+      ? ((S.memory.userName || '我').trim().slice(-1) || '我')
+      : herInitial();
+
+    const col = document.createElement('div');
+    col.className = 'm-col';
+
+    const meta = document.createElement('div');
+    meta.className = 'm-meta';
+    const who = document.createElement('b');
+    who.textContent = '@' + (me ? ((S.memory.userName || '我').trim() || '我') : herName());
+    const when = document.createElement('span');
+    when.textContent = (me ? '发' : '收') + ' · ' + (m.ts ? hhmm(m.ts) : '');
+    meta.appendChild(who);
+    meta.appendChild(when);
+    col.appendChild(meta);
 
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
@@ -2215,13 +2235,15 @@
     body.textContent = m.text || '';
     bubble.appendChild(body);
 
-    wrap.appendChild(bubble);
+    col.appendChild(bubble);
+    wrap.appendChild(ava);
+    wrap.appendChild(col);
 
     // 她心里想（历史重放时也在）
-    if (m.role === 'her' && m.think) wrap.appendChild(buildThinkCard(m.think));
+    if (m.role === 'her' && m.think) col.appendChild(buildThinkCard(m.think));
 
     // 操作行
-    wrap.appendChild(buildOps(m, wrap));
+    col.appendChild(buildOps(m, wrap));
 
     wrap.addEventListener('click', () => {
       stream.querySelectorAll('.msg.show-ops').forEach((n) => {
@@ -2241,7 +2263,8 @@
     const same = now.getFullYear() === d.getFullYear() && now.getMonth() === d.getMonth() && now.getDate() === d.getDate();
     const y = new Date(now.getTime() - 86400000);
     const yday = y.getFullYear() === d.getFullYear() && y.getMonth() === d.getMonth() && y.getDate() === d.getDate();
-    el.textContent = same ? '今天' : yday ? '昨天' : (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    const wd = '周' + (WEEKDAY_CN[d.getDay()] || '');
+    el.textContent = (same ? '今天' : yday ? '昨天' : (d.getMonth() + 1) + '月' + d.getDate() + '日') + ' ' + wd;
     stream.appendChild(el);
   }
 
@@ -2252,22 +2275,10 @@
     appendDateMark(ts);
   }
 
-  function syncTimeMark(ts) {
-    const prev = lastTs;
-    lastTs = ts;
-    if (!prev) return;
-    if (ts - prev < 30 * 60000) return;
-    const el = document.createElement('div');
-    el.className = 'time-mark';
-    el.textContent = hhmm(ts);
-    stream.appendChild(el);
-  }
-
   function appendMessage(m, animate) {
     S.chat.push(m);
     if (S.chat.length > 600) S.chat = S.chat.slice(-500);
     syncDayMark(m.ts);
-    syncTimeMark(m.ts);
     const n = buildMessageNode(m);
     n.msg = m;                      // 流式/异步时别再用 S.chat[length-1] 猜，中间可能插进别的消息
     if (!animate) n.wrap.style.animation = 'none';
@@ -2280,11 +2291,9 @@
   function renderHistory() {
     stream.innerHTML = '';
     lastDayKey = '';
-    lastTs = 0;
     S.chat.forEach((m) => {
       if (m.gap && m.gap >= 30) stream.appendChild(gapNote(m.gap));
       syncDayMark(m.ts);
-      syncTimeMark(m.ts);
       stream.appendChild(buildMessageNode(m).wrap);
     });
     scrollDown(true);
@@ -4088,7 +4097,6 @@
     applyGap(homeCfg().gap);
 
     setInterval(() => {
-      window.__snapLoad = { photos: Array.isArray(S.life.photos) ? S.life.photos.length : 'no-arr', lifeNull: S.life === null };
   S.persona = P.evolve(S.persona, Date.now());
       tickClocks();
       flushScreenTime();
@@ -4096,7 +4104,6 @@
     }, 60000);
 
     document.addEventListener('visibilitychange', () => {
-      window.__snapLoad = { photos: Array.isArray(S.life.photos) ? S.life.photos.length : 'no-arr', lifeNull: S.life === null };
   S.persona = P.evolve(S.persona, Date.now());
       tickClocks();
       renderChips();
