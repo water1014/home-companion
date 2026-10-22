@@ -89,7 +89,7 @@
    * 返回完整文本；任何异常都抛出，交给上层回退。
    */
   async function stream(opts) {
-    const { cfg, messages, onDelta, onUsage, signal } = opts;
+    const { cfg, messages, onDelta, onReason, onUsage, signal } = opts;
     const base = (cfg.apiBase || '').replace(/\/+$/, '');
     const url = /\/chat\/completions$/.test(base) ? base : base + '/chat/completions';
 
@@ -133,6 +133,7 @@
     const decoder = new TextDecoder();
     let buf = '';
     let full = '';
+    let rfull = '';   // 思考过程（reasoning 模型才有）
 
     try {
       while (true) {
@@ -151,7 +152,11 @@
             const j = JSON.parse(data);
             // 用量 chunk 不带 choices（注意空数组也是真的，要判长度）
             if (j.usage && (!j.choices || !j.choices.length)) onUsage && onUsage(j.usage);
-            const d = j.choices?.[0]?.delta?.content;
+            const dl = j.choices?.[0]?.delta || {};
+            // 思考模型（R1/o1 类）的推理流：单独一路回调，不进正文
+            const rc = dl.reasoning_content ?? dl.reasoning;
+            if (rc) { rfull += rc; onReason && onReason(rc, rfull); }
+            const d = dl.content;
             if (d) { full += d; onDelta && onDelta(d, full); }
           } catch (_) { /* 忽略心跳/半包 */ }
         }

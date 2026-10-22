@@ -2102,10 +2102,16 @@
     const head = document.createElement('button');
     head.type = 'button';
     head.className = 'think-head';
+    const ic = document.createElement('span');
+    ic.className = 'think-ic';
+    ic.innerHTML = '<svg viewBox="0 0 24 24"><use href="#i-chat"/></svg>';
     const t1 = document.createElement('span');
-    t1.textContent = '她心里想';
+    t1.className = 'think-label';
+    t1.textContent = '思考过程';
     const t2 = document.createElement('i');
+    t2.className = 'think-toggle';
     t2.textContent = '展开';
+    head.appendChild(ic);
     head.appendChild(t1);
     head.appendChild(t2);
     const body = document.createElement('p');
@@ -2118,6 +2124,12 @@
     card.appendChild(head);
     card.appendChild(body);
     return card;
+  }
+  function setThinkOpen(card, open) {
+    if (!card) return;
+    card.classList.toggle('open', !!open);
+    const t = card.querySelector('.think-toggle');
+    if (t) t.textContent = open ? '收起' : '展开';
   }
 
   /* 消息操作行：时间 + 复制/重说/删除（点消息出现，再点收起） */
@@ -2662,6 +2674,8 @@
       let received = false;
       let strip = null;
       let thinkText = '';
+      let reasonText = '';
+      let reasonNode = null;
       try {
         const history = S.chat.slice(-16, -1).map((m) => ({
           role: m.role === 'her' ? 'assistant' : 'user',
@@ -2676,6 +2690,21 @@
         await LLM.stream({
           cfg,
           messages,
+          onReason: (chunk, full) => {
+            // 思考模型的 reasoning 流：单独一条「思考过程」卡，边想边长
+            reasonText = full;
+            if (!reasonNode) {
+              hideTyping();
+              reasonNode = document.createElement('div');
+              reasonNode.className = 'msg her';
+              const card = buildThinkCard('');
+              setThinkOpen(card, true);
+              reasonNode.appendChild(card);
+              stream.appendChild(reasonNode);
+            }
+            reasonNode.querySelector('.think-body').textContent = full;
+            scrollDown();
+          },
           onUsage: (u) => {
             try {
               const t = S.life.usage.total;
@@ -2706,6 +2735,16 @@
             if (!node) {
               hideTyping();
               node = appendMessage({ role: 'her', text: parsed.text, action: parsed.action, ts: Date.now() }, true);
+              // 正文开始 → 思考卡移到这条消息上方并收起
+              if (reasonNode) {
+                const card = reasonNode.querySelector('.think-card');
+                if (card) {
+                  node.wrap.insertBefore(card, node.wrap.firstChild);
+                  setThinkOpen(card, false);
+                }
+                reasonNode.remove();
+                reasonNode = null;
+              }
               scrollDown();
               return;
             }
@@ -2732,13 +2771,15 @@
           node.msg.action = parsed.action;
           node.body.textContent = node.msg.text;
         }
-        if (thinkText) attachThink(node, thinkText);
+        const finalThink = reasonText || thinkText;
+        if (finalThink) attachThink(node, finalThink);
         save(KEY.chat, S.chat);
         applyEffects([2.5, -1, 2]);
         finish();
         return;
       } catch (err) {
         hideTyping();
+        if (reasonNode) { reasonNode.remove(); reasonNode = null; }
         if (received && node) {
           // 断在流中途：已收到的标记不能丢，被扣住的尾巴要吐回
           if (strip) {
@@ -2748,7 +2789,8 @@
           }
           if (!node.msg.text) node.msg.text = '……';
           node.body.textContent = node.msg.text;
-          if (thinkText) attachThink(node, thinkText);
+          const t2 = reasonText || thinkText;
+          if (t2) attachThink(node, t2);
           save(KEY.chat, S.chat);
           toast('连接断了，先说到这儿');
           finish();

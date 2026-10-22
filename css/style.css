@@ -3364,41 +3364,52 @@ body[data-wall="photo"] .bg {
 
 
 /* ============================================================
-   聊天：她的心里想（虚线折叠卡）+ 消息操作行
+   「思考过程」折叠条：思考模型的 reasoning / 心事的可视化。
+   收起 = 白色圆角条（图标 + 思考过程 + 展开）；展开 = 思考文本。
    ============================================================ */
 .think-card {
-  border: 1px dashed rgba(111, 157, 151, 0.55);
-  border-radius: 16px;
-  padding: 8px 12px;
-  margin: 0 0 8px;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  border-radius: 18px;
+  padding: 9px 14px;
+  margin: 0 0 10px;
   max-width: 88%;
-  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 14px rgba(70, 78, 90, 0.08);
 }
 .think-head {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   border: none;
   background: none;
   padding: 0;
   cursor: pointer;
   font-family: inherit;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: var(--ink-3, #a0a5ad);
 }
-.think-head i { font-style: normal; }
+.think-ic svg { width: 14px; height: 14px; stroke: var(--ink-3, #a0a5ad); }
+.think-label {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--ink-2, #6b7078);
+}
+.think-toggle {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--ink-3, #a0a5ad);
+  letter-spacing: 0.06em;
+}
 .think-body {
   display: none;
-  margin: 7px 0 2px;
-  font-size: 12.5px;
-  line-height: 1.75;
-  font-style: italic;
+  margin: 8px 0 2px;
+  font-size: 13px;
+  line-height: 1.8;
   color: var(--ink-2, #6b7078);
   white-space: pre-wrap;
+  font-style: normal;
 }
+.think-card.open { border-radius: 18px; }
 .think-card.open .think-body { display: block; }
 
 /* 消息操作行：点消息出现 */
