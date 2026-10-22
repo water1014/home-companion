@@ -851,7 +851,7 @@
         '<div class="w-music"><div class="music-row">' +
           '<div class="mcover"><span class="mnote">♪</span></div>' +
           '<div class="mmeta">' +
-            '<p class="mkicker">NOW PLAYING · 一起听</p>' +
+            '<p class="mkicker" id="musicKicker">NOW PLAYING</p>' +
             '<p class="mtitle" id="musicTitle">还没开始</p>' +
             '<p class="msub" id="musicSub">想听什么，放给我</p>' +
             '<div class="mbar"><i id="musicBar"></i></div>' +
@@ -1045,9 +1045,10 @@
     const now = new Date();
     const days = daysTogether();
 
-    // 一起听歌单（种子/以后接的数据）：有歌就报第一首
+    // 一起听歌单（种子/以后接的数据）：有歌就报第一首，点缀字带队列数
     const songs = S.life.music || [];
     const first = songs[0];
+    setTxt('musicKicker', 'NOW PLAYING · ' + songs.length + ' QUEUED');
     setTxt('musicTitle', first ? first.title : '还没开始');
     setTxt('musicSub', first ? (first.artist + (first.note ? ' · ' + first.note : '')) : '想听什么，放给我');
 

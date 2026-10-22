@@ -3251,3 +3251,104 @@ body[data-wall="photo"] .bg {
   box-shadow: inset 0 0 0 1.5px rgba(31, 35, 43, 0.35);
   border-radius: 20px;
 }
+
+/* ============================================================
+   参考调（手帐感）：马卡龙图标托底 + 打字机点缀 + 奶玻璃 + 更亮的纱
+   —— 放最后，压过上面所有皮肤层；非当前页关模糊的规则 specificity 更高，不受影响
+   ============================================================ */
+
+/* 墨色整体调暖调软（玫瑰灰，不再是冷钢灰） */
+:root {
+  --ink-2: #6f6570;
+  --ink-3: #a893a0;
+}
+
+/* 图标托底：每个应用自己的粉彩色（makeTile 给了 --c1/--c2/--inkc） */
+.tile-ic,
+.dock .tile-ic,
+.app-row .tile-ic,
+.quad .tile-ic,
+.mini-tile .tile-ic {
+  background: linear-gradient(150deg, var(--c1, #ffe9f0), var(--c2, #ffcbdb)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.82) !important;
+  box-shadow:
+    0 4px 12px rgba(150, 120, 140, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+}
+.tile-ic svg,
+.mini-tile svg {
+  stroke: var(--inkc, #b8697f) !important;
+  stroke-width: 1.6 !important;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.65));
+}
+
+/* 图标名字：暖玫瑰灰 */
+.tile-name {
+  color: rgba(122, 96, 110, 0.92) !important;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+/* 点缀字：打字机体、小而疏（DAYS TOGETHER / NOW PLAYING / right here 这类） */
+.days-label,
+.mkicker,
+.clock-sub,
+.diary-date,
+.said-kicker,
+.anniv-label,
+.stat span {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: 0.2em;
+  color: rgba(152, 122, 138, 0.9) !important;
+}
+
+/* 大数字与时钟：更轻、暖灰 */
+.days-num, .clock-time { color: #57515c !important; }
+.days-num { font-size: 46px; }
+.clock-time { font-weight: 200; }
+
+/* 日记与他说：楷体正文，英文小标意大利体 */
+.diary-kicker { color: #a4788c !important; }
+.diary-text,
+.said-text {
+  font-family: "Kaiti SC", STKaiti, KaiTi, Georgia, serif;
+  color: #6d5f68 !important;
+  font-size: 11.5px;
+}
+
+/* 心电图：玫瑰细线 */
+.pulse-line path { stroke: rgba(214, 130, 160, 0.55) !important; stroke-width: 1.3; }
+
+/* 奶玻璃：边更淡、更圆、影更软 */
+.glass,
+.dock.glass,
+.cal-card,
+.anniv-card,
+.week-card,
+.stat-card,
+.dev-card,
+.list-card {
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 26px !important;
+  box-shadow: 0 12px 32px rgba(150, 130, 150, 0.08) !important;
+}
+
+/* 纱再亮一档：整站更奶、壁纸更像插画底 */
+body[data-wall="photo"] .bg {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.36) 0%, rgba(255, 255, 255, 0.46) 42%, rgba(255, 255, 255, 0.64) 100%),
+    url("../icons/wall-soft.jpg") !important;
+  background-size: auto 122% !important;
+  background-position: center 34% !important;
+}
+
+/* 参考调 v2：壁纸去饱和提亮（参考图的底是近乎单色的浅调），纱再厚一档 */
+body[data-wall="photo"] .bg {
+  filter: saturate(0.62) brightness(1.1) contrast(0.94);
+}
+body[data-wall="photo"] .bg {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.56) 42%, rgba(255, 255, 255, 0.72) 100%),
+    url("../icons/wall-soft.jpg") !important;
+  background-size: auto 122% !important;
+  background-position: center 34% !important;
+}
