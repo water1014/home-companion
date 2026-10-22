@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v31';
+  window.__TIDE_MARK = 'LOCAL-v32';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -2101,8 +2101,8 @@
     return { text: clean, action: acts.join(' · ') };
   }
 
-  /* 「她心里想」折叠卡：[[心事]] 标记的可视化（虚线卡，默认收起） */
-  function buildThinkCard(text) {
+  /* 「思考了 N 秒」折叠卡：reasoning 流 / [[心事]] 标记的可视化（默认收起） */
+  function buildThinkCard(text, sec) {
     const card = document.createElement('div');
     card.className = 'think-card closed';
     const head = document.createElement('button');
@@ -2113,7 +2113,7 @@
     ic.innerHTML = '<svg viewBox="0 0 24 24"><use href="#i-chat"/></svg>';
     const t1 = document.createElement('span');
     t1.className = 'think-label';
-    t1.textContent = '思考过程';
+    t1.textContent = sec ? '思考了 ' + sec + ' 秒' : '思考过程';
     const t2 = document.createElement('i');
     t2.className = 'think-toggle';
     t2.textContent = '展开';
@@ -2182,44 +2182,51 @@
   }
 
   /* 心里想卡挂到她的消息节点上（流式和重放共用；已有就更新文字） */
-  function attachThink(node, text) {
+  function attachThink(node, text, sec) {
     if (!text || !node || !node.wrap) return;
     node.msg.think = text;
+    if (sec) node.msg.thinkSec = sec;
     const col = node.wrap.querySelector('.m-col');
     if (!col) return;
     let card = col.querySelector(':scope > .think-card');
     if (!card) {
-      card = buildThinkCard(text);
+      card = buildThinkCard(text, sec);
       col.insertBefore(card, col.querySelector(':scope > .ops'));
     } else {
       card.querySelector('.think-body').textContent = text;
+      const lb = card.querySelector('.think-label');
+      if (lb && sec) lb.textContent = '思考了 ' + sec + ' 秒';
     }
   }
 
-  /* 参考图布局：头像列 + meta 行（@名字 · 收/发 时间）+ 气泡（她灰、我黑） */
+  /* 「乱息」式布局：磨砂玻璃泡浮在壁纸上；她 = 小头像+完整时间在泡上方，
+     正文按 \n 拆成连发多个小泡；我 = 右侧单个泡，无标注 */
+  function fmtMeta(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + hhmm(ts);
+  }
+
   function buildMessageNode(m) {
     const me = m.role !== 'her';
     const wrap = document.createElement('div');
     wrap.className = 'msg ' + (me ? 'me' : 'her');
 
-    const ava = document.createElement('div');
-    ava.className = 'm-ava';
-    ava.textContent = me
-      ? ((S.memory.userName || '我').trim().slice(-1) || '我')
-      : herInitial();
-
     const col = document.createElement('div');
     col.className = 'm-col';
 
-    const meta = document.createElement('div');
-    meta.className = 'm-meta';
-    const who = document.createElement('b');
-    who.textContent = '@' + (me ? ((S.memory.userName || '我').trim() || '我') : herName());
-    const when = document.createElement('span');
-    when.textContent = (me ? '发' : '收') + ' · ' + (m.ts ? hhmm(m.ts) : '');
-    meta.appendChild(who);
-    meta.appendChild(when);
-    col.appendChild(meta);
+    if (!me) {
+      const meta = document.createElement('div');
+      meta.className = 'm-meta';
+      const mini = document.createElement('i');
+      mini.className = 'm-mini';
+      mini.textContent = herInitial();
+      const when = document.createElement('span');
+      when.textContent = fmtMeta(m.ts);
+      meta.appendChild(mini);
+      meta.appendChild(when);
+      col.appendChild(meta);
+    }
 
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
@@ -2234,13 +2241,40 @@
     body.className = 'body';
     body.textContent = m.text || '';
     bubble.appendChild(body);
-
     col.appendChild(bubble);
-    wrap.appendChild(ava);
     wrap.appendChild(col);
 
+    const node = { wrap, bubble, body, bubbles: [body] };
+
+    if (!me) {
+      // 正文 setter：按 \n 把连发短句拆成多个磨砂小泡
+      Object.defineProperty(node, 'body', {
+        get() { return node.bubbles[node.bubbles.length - 1]; },
+        set(full) {
+          const parts = String(full == null ? '' : full).split('\n').map((x) => x.trim()).filter(Boolean);
+          if (!parts.length) { node.bubbles[0].textContent = ''; return; }
+          while (node.bubbles.length < parts.length) {
+            const b = document.createElement('div');
+            b.className = 'bubble';
+            const sp = document.createElement('span');
+            sp.className = 'body';
+            b.appendChild(sp);
+            col.insertBefore(b, col.querySelector('.think-card, .ops'));
+            node.bubbles.push(sp);
+          }
+          while (node.bubbles.length > parts.length) {
+            const sp = node.bubbles.pop();
+            const b = sp.closest('.bubble');
+            if (b) b.remove();
+          }
+          parts.forEach((t, i) => { node.bubbles[i].textContent = t; });
+        }
+      });
+      node.body = m.text || '';      // 走 setter：历史消息也按行拆泡
+    }
+
     // 她心里想（历史重放时也在）
-    if (m.role === 'her' && m.think) col.appendChild(buildThinkCard(m.think));
+    if (!me && m.think) col.appendChild(buildThinkCard(m.think, m.thinkSec));
 
     // 操作行
     col.appendChild(buildOps(m, wrap));
@@ -2252,7 +2286,7 @@
       wrap.classList.toggle('show-ops');
     });
 
-    return { wrap, body, bubble };
+    return node;
   }
 
   function appendDateMark(ts) {
@@ -2317,7 +2351,7 @@
     const step = Math.max(1, Math.round(fullText.length / 90));
     const timer = setInterval(() => {
       i = Math.min(fullText.length, i + step);
-      node.body.textContent = fullText.slice(0, i);
+      node.body = fullText.slice(0, i);
       scrollDown();
       if (i >= fullText.length) {
         clearInterval(timer);
@@ -2334,7 +2368,7 @@
     setTimeout(() => {
       hideTyping();
       const node = appendMessage({ role: 'her', text: body, action: action || '', ts: Date.now() }, true);
-      node.body.textContent = '';
+      node.body = '';
       typeOut(node, body, 28);
       updateHeroMeta();
       renderTalk();
@@ -2693,6 +2727,7 @@
       let strip = null;
       let thinkText = '';
       let reasonText = '';
+      let thinkStartMs = 0;
       let reasonNode = null;
       try {
         const history = S.chat.slice(-16, -1).map((m) => ({
@@ -2710,6 +2745,7 @@
           messages,
           onReason: (chunk, full) => {
             // 思考模型的 reasoning 流：单独一条「思考过程」卡，边想边长
+            if (!thinkStartMs) thinkStartMs = Date.now();
             reasonText = full;
             if (!reasonNode) {
               hideTyping();
@@ -2757,7 +2793,8 @@
               if (reasonNode) {
                 const card = reasonNode.querySelector('.think-card');
                 if (card) {
-                  node.wrap.insertBefore(card, node.wrap.firstChild);
+                  const colx = node.wrap.querySelector('.m-col');
+                  colx.insertBefore(card, colx.querySelector('.bubble'));
                   setThinkOpen(card, false);
                 }
                 reasonNode.remove();
@@ -2768,7 +2805,7 @@
             }
             node.msg.text = parsed.text;
             node.msg.action = parsed.action;
-            node.body.textContent = parsed.text;
+            node.body = parsed.text;
             let em = node.bubble.querySelector('em');
             if (parsed.action) {
               if (!em) {
@@ -2787,10 +2824,13 @@
           const parsed = splitAction(strip.text() + tail);
           node.msg.text = parsed.text || '……';
           node.msg.action = parsed.action;
-          node.body.textContent = node.msg.text;
+          node.body = node.msg.text;
         }
         const finalThink = reasonText || thinkText;
-        if (finalThink) attachThink(node, finalThink);
+        if (finalThink) {
+          const thinkSec = thinkStartMs ? Math.max(1, Math.round((Date.now() - thinkStartMs) / 1000)) : 0;
+          attachThink(node, finalThink, thinkSec);
+        }
         save(KEY.chat, S.chat);
         applyEffects([2.5, -1, 2]);
         finish();
@@ -2806,7 +2846,7 @@
             node.msg.action = parsed.action;
           }
           if (!node.msg.text) node.msg.text = '……';
-          node.body.textContent = node.msg.text;
+          node.body = node.msg.text;
           const t2 = reasonText || thinkText;
           if (t2) attachThink(node, t2);
           save(KEY.chat, S.chat);
@@ -2828,7 +2868,7 @@
       pendingMarks = (pendingMarks || []).concat(P.synthMarks(r, S.persona) || []);
       if (clean.marks.length) pendingMarks = pendingMarks.concat(clean.marks);
       const node = appendMessage({ role: 'her', text: clean.text, action: r.action, ts: Date.now() }, true);
-      node.body.textContent = '';
+      node.body = '';
       const th = (pendingMarks || []).filter((x) => x.key === '心事' && x.text).slice(-1)[0];
       if (th) attachThink(node, th.text);
       typeOut(node, clean.text, 26);
@@ -3936,7 +3976,7 @@
       setTimeout(() => {
         const g = greeting();
         const node = appendMessage({ role: 'her', text: g, action: '', ts: Date.now() }, true);
-        node.body.textContent = '';
+        node.body = '';
         typeOut(node, g, 34, () => renderQuote());
       }, 900);
     } else {
