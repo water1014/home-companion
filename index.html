@@ -9,6 +9,25 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="css/style.css" />
+<style>
+  /* 主题/字体在读样式表前先落地，避免深色用户闪一下白底 */
+  html[data-theme="dark"] { color-scheme: dark; }
+  html[data-theme="light"] { color-scheme: light; }
+</style>
+<script>
+  /* 开机第一件事：读 tide.theme / tide.font，挂在 <html> 上 */
+  (function () {
+    try {
+      var t = localStorage.getItem('tide.theme');
+      var f = localStorage.getItem('tide.font');
+      document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light';
+      document.documentElement.dataset.font = f === 'sans' ? 'sans' : 'serif';
+    } catch (_) {
+      document.documentElement.dataset.theme = 'light';
+      document.documentElement.dataset.font = 'serif';
+    }
+  })();
+</script>
 </head>
 <body>
 
@@ -47,7 +66,8 @@
   <symbol id="i-sunrise" viewBox="0 0 24 24"><path d="M3.6 18.4h16.8"/><path d="M7 18.4a5 5 0 0 1 10 0"/><path d="M12 4.4v3.2M5.6 7.6l2.2 2.2M18.4 7.6l-2.2 2.2M3.6 14.4h2M18.4 14.4h2"/></symbol>
   <symbol id="i-device" viewBox="0 0 24 24"><rect x="6.4" y="2.8" width="11.2" height="18.4" rx="2.6"/><path d="M10.6 5.4h2.8"/><path d="M9.6 18.6h4.8"/></symbol>
   <symbol id="i-game" viewBox="0 0 24 24"><path d="M7.6 7.4h8.8a4.2 4.2 0 0 1 4.1 3.3l.6 3.6a3.4 3.4 0 0 1-6.2 2.2l-.9-1.4H10l-.9 1.4a3.4 3.4 0 0 1-6.2-2.2l.6-3.6a4.2 4.2 0 0 1 4.1-3.3Z"/><path d="M7.2 11.2v2M6.2 12.2h2M15.4 11.6h.01M17.4 13.2h.01"/></symbol>
-  <symbol id="i-meter" viewBox="0 0 24 24"><path d="M3.6 17.4a8.4 8.4 0 1 1 16.8 0"/><path d="M12 17.4l4-4.4"/><circle cx="12" cy="17.4" r="1.1"/><path d="M3.6 20.4h16.8"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.6 12 4l8 6.6V20a1 1 0 0 1-1 1h-4.6v-6.2H9.6V21H5a1 1 0 0 1-1-1Z"/></symbol>
+<symbol id="i-meter" viewBox="0 0 24 24"><path d="M3.6 17.4a8.4 8.4 0 1 1 16.8 0"/><path d="M12 17.4l4-4.4"/><circle cx="12" cy="17.4" r="1.1"/><path d="M3.6 20.4h16.8"/></symbol>
 </svg>
 
 <div class="bg" aria-hidden="true">
@@ -72,6 +92,19 @@
 </section>
 
 <!-- ============ 主屏 ============ -->
+<header class="topbar" id="topbar" aria-label="状态栏">
+    <span class="pair-ava partner tb-ava" id="tbAva"></span>
+    <i class="tb-line"></i>
+    <span class="tb-status" id="tbStatus">在家</span>
+    <span class="tb-acts">
+      <button class="tb-btn" id="tbChatBtn" type="button" aria-label="聊天"><svg viewBox="0 0 24 24"><use href="#i-chat"/></svg></button>
+      <button class="tb-btn" id="chatSetBtn" hidden type="button" aria-label="聊天设置" aria-expanded="false">
+        <svg viewBox="0 0 24 24"><use href="#i-gear"/></svg>
+      </button>
+    </span>
+  </header>
+
+  <div class="screen-zone" id="screenZone">
 <main class="screen home" id="home" aria-label="主屏">
   <div class="home-dim" aria-hidden="true"></div>
 
@@ -79,35 +112,17 @@
 
     <!-- 只有一屏，上下滚动 -->
     <section class="home-page active" aria-label="桌面">
-      <div class="statusbar">
-        <span id="sbDate">7月11日 星期六</span>
-        <span class="sb-right"><i class="sb-dot"></i><span id="sbState">他在家</span></span>
-      </div>
 
       <!-- 首屏：四栏栅格，杂志式拼贴，九块顺序和尺寸都固定（js/app.js GRID_GROUPS） -->
       <div class="grid" id="grid" aria-label="首屏"></div>
     </section>
 
   </div>
-
-  <nav class="dock glass" id="dock" aria-label="常驻"></nav>
 </main>
 
 <!-- ============ 聊天 ============ -->
 <section class="screen page chat-page" id="chat" aria-label="聊天">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-      <div class="head-mid">
-        <div class="pair-ava tiny partner" id="chatAvaWrap"><span id="chatAvaPartner">满</span></div>
-        <div>
-          <p class="head-name" id="chatName">宋祁</p>
-          <p class="head-status" id="chatStatus">…</p>
-        </div>
-      </div>
-      <button class="chat-set-btn" id="chatSetBtn" type="button" aria-label="聊天设置" aria-expanded="false">
-        <svg viewBox="0 0 24 24"><use href="#i-gear"/></svg>
-      </button>
-  </header>
+  
 
   <div class="stream" id="stream" role="log" aria-live="polite"></div>
 
@@ -238,11 +253,6 @@
 
 <!-- ============ 心情（他的状态） ============ -->
 <section class="screen page mood-page" id="mood" aria-label="状态">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">状态</p>
-    <span class="head-spacer"></span>
-  </header>
 
   <div class="page-scroll">
     <section class="glass mood-main">
@@ -291,11 +301,6 @@
 
 <!-- ============ 设置（我的） ============ -->
 <section class="screen page set-page" id="settings" aria-label="我的">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">我的</p>
-    <span class="head-spacer"></span>
-  </header>
 
   <div class="page-scroll">
     <section class="glass profile-card">
@@ -305,6 +310,25 @@
         <p class="profile-sub" id="setMoodLine">这台手机里住着一个人。</p>
       </div>
       <p class="profile-note">他的备注<b id="setNotePartner">宋祁</b></p>
+    </section>
+
+    
+    <!-- 外观：明暗 + 字体（第 4 步做主题色/饱和度/主页背景的完整控件） -->
+    <section class="glass list-card">
+      <div class="row seg-row">
+        <span class="row-name">明暗</span>
+        <div class="seg" id="segTheme" role="group" aria-label="明暗">
+          <button type="button" data-v="light">浅色</button>
+          <button type="button" data-v="dark">深色</button>
+        </div>
+      </div>
+      <div class="row seg-row">
+        <span class="row-name">字体</span>
+        <div class="seg" id="segFont" role="group" aria-label="字体">
+          <button type="button" data-v="serif">衬线</button>
+          <button type="button" data-v="sans">无衬线</button>
+        </div>
+      </div>
     </section>
 
     <!-- 全部应用（原应用页的图标都收在这） -->
@@ -387,11 +411,6 @@
 
 <!-- ============ 记忆库 ============ -->
 <section class="screen page memory-page" id="memory" aria-label="记忆">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">记忆</p>
-    <span class="head-spacer"></span>
-  </header>
 
   <div class="page-scroll">
     <section class="glass mem-main">
@@ -417,11 +436,6 @@
 
 <!-- ============ 课程表 ============ -->
 <section class="screen page" id="courses" aria-label="课程">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">课程</p>
-    <button class="head-act" id="btnAddCourse" type="button">加一节</button>
-  </header>
   <div class="page-scroll">
     <p class="hint">填好之后他会知道你今天有没有课、什么时候下课。</p>
     <section class="glass list-card" id="courseList"></section>
@@ -444,11 +458,6 @@
 
 <!-- ============ 倒数日 ============ -->
 <section class="screen page" id="countdown" aria-label="倒数">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">倒数</p>
-    <button class="head-act" id="btnAddCd" type="button">加一个</button>
-  </header>
   <div class="page-scroll">
     <p class="hint">会在日历上点一个点。</p>
     <section class="glass list-card" id="cdList"></section>
@@ -467,11 +476,6 @@
 
 <!-- ============ 卡券 ============ -->
 <section class="screen page" id="cards" aria-label="卡券">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">卡券</p>
-    <button class="head-act" id="btnAddCard" type="button">加一张</button>
-  </header>
   <div class="page-scroll">
     <p class="hint">想让他哄你，用一张；想让他催你睡，用一张。用掉一张，记一笔。<br>他也能用——他用了会记在下面。</p>
     <section class="glass list-card" id="cardList"></section>
@@ -488,11 +492,6 @@
 
 <!-- ============ 他的一天 ============ -->
 <section class="screen page" id="partnerday" aria-label="一天">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">一天</p>
-    <span class="head-spacer"></span>
-  </header>
   <div class="page-scroll">
     <section class="glass day-note">
       <p class="hint">
@@ -507,11 +506,6 @@
 
 <!-- ============ 查手机 ============ -->
 <section class="screen page" id="device" aria-label="设备">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">设备</p>
-    <span class="head-spacer"></span>
-  </header>
   <div class="page-scroll">
     <p class="hint">他能看到的就是这些：浏览器愿意告诉网页的那点信息。没有位置、没有你的任何隐私。</p>
     <section class="glass list-card" id="deviceList"></section>
@@ -523,12 +517,6 @@
 
 <!-- ============ 相册 ============ -->
 <section class="screen page" id="album" aria-label="相册">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">相册</p>
-    <button class="head-act" id="btnAlbumCal" type="button">日历找</button>
-    <button class="head-act" id="btnAddPhoto" type="button">加一张</button>
-  </header>
   <div class="page-scroll">
     <div class="album-cats" id="albumCats" aria-label="按样式筛选"></div>
     <p class="hint" id="albumHint">第一张图放这儿</p>
@@ -548,11 +536,6 @@
 
 <!-- ============ 朋友圈 ============ -->
 <section class="screen page" id="moments" aria-label="朋友圈">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">朋友圈</p>
-    <span class="head-spacer"></span>
-  </header>
   <div class="page-scroll">
     <p class="hint" id="momentsHint">没发过，发一条试试</p>
     <div id="momentList"></div>
@@ -570,11 +553,6 @@
 
 <!-- ============ 美化 ============ -->
 <section class="screen page" id="theme" aria-label="美化">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">美化</p>
-    <span class="head-spacer"></span>
-  </header>
   <div class="page-scroll">
     <p class="hint">桌面太满就关掉几个组件。顺序在桌面长按拖动。</p>
 
@@ -660,12 +638,21 @@
 </section>
 
 <!-- ============ 占位页（之后自己盖） ============ -->
+
+<!-- ============ 日历（占位骨架，完整样式第 5 步） ============ -->
+<section class="screen page cal-page" id="calendar" aria-label="日历">
+  <div class="page-scroll">
+    <div class="cal-head2">
+      <button type="button" id="calPrev" aria-label="上个月">&#8249;</button>
+      <h2 id="calPageTitle">&#183;</h2>
+      <button type="button" id="calNext" aria-label="下个月">&#8250;</button>
+    </div>
+    <div class="cal-grid" id="calPageGrid"></div>
+    <p class="hint">先能用：翻月、今天描边、说过话的日子点一个点。标记 / 图例 / 某一天发生了什么，第 5 步做。</p>
+  </div>
+</section>
+
 <section class="screen page todo-page" id="todo" aria-label="施工中">
-  <header class="page-head">
-    <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title" id="todoTitle">抽屉</p>
-    <span class="head-spacer"></span>
-  </header>
   <div class="page-scroll todo-body">
     <div class="todo-ic glass"><svg><use id="todoIcon" href="#i-photo"/></svg></div>
     <p class="todo-word" id="todoName">还没盖好</p>
@@ -674,6 +661,9 @@
   </div>
 </section>
 
+  </div><!-- /screen-zone -->
+
+  <nav class="dock" id="dock" aria-label="常驻"></nav>
 </div><!-- /phone -->
 
 <input type="file" id="importFile" accept="application/json" hidden />

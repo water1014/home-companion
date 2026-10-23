@@ -3837,3 +3837,283 @@ section.home-page .bg-blob { opacity: 0.12; }
 /* 五组的容器纵向排，组内才是网格 */
 #appGridAll { display: block; }
 #appGridAll .app-grid-all { margin-top: 0; }
+
+/* ============================================================
+   v42 · 主题骨架（第 1 步：双主题 + 字体 + 三区结构 + 顶栏 + 新 dock）
+   —— 排版语法：装饰小字 / 超大衬线数字 / 分组卡片 / 凸起 Home / 细描边不投影
+   —— 本层放在最后，用后层优先把旧壁纸皮肤全部压住
+   ============================================================ */
+
+/* ---- 1. 主题变量：浅色默认，html[data-theme="dark"] 深色 ---- */
+:root {
+  --font-serif: "Noto Serif SC", "Songti SC", serif;
+  --font-sans: system-ui, -apple-system, "PingFang SC", sans-serif;
+  --font: var(--font-serif);
+
+  --bg: #f5f4f7;
+  --card: rgba(255, 255, 255, 0.72);
+  --line: rgba(0, 0, 0, 0.06);
+  --text: #1a1a1f;
+  --text-2: rgba(0, 0, 0, 0.55);
+  --text-3: rgba(0, 0, 0, 0.38);
+  --accent: #7c6bd6;
+  --noise-op: 0.03;
+  --glow-op: 0;
+
+  /* 旧墨色/粉色变量并入新文本阶，老组件自动跟着换肤 */
+  --ink: var(--text);
+  --ink-2: var(--text-2);
+  --ink-3: var(--text-3);
+  --pink: var(--accent);
+  --pink-deep: var(--accent);
+  --pink-soft: rgba(124, 107, 214, 0.12);
+  --glass: var(--card);
+  --glass-strong: var(--card);
+  --glass-line: var(--line);
+  --shadow: none;
+  --r-lg: 24px;
+  --r-md: 18px;
+  --dur: 180ms;
+}
+html[data-theme="dark"] {
+  --bg: #0b0a10;
+  --card: rgba(255, 255, 255, 0.055);
+  --line: rgba(255, 255, 255, 0.10);
+  --text: #ffffff;
+  --text-2: rgba(255, 255, 255, 0.55);
+  --text-3: rgba(255, 255, 255, 0.34);
+  --accent: #a89bff;
+  --pink-soft: rgba(168, 155, 255, 0.16);
+  --noise-op: 0;
+  --glow-op: 1;
+}
+html[data-font="sans"] { --font: var(--font-sans); }
+
+body { font-family: var(--font); color: var(--text); }
+
+/* ---- 2. 主题底：浅色平色 + 3% 噪点；深色平色 + 左上径向光晕 ---- */
+.bg {
+  background: var(--bg) !important;
+  filter: none !important;
+  background-image: none !important;
+}
+.bg-blob, .bg-grain { display: none !important; }
+.bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--glow-op);
+  background: radial-gradient(circle at 20% 10%, rgba(120, 90, 255, 0.20), transparent 60%);
+}
+.bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--noise-op);
+  mix-blend-mode: normal;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- 3. 三区骨架：顶栏 48 / 内容 auto / dock 76 ---- */
+.phone { display: flex; flex-direction: column; }
+
+.topbar {
+  flex: 0 0 auto;
+  height: calc(48px + var(--safe-t));
+  padding: var(--safe-t) 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  z-index: 15;
+}
+.tb-ava { width: 28px; height: 28px; font-size: 12px; flex: 0 0 auto; box-shadow: none; }
+.tb-line { width: 1px; height: 14px; background: var(--line); flex: 0 0 auto; }
+.tb-status { font-size: 12px; color: var(--text-2); letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb-acts { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.tb-btn {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border: 0; padding: 0; margin: 0;
+  background: transparent; color: var(--text-2);
+  border-radius: 50%; cursor: pointer;
+}
+.tb-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.tb-btn:active { color: var(--accent); }
+/* UA 的 [hidden]{display:none} 会被上面的 display:grid 盖掉，显式补一条 */
+.tb-btn[hidden] { display: none; }
+/* 既存漏洞：.row 的 display:flex 同样会盖掉 [hidden]（美化页换回预设那一行） */
+.row[hidden] { display: none; }
+
+.screen-zone { position: relative; flex: 1; min-height: 0; }
+
+/* 内容区：左右 20px，底部给 dock + 凸起 Home 让位（!important 压旧皮肤 16px） */
+.page-scroll, .home-page { padding-left: 20px !important; padding-right: 20px !important; }
+.page-scroll { padding-bottom: calc(76px + var(--safe-b) + 20px) !important; }
+.home-page { padding-bottom: calc(76px + var(--safe-b) + 12px) !important; }
+
+/* ---- 4. dock：五格，中间 Home 圆形凸起 ---- */
+.dock {
+  flex: 0 0 auto;
+  height: calc(76px + var(--safe-b));
+  padding-bottom: var(--safe-b);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  background: var(--card) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  backdrop-filter: blur(20px) saturate(1.1);
+  border-top: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  z-index: 25;
+}
+.dock .tile {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 0 0 7px; margin: 0;
+  border: 0; background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.dock .tile svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.dock .tile .tile-name { font-size: 10px; letter-spacing: 0.04em; line-height: 1.2; }
+.dock .tile.on { color: var(--accent); }
+.dock .tile.t-home { padding-bottom: 7px; }
+.dock .tile.t-home .tile-ic {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--line);
+  display: grid; place-items: center;
+  transform: translateY(-14px);
+}
+.dock .tile.t-home svg { width: 24px; height: 24px; }
+.dock .tile .badge { display: none; }
+
+/* ---- 5. 页面切换：淡入 180ms，不投影不滑轨 ---- */
+/* 页面自带主题底：否则透明页会把主屏九卡透出来（旧皮肤 .page 有 linear-gradient 底，
+   新排版语法改成纯色 --bg，深浅两套都跟主题走） */
+.screen.page, .screen.page.open {
+  background: var(--bg) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: opacity var(--dur) ease, visibility var(--dur);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.screen.page.open { opacity: 1; visibility: visible; pointer-events: auto; }
+.phone.zoom #home, .phone.zoom .home-dim { transform: none !important; opacity: 1 !important; }
+.page .page-scroll > *, .page.open .page-scroll > * { animation: none !important; opacity: 1 !important; }
+
+/* ---- 6. 卡片通用：var(--card) + 细描边 + 24 圆角 + 不投影 ---- */
+.glass, .card, .list-card, .dock.glass {
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 24px !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  backdrop-filter: blur(20px) saturate(1.1);
+}
+
+/* ---- 7. 文本阶 + dock 图标改线性单色（app 网格贴纸留给第 4 步主屏一起改） ---- */
+.screen, .page-scroll, .home-page, .topbar, .lock-inner { color: var(--text); }
+.tile-name { color: var(--text-2) !important; text-shadow: none !important; }
+.dock .tile-ic {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--text-2);
+}
+.dock .tile-ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.dock .tile.on .tile-ic, .dock .tile:active .tile-ic { color: var(--accent); }
+
+/* 英文装饰小字：大写 + .2em 字距 + 11px */
+.en-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-3); }
+/* 数字和天数一律 serif（切了无衬线也不变） */
+.serif-num, .days-num, .tile-num, .mem-count b, .stat b, .big-clock, .lock-time { font-family: var(--font-serif); }
+
+/* ---- 8. 分段控件（明暗 / 字体，设置页先用，第 4 步再美化） ---- */
+.seg { display: inline-flex; padding: 2px; gap: 2px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); }
+.seg button {
+  border: 0; margin: 0; padding: 5px 14px;
+  border-radius: 999px; background: transparent;
+  font-size: 12px; color: var(--text-2); cursor: pointer;
+  font-family: var(--font);
+}
+.seg button.on { background: var(--accent); color: #fff; }
+.row.seg-row { justify-content: space-between; }
+
+/* ---- 9. 日历占位页（第 5 步才做完整样式，先保证 日 格能打开） ---- */
+.cal-head2 { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 6px 0 14px; }
+.cal-head2 h2 { margin: 0; font-size: 15px; font-weight: 500; font-family: var(--font-serif); }
+.cal-head2 button { border: 0; background: transparent; color: var(--text-2); font-size: 20px; padding: 4px 10px; cursor: pointer; line-height: 1; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-grid .cg-w { text-align: center; font-size: 10px; color: var(--text-3); padding: 4px 0; }
+.cal-grid .cg-d {
+  height: 52px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font-size: 15px; font-family: var(--font-serif); color: var(--text);
+  border: 1px solid transparent;
+}
+.cal-grid .cg-d.today { border-color: var(--accent); }
+.cal-grid .cg-d em { font-style: normal; line-height: 1.1; }
+.cal-grid .cg-d.pad { visibility: hidden; }
+.cal-grid .cg-d i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+/* ---- 10. 级联修复：旧 13 层皮肤全是 !important，这里用更高特异性一一压住 ---- */
+
+/* 照片/自定义壁纸皮肤（body[data-wall="photo"] .bg 是 0,2,1 + !important，
+   单类 .bg 压不住 → 提到 html body[data-wall] .bg = 0,2,2 后层赢） */
+html body[data-wall] .bg,
+html body[data-wallimg] .bg {
+  background: var(--bg) !important;
+  background-image: none !important;
+  filter: none !important;
+}
+/* 旧「照片底玻璃更实」同样压卡片 */
+html body[data-wall] .glass,
+html body[data-wall] .card,
+html body[data-wall] .list-card,
+html body[data-wall] .dock,
+html body[data-wall] .dock.glass {
+  background: var(--card) !important;
+  border-color: var(--line) !important;
+}
+/* 旧 2204 行把 .bg::after 连噪点一起 display:none（虽被 2708 救回，这里再兜一次） */
+.bg::after { display: block !important; }
+
+/* dock 从 phone 内浮悬块改成全宽底栏：旧 .dock 有 margin 0 14px 左右缩进 */
+html .dock { margin: 0 !important; }
+
+/* 旧贴纸图标底色（.dock .tile-ic 带 --c1/--c2/--inkc !important）与白描边投影 */
+html .dock .tile-ic {
+  --c1: transparent !important;
+  --c2: transparent !important;
+  --inkc: currentColor !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+/* Home 键要的是正圆，压过上面拔贴纸的 border-radius: 0 */
+html .dock .tile.t-home .tile-ic { border-radius: 50% !important; }
+html .dock .tile-ic svg,
+html .dock .tile svg {
+  stroke: currentColor !important;
+  stroke-width: 1.5 !important;
+  filter: none !important;
+}
+/* 旧 2935 行有 #dock .tile-ic svg（id 级 + !important）压类级规则，这里用同 id 后层再盖一次 */
+#dock .tile-ic svg,
+#dock .tile svg {
+  stroke: currentColor !important;
+  stroke-width: 1.5 !important;
+}
+
+/* 深色下发闷的旧定色 */
+.clock-time { color: var(--text) !important; }
+.pair-names b { color: var(--text); }

@@ -4,11 +4,59 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v41';
+  window.__TIDE_MARK = 'LOCAL-v42';
 
   const P = window.Persona;
   const LLM = window.LLM;
   const $ = (id) => document.getElementById(id);
+
+  /* ============================================================
+     外观：明暗 + 字体
+     两个值各自独立存 localStorage（tide.theme / tide.font），
+     <head> 里的内联脚本已经先把 data-theme / data-font 挂上 html 了，
+     这里负责「切换 + 落盘」，CSS 变量全部跟着 html 属性走。
+     ============================================================ */
+  const APPEAR_KEY = { theme: 'tide.theme', font: 'tide.font' };
+
+  function appearCfg() {
+    let theme = 'light', font = 'serif';
+    try {
+      theme = localStorage.getItem(APPEAR_KEY.theme) || 'light';
+      font = localStorage.getItem(APPEAR_KEY.font) || 'serif';
+    } catch (_) {}
+    return { theme: theme === 'dark' ? 'dark' : 'light', font: font === 'sans' ? 'sans' : 'serif' };
+  }
+
+  function applyAppearance(theme, font) {
+    const a = { theme: theme || appearCfg().theme, font: font || appearCfg().font };
+    document.documentElement.dataset.theme = a.theme;
+    document.documentElement.dataset.font = a.font;
+    return a;
+  }
+
+  function patchAppearance(patch) {
+    const a = appearCfg();
+    const next = { theme: patch.theme || a.theme, font: patch.font || a.font };
+    try {
+      localStorage.setItem(APPEAR_KEY.theme, next.theme);
+      localStorage.setItem(APPEAR_KEY.font, next.font);
+    } catch (_) {}
+    applyAppearance(next.theme, next.font);
+    syncAppearance();
+    return next;
+  }
+
+  /* 设置页两个分段控件的高亮跟随当前值 */
+  function syncAppearance() {
+    const a = appearCfg();
+    const mark = (id, v) => {
+      const seg = $(id);
+      if (!seg) return;
+      seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+    };
+    mark('segTheme', a.theme);
+    mark('segFont', a.font);
+  }
 
   /* ============================================================
      应用注册表 —— 之后加功能就在这里加一条
@@ -94,6 +142,18 @@
     { id: 'chat',     name: '说', icon: 'i-chat',  page: 'chat' },
     { id: 'memory',   name: '记', icon: 'i-brain', page: 'memory' },
     { id: 'settings', name: '我', icon: 'i-gear',  page: 'settings' },
+  ];
+
+  /* 新 dock（v42 三区骨架）：五格 —— 现在 / 记 / Home / 日 / 我。
+     tab = 点亮规则：currentPage 为 null（主屏）时 Home 亮，
+     打开某页时对应格亮；Home 是圆形凸起键，点它回主屏。
+     data-app 保留，角标查询（.tile[data-app]）不用改。 */
+  const DOCK_TABS = [
+    { id: 'mood',     name: '现在', icon: 'i-face',  page: 'mood' },
+    { id: 'memory',   name: '记',   icon: 'i-brain', page: 'memory' },
+    { id: 'homeKey',  name: '',     icon: 'i-home',  page: null },
+    { id: 'calendar', name: '日',   icon: 'i-cal',   page: 'calendar' },
+    { id: 'settings', name: '我',   icon: 'i-gear',  page: 'settings' },
   ];
 
   /* 应用/dock 顺序可拖动换位，存本地；读出来时按注册表校准，缺的补默认 */
@@ -457,6 +517,7 @@
     device: $('device'),
     album: $('album'),
     moments: $('moments'),
+    calendar: $('calendar'),
   };
 
   let currentPage = null;
@@ -476,6 +537,8 @@
     if (dim) dim.style.opacity = '';
   }
 
+  /* v42：页面切换只准淡入 180ms（.screen.page 的 CSS 过渡），
+     不再滑轨、不再给主屏加 zoom 视差；手势里写过的 inline 值仍要清掉 */
   function openPage(id) {
     const el = pages[id];
     if (!el || currentPage === id) return;
@@ -492,16 +555,15 @@
       prev.style.transition = '';
     }
 
-    // 确保起始位置在屏幕右侧，再触发过渡
     el.style.transition = 'none';
     el.style.transform = '';
     void el.offsetWidth;
     el.style.transition = '';
 
     el.classList.add('open');
-    phone.classList.add('zoom');
-    markMoving();
     currentPage = id;
+    syncDock();
+    syncTopbar();
 
     if (id === 'chat') {
       clearBadge('chat');
@@ -519,6 +581,7 @@
     if (id === 'album') { renderAlbum(); renderAlbumCal(); }
     if (id === 'moments') renderMoments();
     if (id === 'theme') renderTheme();
+    if (id === 'calendar') renderCalendarPage();
   }
 
   function closePage() {
@@ -527,10 +590,10 @@
     el.style.transition = '';
     el.style.transform = '';
     el.classList.remove('open');
-    phone.classList.remove('zoom');
     resetHomeInline();
-    markMoving();
     currentPage = null;
+    syncDock();
+    syncTopbar();
   }
 
   document.querySelectorAll('[data-back]').forEach((b) => {
@@ -576,13 +639,9 @@
       const w = g.w;
       const d = Math.max(0, Math.min(w, dx));
       g.dx = d;
-      const inv = d / w;      // 0 → 1：从"页面全开"到"完全回到桌面"
-      const rest = 1 - inv;
 
+      /* v42：手势只拖页面自己，主屏不跟着缩放/平移（动效只准三样） */
       el.style.transform = 'translate3d(' + d + 'px,0,0)';
-      home.style.transform = 'translate3d(' + (-15 * rest) + '%,0,0) scale(' + (0.92 + 0.08 * inv) + ')';
-      home.style.opacity = String(0.62 + 0.38 * inv);
-      if (dim) dim.style.opacity = String(0.1 * rest);
     });
 
     const end = (e) => {
@@ -604,8 +663,9 @@
 
       if (done) {
         el.classList.remove('open');
-        phone.classList.remove('zoom');
         currentPage = null;
+        syncDock();
+        syncTopbar();
       }
       markMoving();
     };
@@ -631,10 +691,11 @@
     if (!app) return;
     if (app.page) { openPage(app.page); return; }
     // 占位：把这个功能的设想写在页面上，之后照着填
-    $('todoTitle').textContent = app.name;
-    $('todoName').textContent = app.name;
-    $('todoDesc').textContent = app.desc || '位置已经留好了。';
-    $('todoIcon').setAttribute('href', '#' + app.icon);
+    setTxt('todoTitle', app.name);
+    setTxt('todoName', app.name);
+    setTxt('todoDesc', app.desc || '位置已经留好了。');
+    const ti = $('todoIcon');
+    if (ti) ti.setAttribute('href', '#' + app.icon);
     openPage('todo');
   }
 
@@ -733,7 +794,48 @@
         all.appendChild(sec);
       });
     }
-    if (dock) { dock.innerHTML = ''; DOCK.forEach((a) => dock.appendChild(makeTile(a))); }
+    if (dock) renderDock();
+  }
+
+  /* v42 新 dock：五格固定，中间 Home 圆形凸起；不再跟着 DOCK 排列变 */
+  function renderDock() {
+    const dock = $('dock');
+    if (!dock) return;
+    dock.innerHTML = '';
+    DOCK_TABS.forEach((t) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tile' + (t.page === null ? ' t-home' : '');
+      b.dataset.app = t.id;
+      b.dataset.tab = t.id;
+      b.setAttribute('aria-label', t.name || '回主屏');
+      b.innerHTML =
+        '<span class="tile-ic"><svg><use href="#' + t.icon + '"/></svg></span>' +
+        (t.name ? '<span class="tile-name">' + t.name + '</span>' : '<span class="tile-name" aria-hidden="true"></span>');
+      b.addEventListener('click', () => {
+        if (t.page === null) closePage();
+        else openPage(t.page);
+      });
+      dock.appendChild(b);
+    });
+    syncDock();
+  }
+
+  /* dock 点亮：主屏（currentPage 为 null）→ Home；打开某页 → 对应格 */
+  function syncDock() {
+    const key = currentPage === null ? 'homeKey' : currentPage;
+    document.querySelectorAll('.dock .tile').forEach((t) => {
+      t.classList.toggle('on', t.dataset.tab === key);
+    });
+  }
+
+  /* 顶栏右侧：主屏显示聊天入口，聊天页显示齿轮（聊天设置） */
+  function syncTopbar() {
+    const inChat = currentPage === 'chat';
+    const chatBtn = $('tbChatBtn');
+    const setBtn = $('chatSetBtn');
+    if (chatBtn) chatBtn.hidden = inChat;
+    if (setBtn) setBtn.hidden = !inChat;
   }
 
   /** 通用：重建前后各量一次，让元素从旧位置滑到新位置（FLIP） */
@@ -766,6 +868,9 @@
     setTxt('clockSub', P.statusLine(S.persona, Date.now()));
     setTxt('clockTime', pad(now.getHours()) + ':' + pad(now.getMinutes()));
     setTxt('clockDate', dateLabel(now));
+    /* v42 顶栏：他的头像 + 一句状态 */
+    setHTML('tbAva', partnerAvaInner(''));
+    setTxt('tbStatus', P.statusLine(S.persona, Date.now()));
     if (typeof updateGrid === 'function') updateGrid();
     document.querySelectorAll('.sb-date-mini').forEach((el) => {
       el.textContent = dateLabel(now);
@@ -815,6 +920,67 @@
       }
       grid.appendChild(s);
     }
+  }
+
+  /* v42 日历页（第 1 步先能用：翻月 / 今天描边 / 说过话的日子点；
+     标记 / 图例 / 某天发生了什么，第 5 步做） */
+  let calPageYM = null;   // 当前翻到哪个月，null = 回到本月
+
+  function renderCalendarPage() {
+    const grid = $('calPageGrid');
+    if (!grid) return;
+    const now = new Date();
+    if (!calPageYM) calPageYM = { y: now.getFullYear(), m: now.getMonth() };
+    const y = calPageYM.y, m = calPageYM.m;
+    setTxt('calPageTitle', y + ' 年 ' + (m + 1) + ' 月');
+
+    // 说过话的日子（本地日期）
+    const talked = {};
+    S.chat.forEach((msg) => {
+      const d = new Date(msg.ts || 0);
+      if (isNaN(d.getTime())) return;
+      talked[d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate()] = true;
+    });
+
+    const first = new Date(y, m, 1);
+    const padStart = (first.getDay() + 6) % 7; // 周一开头
+    const total = new Date(y, m + 1, 0).getDate();
+
+    grid.innerHTML = '';
+    ['一', '二', '三', '四', '五', '六', '日'].forEach((w) => {
+      const el = document.createElement('span');
+      el.className = 'cg-w';
+      el.textContent = w;
+      grid.appendChild(el);
+    });
+    for (let i = 0; i < padStart; i++) {
+      const el = document.createElement('span');
+      el.className = 'cg-d pad';
+      grid.appendChild(el);
+    }
+    for (let d = 1; d <= total; d++) {
+      const cell = document.createElement('span');
+      cell.className = 'cg-d' +
+        (y === now.getFullYear() && m === now.getMonth() && d === now.getDate() ? ' today' : '');
+      const num = document.createElement('em');
+      num.textContent = d;
+      cell.appendChild(num);
+      if (talked[y + '-' + m + '-' + d]) {
+        const dot = document.createElement('i');
+        cell.appendChild(dot);
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  function shiftCalPage(delta) {
+    if (!calPageYM) {
+      const now = new Date();
+      calPageYM = { y: now.getFullYear(), m: now.getMonth() };
+    }
+    const d = new Date(calPageYM.y, calPageYM.m + delta, 1);
+    calPageYM = { y: d.getFullYear(), m: d.getMonth() };
+    renderCalendarPage();
   }
 
   /* ---------------- 主屏分页 ---------------- */
@@ -1950,6 +2116,9 @@
     setHTML('chatAvaPartner', partnerAvaInner(''));   // 聊天头部头像（用图或首字）
     setTxt('moodAvaPartner', partnerInitial());
     setTxt('chatName', chatPartnerName());         // 聊天里用备注名
+    /* v42 顶栏也跟着刷：头像 + 状态（名字改了这里马上变） */
+    setHTML('tbAva', partnerAvaInner(''));
+    setTxt('tbStatus', P.statusLine(S.persona, Date.now()));
     const inp = $('input');
     if (inp) inp.placeholder = '说点什么…';
     setTxt('setAvaMe', me);
@@ -2787,7 +2956,11 @@
 
   function applyWall() {
     const w = wallCfg();
-    document.body.dataset.wall = w.preset || 'photo';
+    /* v42：默认不再挂任何壁纸皮肤（纯色底 + 噪点/光晕由主题层负责）。
+       只有用户主动选过预设、或上传过图，才让旧皮肤接管。 */
+    const saved = (S.settings && S.settings.wall) || {};
+    if (saved.preset) document.body.dataset.wall = w.preset;
+    else delete document.body.dataset.wall;
     if (w.img) {
       document.documentElement.style.setProperty('--wall-img', 'url("' + w.img + '")');
       document.body.dataset.wallimg = '1';
@@ -4052,6 +4225,8 @@
 
     setTxt('modelStatus', LLM.configured(S.settings) ? '已接入' : '未接入');
     setTxt('partnerTagModel', LLM.configured(S.settings) ? '已接模型' : '未接模型');
+
+    syncAppearance();   // 明暗 / 字体分段控件的高亮
   }
 
   /* 主动说话的三个旋钮 */
@@ -4116,6 +4291,22 @@
     if (S.settings.enabled && !LLM.configured(S.settings)) toast('再把地址、模型和 Key 填上才生效');
     else if (S.settings.enabled) toast('已接入，他换一种方式说话');
   });
+
+  /* ---- 明暗 / 字体：两个分段控件，点了马上换、落盘、刷新保留 ---- */
+  function bindSegAppear(id, key) {
+    const seg = $(id);
+    if (!seg) return;
+    seg.querySelectorAll('button').forEach((b) => {
+      b.addEventListener('click', () => {
+        patchAppearance({ [key]: b.dataset.v });
+        toast(key === 'theme'
+          ? (b.dataset.v === 'dark' ? '深色了' : '浅色了')
+          : (b.dataset.v === 'sans' ? '换无衬线了' : '换衬线了'));
+      });
+    });
+  }
+  bindSegAppear('segTheme', 'theme');
+  bindSegAppear('segFont', 'font');
 
   /* ---------------- 记忆 ---------------- */
 
@@ -4569,6 +4760,7 @@
 
   async function boot() {
     await seedIfEmpty();   // 第一次进站：没数据就 fetch 同级 seed.json 灌进来
+    applyAppearance();     // 明暗 / 字体（head 内联脚本已挂过一次，这里兜底 + 同步设置页）
     renderGrid();
     renderBento();
     renderBento2();
@@ -4581,6 +4773,8 @@
     setupChatPanel();
     tickClocks();
     updateSendState();
+    syncDock();            // 新 dock 点亮 + 顶栏右侧图标（主屏态）
+    syncTopbar();
 
     setTxt('lockLine', lockLine());
 
@@ -4721,6 +4915,13 @@
       mainCard.addEventListener('click', () => openPage('mood'));
       mainCard.style.cursor = 'pointer';
     }
+
+    /* 顶栏聊天入口 / 日历页翻月 */
+    const tbChat = $('tbChatBtn');
+    if (tbChat) tbChat.addEventListener('click', () => openPage('chat'));
+    const calPrev = $('calPrev'), calNext = $('calNext');
+    if (calPrev) calPrev.addEventListener('click', () => shiftCalPage(-1));
+    if (calNext) calNext.addEventListener('click', () => shiftCalPage(1));
 
     document.querySelectorAll('.mini-tile[data-app]').forEach((b) => {
       b.addEventListener('click', () => openApp(findApp(b.dataset.app)));
