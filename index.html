@@ -8,6 +8,10 @@
 <title>潮 · TIDE</title>
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+<!-- 字体系统：衬线（Playfair Display / Noto Serif SC）+ 手写（Ma Shan Zheng）；断网时回退系统字 -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..600&family=Noto+Serif+SC:wght@300;400;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
 <style>
   /* 主题/字体在读样式表前先落地，避免深色用户闪一下白底 */
@@ -77,6 +81,8 @@
   <div class="bg-blob b2"></div>
   <div class="bg-blob b3"></div>
   <div class="bg-grain"></div>
+  <!-- 氛围粒子：暗色=雨滴/星尘，亮色=阳光光斑（JS 按主题切换，降频保性能） -->
+  <canvas class="ambient" id="ambient" aria-hidden="true"></canvas>
 </div>
 
 <div class="phone" id="phone">

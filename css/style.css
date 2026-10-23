@@ -5243,3 +5243,688 @@ html .topbar .tb-btn#tbMoreBtn:active{ color: var(--accent) !important; }
 /* 顶栏右侧只留「更多」：聊天入口交给常驻「我来找你」与桌面「和他聊聊」卡 */
 html .topbar .tb-btn#tbChatBtn{ display: none !important; }
 
+/* ============================================================
+   V13 · 沉浸玻璃 · 赛博陪伴空间（大版本 UI/UX 升级）
+   —— 只追加一层，不改既有规则；整段可删。
+   0 令牌 / 1 字型 / 2 玻璃材质 / 3 便当盒 / 4 天数主视觉
+   5 情绪面板 / 6 拍立得 / 7 黑胶 / 8 便签 / 9 聊天
+   10 足迹 / 11 氛围粒子 / 12 无障碍与降级
+   ============================================================ */
+
+/* ---------- 0. 令牌层：材质 / 圆角 / 阴影 / 字族 ---------- */
+:root{
+  --v13-r-card: 24px;
+  --v13-r-ctl: 16px;
+  --v13-r-pill: 999px;
+  --v13-blur: 24px;
+  --v13-sat: 1.5;
+
+  /* 亮：白玻璃；暗：极淡白玻璃（底色本身近黑，压黑会糊成一团） */
+  --v13-glass-l: rgba(255, 255, 255, .42);
+  --v13-brd-l:   rgba(255, 255, 255, .62);
+  --v13-shadow-l: 0 26px 56px -28px rgba(26, 38, 58, .34), 0 2px 10px -4px rgba(26, 38, 58, .10);
+
+  --v13-glass-d: rgba(255, 255, 255, .055);
+  --v13-brd-d:   rgba(255, 255, 255, .10);
+  --v13-shadow-d: 0 28px 64px -26px rgba(0, 0, 0, .78), 0 2px 12px -4px rgba(0, 0, 0, .45);
+
+  --font-display: 'Playfair Display', 'Noto Serif SC', 'Songti SC', 'Times New Roman', serif;
+  --font-hand: 'Ma Shan Zheng', 'Kaiti SC', 'STKaiti', 'Noto Serif SC', cursive;
+
+  --v13-ease: cubic-bezier(.22, .61, .36, 1);
+}
+
+/* ---------- 1. 字型与节奏 ---------- */
+html body{
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif !important;
+  line-height: 1.66 !important;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 大号数字 / 英文标题：强制衬线 */
+html .days-num, html .days-since, html .days-names,
+html .td-day, html .ed-time, html .lock-time, html .big-clock,
+html .mo-v, html .st-word, html .tile-num,
+html .vi-title, html .cal-page-title, html #daysNum{
+  font-family: var(--font-display) !important;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -.01em;
+}
+/* 小号拉丁标签：宽字距、极小号 */
+html .td-eyebrow, html .vi-eyebrow, html .pl-eyebrow,
+html .mo-eyebrow, html .app-matrix-title, html .nt-eyebrow{
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif !important;
+  font-size: 9.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: .3em !important;
+  text-indent: .3em;
+  text-transform: uppercase;
+  color: var(--text-3) !important;
+  opacity: .9;
+}
+/* 正文呼吸感 */
+html .st-sub, html .mo-say, html .days-names,
+html .row-name, html .row small, html .list-head,
+html .msg .bubble, html .qt, html .bt-cell, html .pl-cap{
+  line-height: 1.62 !important;
+}
+
+/* ---------- 2. 玻璃材质：卡片 / 列表 / 顶栏 / 底栏 / 输入 ---------- */
+html .bento .card,
+html .card,
+html .glass,
+html .list-card,
+html .cp-card,
+html .think-card{
+  background: var(--v13-glass-d) !important;
+  border: 1px solid var(--v13-brd-d) !important;
+  border-radius: var(--v13-r-card) !important;
+  -webkit-backdrop-filter: blur(var(--v13-blur)) saturate(var(--v13-sat)) !important;
+  backdrop-filter: blur(var(--v13-blur)) saturate(var(--v13-sat)) !important;
+  box-shadow: var(--v13-shadow-d) !important;
+  overflow: hidden;
+  transition: transform 240ms var(--v13-ease), box-shadow 240ms var(--v13-ease), border-color 240ms var(--v13-ease);
+}
+html[data-theme="light"] .bento .card,
+html[data-theme="light"] .card,
+html[data-theme="light"] .glass,
+html[data-theme="light"] .list-card,
+html[data-theme="light"] .cp-card,
+html[data-theme="light"] .think-card{
+  background: var(--v13-glass-l) !important;
+  border-color: var(--v13-brd-l) !important;
+  box-shadow: var(--v13-shadow-l) !important;
+}
+
+/* 顶部高光：液态玻璃的一线反光 */
+html .bento .card::after,
+html .glass::after{
+  content: '';
+  position: absolute; inset: 0 0 auto 0; height: 44%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+html[data-theme="light"] .bento .card::after,
+html[data-theme="light"] .glass::after{
+  background: linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0));
+}
+
+/* 可点卡片：按下轻微内收，不位移布局 */
+html .bento .card.tap:active{
+  transform: scale(.988);
+  box-shadow: 0 12px 30px -18px rgba(0, 0, 0, .7) !important;
+}
+
+/* 顶栏 / 分段条 / 底栏：玻璃 */
+html .topbar{
+  background: rgba(10, 10, 14, .55) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.4) !important;
+  backdrop-filter: blur(22px) saturate(1.4) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .07) !important;
+}
+html[data-theme="light"] .topbar{
+  background: rgba(255, 255, 255, .48) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .7) !important;
+}
+
+html .seg-bar{
+  background: rgba(12, 12, 17, .5) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.4) !important;
+  backdrop-filter: blur(18px) saturate(1.4) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .06) !important;
+}
+html[data-theme="light"] .seg-bar{
+  background: rgba(255, 255, 255, .42) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .6) !important;
+}
+
+/* 底栏：悬浮胶囊（无硬投影，靠玻璃与描边分层） */
+html .dock{
+  border-radius: 26px !important;
+  background: rgba(16, 16, 22, .58) !important;
+  border: 1px solid rgba(255, 255, 255, .10) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(1.6) !important;
+  backdrop-filter: blur(26px) saturate(1.6) !important;
+  box-shadow: 0 18px 44px -22px rgba(0, 0, 0, .7) !important;
+}
+html[data-theme="light"] .dock{
+  background: rgba(255, 255, 255, .52) !important;
+  border-color: rgba(255, 255, 255, .72) !important;
+  box-shadow: 0 18px 40px -24px rgba(26, 38, 58, .30) !important;
+}
+/* 极细线性图标 */
+html .dock .tile .tile-ic svg{ stroke-width: 1.25 !important; }
+html .topbar .tb-btn svg{ stroke-width: 1.25 !important; }
+
+/* 输入 / 搜索 / 胶囊 */
+html .composer,
+html .rec-search-input,
+html .cp-field input,
+html .chip{
+  border-radius: var(--v13-r-ctl) !important;
+  background: rgba(255, 255, 255, .06) !important;
+  border: 1px solid rgba(255, 255, 255, .10) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.4) !important;
+  backdrop-filter: blur(16px) saturate(1.4) !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] .composer,
+html[data-theme="light"] .rec-search-input,
+html[data-theme="light"] .cp-field input,
+html[data-theme="light"] .chip{
+  background: rgba(255, 255, 255, .46) !important;
+  border-color: rgba(255, 255, 255, .68) !important;
+}
+html .chip{ border-radius: var(--v13-r-pill) !important; }
+html .composer{ border-radius: 22px !important; }
+
+/* 图标底座：玻璃小方块 */
+html .row-ic{
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, .07) !important;
+  border: 1px solid rgba(255, 255, 255, .10) !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] .row-ic{
+  background: rgba(255, 255, 255, .58) !important;
+  border-color: rgba(255, 255, 255, .8) !important;
+}
+
+/* 「我来找你」：玻璃胶囊 + 唯一粉点 */
+html .find-me{
+  border-radius: var(--v13-r-pill) !important;
+  background: rgba(18, 18, 24, .55) !important;
+  border: 1px solid rgba(255, 255, 255, .12) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.5) !important;
+  backdrop-filter: blur(18px) saturate(1.5) !important;
+}
+html[data-theme="light"] .find-me{
+  background: rgba(255, 255, 255, .58) !important;
+  border-color: rgba(255, 255, 255, .8) !important;
+}
+
+/* ---------- 3. 便当盒：留白与间距 ---------- */
+html .bento{
+  gap: 18px !important;
+  padding: 4px 0 8px !important;
+}
+html .home-page{ padding-top: 18px !important; }
+html .card{ padding: 20px 22px !important; }
+html .c-days{ padding: 26px 22px 22px !important; }
+
+/* ---------- 4. 天数主视觉：居中放大 + 衬线 ---------- */
+html .c-days .days{
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; height: 100%; text-align: center;
+}
+html .c-days .days-pair{ transform: scale(.92) !important; margin: 0 0 6px !important; }
+html .c-days .days-wave{
+  width: 96px !important; height: 14px !important;
+  color: var(--accent) !important; opacity: .55;
+}
+/* 心跳波纹：虚线流动 */
+html .c-days .days-wave path{
+  stroke-dasharray: 3 6;
+  animation: v13beat 2.6s linear infinite;
+}
+@keyframes v13beat{
+  to{ stroke-dashoffset: -36; }
+}
+html .c-days .days-num{
+  font-size: clamp(72px, 21vw, 104px) !important;
+  line-height: .92 !important;
+  font-weight: 400 !important;
+  letter-spacing: -.03em !important;
+  margin: 6px 0 2px !important;
+}
+html .c-days .days-names{
+  margin: 0 !important;
+  font-size: 13px !important;
+  font-style: italic;
+  letter-spacing: .02em;
+  color: var(--text-2) !important;
+  opacity: .95;
+}
+html .c-days .days-since{
+  margin: 6px 0 0 !important;
+  font-size: 11px !important;
+  letter-spacing: .16em !important;
+  color: var(--text-3) !important;
+  text-transform: none;
+}
+
+/* ---------- 5. 情绪面板 ---------- */
+html .c-mood{ padding: 20px 22px 18px !important; }
+html .c-mood .mo{ display: flex; flex-direction: column; gap: 9px; height: 100%; justify-content: center; }
+html .mo-head{ display: flex; align-items: center; gap: 8px; }
+html .mo-ava{ width: 26px !important; height: 26px !important; font-size: 11px !important; }
+html .mo-name{
+  font-family: var(--font-display) !important;
+  font-size: 14px !important; letter-spacing: .01em;
+  color: var(--text) !important;
+}
+html .mo-dot{
+  width: 5px !important; height: 5px !important; border-radius: 50%;
+  background: var(--accent) !important; opacity: .8;
+}
+html .mo-eyebrow{ margin-left: auto !important; }
+
+html .mo-row{ display: flex; align-items: center; gap: 10px; }
+html .mo-k{
+  flex: 0 0 30px;
+  font-size: 11px !important; letter-spacing: .12em;
+  color: var(--text-3) !important;
+}
+html .mo-bar{
+  position: relative; flex: 1 1 auto; height: 3px;
+  border-radius: 999px; overflow: hidden;
+  background: rgba(255, 255, 255, .10) !important;
+}
+html[data-theme="light"] .mo-bar{ background: rgba(22, 22, 26, .10) !important; }
+html .mo-bar i{
+  display: block; height: 100%; width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), rgba(255, 255, 255, .9)) !important;
+  transition: width 900ms var(--v13-ease);
+}
+html[data-theme="light"] .mo-bar i{
+  background: linear-gradient(90deg, var(--accent), rgba(58, 58, 68, .85)) !important;
+}
+html .mo-v{
+  flex: 0 0 38px; text-align: right;
+  font-size: 13px !important; font-weight: 400;
+  color: var(--text) !important; opacity: .9;
+  font-variant-numeric: tabular-nums;
+}
+html .mo-say{
+  margin: 2px 0 0 !important;
+  font-size: 12px !important;
+  color: var(--text-2) !important;
+  opacity: .88;
+}
+
+/* ---------- 6. 拍立得相册墙 ---------- */
+html .c-album{ padding: 18px 0 16px !important; }
+html .c-album .pl{ display: flex; flex-direction: column; gap: 12px; }
+html .pl-eyebrow{ margin: 0 !important; padding: 0 22px; }
+html .pl-rail{
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 6px 22px 10px;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+html .pl-rail::-webkit-scrollbar{ display: none; }
+html .pl-item{
+  flex: 0 0 auto;
+  margin: 0; padding: 7px 7px 0;
+  width: 124px;
+  border-radius: 4px;
+  background: #fbfaf7 !important;
+  box-shadow: 0 12px 26px -14px rgba(0, 0, 0, .55), 0 2px 6px -3px rgba(0, 0, 0, .3);
+  transform: rotate(var(--tilt, 0deg));
+  scroll-snap-align: center;
+  transition: transform 260ms var(--v13-ease), box-shadow 260ms var(--v13-ease);
+}
+html .pl-item:active{
+  transform: rotate(0deg) scale(1.03);
+  box-shadow: 0 18px 34px -14px rgba(0, 0, 0, .6);
+}
+html .pl-img{
+  display: block; width: 100%; height: 112px;
+  border-radius: 2px;
+  background: #e8e6e0 center/cover no-repeat;
+}
+html .pl-cap{
+  margin: 0; padding: 7px 3px 9px;
+  font-family: var(--font-hand) !important;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #5a564e !important;
+  text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* 空态：一张还没贴照片的相纸 */
+html .pl-empty .pl-img{
+  background:
+    repeating-linear-gradient(135deg, #ecebe6 0 6px, #f4f3ef 6px 12px);
+}
+html .pl-empty .pl-cap{ color: #8a857a !important; }
+
+/* ---------- 7. 黑胶音乐 ---------- */
+html .c-music{ padding: 18px 22px !important; }
+html .c-music .vi{
+  display: flex; align-items: center; gap: 16px; height: 100%;
+}
+html .vi-disc{
+  position: relative; flex: 0 0 auto;
+  width: 78px; height: 78px;
+  padding: 0; border: 0; cursor: pointer;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, #1a1a20 0 26%, #0f0f14 27% 58%, #1c1c23 59% 100%) !important;
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 255, 255, .10);
+  -webkit-tap-highlight-color: transparent;
+}
+html .vi-groove{
+  position: absolute; inset: 5px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, rgba(255, 255, 255, .10) 0 1px, transparent 1px 4px);
+  opacity: .8;
+}
+html .vi-label{
+  position: absolute; inset: 50% auto auto 50%;
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--accent) !important;
+  color: var(--accent-ink, #111) !important;
+}
+html .vi-label svg{
+  width: 15px; height: 15px; fill: none; stroke: currentColor;
+  stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+}
+html .vi-hole{
+  position: absolute; inset: 50% auto auto 50%;
+  width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%; background: rgba(0, 0, 0, .6);
+}
+html .vi-meta{ flex: 1 1 auto; min-width: 0; }
+html .vi-eyebrow{ margin: 0 0 5px !important; }
+html .vi-title{
+  margin: 0 !important;
+  font-family: var(--font-display) !important;
+  font-size: 16px !important;
+  color: var(--text) !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+html .vi-artist{
+  margin: 3px 0 0 !important;
+  font-size: 11.5px !important; color: var(--text-3) !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* 播放中的波形 */
+html .vi-wave{ display: flex; align-items: flex-end; gap: 3px; height: 12px; margin-top: 8px; }
+html .vi-wave i{
+  display: block; width: 2px; height: 3px;
+  border-radius: 2px; background: var(--accent) !important; opacity: .45;
+}
+html .card.playing .vi-disc{ animation: v13spin 6s linear infinite; }
+html .card.playing .vi-wave i{ animation: v13bar .9s ease-in-out infinite alternate; }
+html .card.playing .vi-wave i:nth-child(2){ animation-delay: .12s; }
+html .card.playing .vi-wave i:nth-child(3){ animation-delay: .24s; }
+html .card.playing .vi-wave i:nth-child(4){ animation-delay: .36s; }
+html .card.playing .vi-wave i:nth-child(5){ animation-delay: .48s; }
+@keyframes v13spin{ to{ transform: rotate(360deg); } }
+@keyframes v13bar{ from{ height: 3px; opacity: .4; } to{ height: 12px; opacity: .95; } }
+/* 点击波纹 */
+html .vi-disc::after{
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  border: 1px solid var(--accent);
+  opacity: 0; pointer-events: none;
+}
+html .vi-disc:active::after{ animation: v13ripple .62s ease-out; }
+@keyframes v13ripple{
+  from{ opacity: .55; transform: scale(1); }
+  to{ opacity: 0; transform: scale(1.55); }
+}
+
+/* ---------- 8. 便签 / 小纸条 ---------- */
+html .c-quote{
+  padding: 22px 22px 20px !important;
+  display: block !important;
+}
+html .c-quote .nt{ position: relative; display: block; }
+html .nt-tape{
+  position: absolute; top: -14px; left: 50%;
+  width: 62px; height: 18px; margin-left: -31px;
+  background: rgba(226, 138, 162, .28) !important;
+  border-left: 1px dashed rgba(255, 255, 255, .25);
+  border-right: 1px dashed rgba(255, 255, 255, .25);
+  transform: rotate(-1.6deg);
+  border-radius: 2px;
+  pointer-events: none;
+}
+html .nt-eyebrow{ margin: 0 0 8px !important; }
+html .c-quote .qt{
+  margin: 0 !important;
+  font-family: var(--font-hand) !important;
+  font-size: 21px !important;
+  line-height: 1.55 !important;
+  letter-spacing: .02em !important;
+  color: var(--text) !important;
+  text-align: left !important;
+}
+html .c-quote .qt::before{ content: none !important; }
+
+/* ---------- 9. 聊天：思考面板 / 动作神态 / 记忆气泡 / 想念卡 ---------- */
+html .think-card{
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, .05) !important;
+  border: 1px solid rgba(255, 255, 255, .09) !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] .think-card{
+  background: rgba(255, 255, 255, .46) !important;
+  border-color: rgba(255, 255, 255, .7) !important;
+}
+html .think-ic svg{ display: none !important; }
+html .think-ic::before{ content: '💭'; font-size: 13px; line-height: 1; }
+html .think-head{
+  font-size: 12px !important;
+  letter-spacing: .04em;
+  color: var(--text-2) !important;
+}
+html .think-body{
+  font-size: 12.5px !important;
+  line-height: 1.7 !important;
+  color: var(--text-2) !important;
+  opacity: .9;
+}
+
+/* 动作 / 神态：斜体 + 淡灰 + 左侧竖线 */
+html .msg .bubble em{
+  font-style: italic !important;
+  font-size: 12.5px !important;
+  color: var(--text-3) !important;
+  letter-spacing: .01em !important;
+  margin-bottom: 6px !important;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, .18);
+}
+
+/* 系统气泡：玻璃小胶囊 */
+html .sys-note,
+html .miss-you{
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, .055) !important;
+  border: 1px solid rgba(255, 255, 255, .09) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  backdrop-filter: blur(14px) !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] .sys-note,
+html[data-theme="light"] .miss-you{
+  background: rgba(255, 255, 255, .5) !important;
+  border-color: rgba(255, 255, 255, .72) !important;
+}
+/* 超过 12 小时没互动：委屈小卡 */
+html .miss-you{
+  display: flex; align-items: center; gap: 10px;
+  margin: 14px auto 6px;
+  padding: 10px 16px 10px 12px;
+  width: max-content; max-width: 88%;
+  border-radius: 18px !important;
+}
+html .miss-you .my-face{ font-size: 20px; line-height: 1; }
+html .miss-you .my-body{ display: flex; flex-direction: column; gap: 1px; }
+html .miss-you .my-body b{
+  font-size: 12px; font-weight: 600; color: var(--text) !important;
+  letter-spacing: .04em;
+}
+html .miss-you .my-body span{
+  font-size: 11.5px; color: var(--text-2) !important;
+}
+
+/* ---------- 10. 足迹：日历热度 ---------- */
+html .cg-d{ position: relative; }
+html .cg-d .fp{
+  position: absolute; left: 50%; bottom: 5px;
+  width: 4px; height: 4px; margin-left: -2px;
+  border-radius: 50%;
+  background: var(--accent) !important;
+}
+html .cg-d .fp.l1{ opacity: .38; }
+html .cg-d .fp.l2{ opacity: .68; width: 5px; height: 5px; margin-left: -2.5px; }
+html .cg-d .fp.l3{
+  opacity: 1; width: 6px; height: 6px; margin-left: -3px;
+  box-shadow: 0 0 8px rgba(200, 203, 210, .55);
+}
+html .cg-d.has-fp{ background: rgba(255, 255, 255, .04) !important; }
+html[data-theme="light"] .cg-d.has-fp{ background: rgba(58, 58, 68, .05) !important; }
+
+/* ---------- 11. 氛围粒子画布 ---------- */
+html .bg .ambient{
+  position: absolute; inset: 0;
+  width: 100% !important; height: 100% !important;
+  display: block;
+  pointer-events: none;
+  opacity: .85;
+  z-index: 1;
+}
+html[data-theme="light"] .bg .ambient{ opacity: .9; }
+
+/* ---------- 12. 无障碍与降级 ---------- */
+html :focus-visible{
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px !important;
+  border-radius: 8px;
+}
+html .vi-disc:focus-visible{ outline-offset: 4px !important; border-radius: 50% !important; }
+
+@media (prefers-reduced-motion: reduce){
+  html .c-days .days-wave path,
+  html .card.playing .vi-disc,
+  html .card.playing .vi-wave i,
+  html .vi-disc::after{ animation: none !important; }
+  html .bento .card, html .card, html .pl-item, html .mo-bar i{ transition: none !important; }
+}
+
+@media (prefers-contrast: more){
+  html .bento .card, html .card, html .glass, html .list-card, html .dock, html .topbar{
+    border-color: var(--text-2) !important;
+  }
+  html .mo-bar i{ background: var(--text) !important; }
+}
+
+/* 小屏：便当盒间距收缩，黑胶缩小 */
+@media (max-width: 380px){
+  html .bento{ gap: 14px !important; }
+  html .vi-disc{ width: 64px; height: 64px; }
+  html .c-quote .qt{ font-size: 19px !important; }
+}
+
+/* ---------- V13.1 尺寸校准：行高够不够，决定文字会不会被裁 ----------
+   便当盒一行 88px：g-4x2 = 2 行 ≈ 194。天数主视觉与拍立得都需要更高的舞台，
+   各占 3 行（≈300），才能真正「居中放大 / 摊开一墙相纸」。 */
+html .c-days,
+html .c-album{ grid-row: span 3 !important; }
+
+/* 天数：字号回到 96，头像对略收，since 稳稳落在卡内 */
+html .c-days{ padding: 26px 22px 24px !important; }
+html .c-days .days{ gap: 0 !important; }
+html .c-days .days-pair{ transform: scale(.86) !important; margin: 0 0 10px !important; }
+html .c-days .days-num{
+  font-size: clamp(76px, 20vw, 96px) !important;
+  line-height: 1 !important;
+  margin: 2px 0 4px !important;
+}
+html .c-days .days-num::before{
+  margin-bottom: 6px !important;
+  font-size: 9.5px !important;
+  letter-spacing: .38em !important;
+  text-indent: .38em;
+}
+html .c-days .days-names{ margin: 2px 0 0 !important; }
+html .c-days .days-since{ margin: 8px 0 0 !important; }
+
+/* 拍立得：相纸放大，标题行收一行且不挤压 */
+html .c-album{ padding: 20px 0 20px !important; }
+html .c-album .pl{ gap: 14px !important; height: 100%; justify-content: center; }
+html .pl-item{ width: 148px; padding: 8px 8px 0; }
+html .pl-img{ height: 148px; }
+html .pl-cap{ font-size: 13px; padding: 8px 4px 11px; }
+html .pl-rail{ padding: 4px 22px 6px; }
+
+/* ---------- V13.2 空态与细节校准 ---------- */
+/* 相册没照片：卡片收成 2 行，空相纸也收小，不占着首页最贵的 300px */
+html .c-album.is-empty{ grid-row: span 2 !important; }
+html .c-album.is-empty .pl{ gap: 10px !important; }
+html .c-album.is-empty .pl-item{ width: 96px; padding: 6px 6px 0; }
+html .c-album.is-empty .pl-img{ height: 78px; }
+html .c-album.is-empty .pl-cap{ font-size: 11px; padding: 6px 2px 8px; }
+html .c-album.is-empty .pl-rail{ padding: 2px 22px 2px; }
+
+/* 心跳波纹：银线上再亮一点才看得见 */
+html .c-days .days-wave{ opacity: .8 !important; }
+
+/* 状态卡的呼吸点：挪到右上角当「在线」指示灯，不再像掉在角落的碎片 */
+html .c-status .st-dot{
+  right: 18px !important; bottom: auto !important; top: 18px !important;
+  width: 6px !important; height: 6px !important;
+  background: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(200, 203, 210, .10), 0 0 10px rgba(200, 203, 210, .45) !important;
+}
+html[data-theme="light"] .c-status .st-dot{
+  box-shadow: 0 0 0 3px rgba(58, 58, 68, .08), 0 0 10px rgba(58, 58, 68, .25) !important;
+}
+
+/* ---------- V13.3 聊天输入区：把浅色白渐变换成按主题走 ---------- */
+html #chat .composer-wrap{
+  background: linear-gradient(to top, rgba(10, 10, 14, .94) 56%, rgba(10, 10, 14, 0)) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-theme="light"] #chat .composer-wrap{
+  background: linear-gradient(to top, rgba(252, 252, 253, .88) 56%, rgba(252, 252, 253, 0)) !important;
+}
+/* 快捷胶囊：文字跟主题走，别在深色里糊成一片 */
+html .quick .chip{
+  color: var(--text-2) !important;
+  font-size: 12px !important;
+  letter-spacing: .02em;
+  padding: 7px 14px !important;
+}
+html .quick .chip:active{ color: var(--accent) !important; }
+
+/* ---------- V13.4 足迹：把「点」升级成「热度块」 ---------- */
+html .cg-d .fp{
+  width: 5px; height: 5px; margin-left: -2.5px; bottom: 6px;
+}
+html .cg-d .fp.l1{ opacity: .5; }
+html .cg-d .fp.l2{ opacity: .8; width: 6px; height: 6px; margin-left: -3px; }
+html .cg-d .fp.l3{ width: 7px; height: 7px; margin-left: -3.5px; }
+html .cg-d.has-fp{
+  border-radius: 14px !important;
+  background: rgba(200, 203, 210, .07) !important;
+}
+html .cg-d:has(.fp.l2){
+  background: rgba(200, 203, 210, .13) !important;
+}
+html .cg-d:has(.fp.l3){
+  background: rgba(200, 203, 210, .22) !important;
+  box-shadow: inset 0 0 0 1px rgba(200, 203, 210, .18);
+}
+html[data-theme="light"] .cg-d.has-fp{ background: rgba(58, 58, 68, .05) !important; }
+html[data-theme="light"] .cg-d:has(.fp.l2){ background: rgba(58, 58, 68, .09) !important; }
+html[data-theme="light"] .cg-d:has(.fp.l3){
+  background: rgba(58, 58, 68, .15) !important;
+  box-shadow: inset 0 0 0 1px rgba(58, 58, 68, .12);
+}
+
+/* ---------- V13.5 首页底部：给浮动「我来找你」留出一条通道 ----------
+   底栏 62 + 让位 10 = 72，胶囊本身 38 高、底距 80，所以最后一张卡要退到 124 才不会压在胶囊下面。 */
+html .home-page{ padding-bottom: 124px !important; }

@@ -1047,12 +1047,13 @@
     const y = calPageYM.y, m = calPageYM.m;
     setTxt('calPageTitle', y + ' 年 ' + (m + 1) + ' 月');
 
-    // 说过话的日子（本地日期）
+    // 说过话的日子（本地日期）→ 计数，做成「足迹」热度：聊得越多，色块越深
     const talked = {};
     S.chat.forEach((msg) => {
       const d = new Date(msg.ts || 0);
       if (isNaN(d.getTime())) return;
-      talked[d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate()] = true;
+      const k = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+      talked[k] = (talked[k] || 0) + 1;
     });
 
     const first = new Date(y, m, 1);
@@ -1078,8 +1079,12 @@
       const num = document.createElement('em');
       num.textContent = d;
       cell.appendChild(num);
-      if (talked[y + '-' + m + '-' + d]) {
+      const n = talked[y + '-' + m + '-' + d] || 0;
+      if (n) {
         const dot = document.createElement('i');
+        dot.className = 'fp l' + (n >= 20 ? 3 : n >= 6 ? 2 : 1);
+        cell.classList.add('has-fp');
+        cell.setAttribute('title', d + ' 日 · 聊了 ' + n + ' 句');
         cell.appendChild(dot);
       }
       grid.appendChild(cell);
@@ -1228,30 +1233,35 @@
   const DT_CARDS = {
     today:   { page: 0, size: 'g-4x2', name: '今日', go: 'calendar' },
     days:    { page: 0, size: 'g-4x2', name: '在一起多少天', go: 'now', seg: 'status' },
+    mood:    { page: 0, size: 'g-4x2', name: '他的情绪', go: 'now', seg: 'status' },
     status:  { page: 0, size: 'g-2x2', name: '他的状态', go: 'now', seg: 'status' },
     chat:    { page: 0, size: 'g-2x2', name: '和他聊聊', go: 'chat' },
     between: { page: 0, size: 'g-4x2', name: '之间', go: 'cards' },
+    album:   { page: 0, size: 'g-4x2', name: '拍立得', go: 'records', seg: 'album' },
     music:   { page: 0, size: 'g-4x2', name: '一起听', go: null },
     device:  { page: 0, size: 'g-2x2', name: '他的设备', go: 'now', seg: 'device' },
-    album:   { page: 0, size: 'g-2x2', name: '相册', go: 'records', seg: 'album' },
     week:    { page: 0, size: 'g-4x2', name: '这一周', go: null },
     quote:   { page: 0, size: 'g-4x2', name: '一句话', go: null },
   };
   /* 美化页开关的列举顺序 = 桌面从上到下 */
-  const DT_ORDER = ['days', 'quote', 'status', 'chat', 'between', 'music', 'device', 'album', 'week'];
+  const DT_ORDER = ['days', 'mood', 'status', 'chat', 'between', 'album', 'music', 'quote', 'today', 'device', 'week'];
 
   /* 收起了哪些卡片：存 S.settings.widgets.hidden。
      老配置里是旧组件 id（pair/clock/quad…），这里只认 DT_CARDS 里有的。
      v2：device / album / week 不再上桌面（内容和「现在 / 记」页重复），
      首次进入新单页桌面时默认收起——想留着可在「美化 → 桌面组件」里开回来 */
-  const HOME_EXTRA_HIDDEN = ['device', 'album', 'week'];
+  /* V13 沉浸版首页默认上墙：天数 / 情绪 / 状态 / 聊聊 / 之间 / 拍立得 / 音乐 / 一句话
+     device、week、today 默认收起（可在编辑态里拖出来） */
+  const HOME_EXTRA_HIDDEN = ['device', 'week', 'today'];
   function dtHidden() {
     const w = S.settings.widgets || {};
-    if (!w.__homeV2) {                       // 每个用户只标记一次，之后完全交给用户自己
+    if (!w.__homeV3) {                       // 一次性迁移：情绪卡 + 拍立得上墙
       const set = new Set(Array.isArray(w.hidden) ? w.hidden : []);
       HOME_EXTRA_HIDDEN.forEach((id) => { if (DT_CARDS[id]) set.add(id); });
+      set.delete('album');
+      set.delete('mood');
       w.hidden = Array.from(set);
-      w.__homeV2 = true;
+      w.__homeV3 = true;
       save(KEY.settings, S.settings);
     }
     const hid = Array.isArray(w.hidden) ? w.hidden : [];
@@ -1377,22 +1387,49 @@
         '</div>' +
       '</div>',
 
-    music: () =>
-      '<div class="mu">' +
-        '<div class="mu-cover"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-music"/></svg></div>' +
-        '<div class="mu-meta">' +
-          '<p class="mu-title" id="muTitle">想听什么，放给我</p>' +
-          '<p class="mu-artist" id="muArtist"></p>' +
+    /* 情绪面板（g-4x2）：精力 / 心情 两条极细进度条 + 一句他的状态话 */
+    mood: () =>
+      '<div class="mo">' +
+        '<div class="mo-head">' +
+          '<span class="pair-ava d32 partner mo-ava" id="moAva"></span>' +
+          '<span class="mo-name" id="moName">他</span>' +
+          '<i class="breath mo-dot" aria-hidden="true"></i>' +
+          '<span class="mo-eyebrow">MOOD</span>' +
         '</div>' +
-        '<button class="mu-play" id="muPlay" type="button" aria-label="播放">' +
-          '<svg class="ic-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19.5 12z"/></svg>' +
-          '<svg class="ic-pause" viewBox="0 0 24 24"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>' +
-        '</button>' +
-      '</div>' +
-      '<div class="mu-bar"><i></i></div>',
+        '<div class="mo-row">' +
+          '<span class="mo-k">精力</span>' +
+          '<span class="mo-bar"><i id="moEnergy"></i></span>' +
+          '<b class="mo-v" id="moEnergyN">—</b>' +
+        '</div>' +
+        '<div class="mo-row">' +
+          '<span class="mo-k">心情</span>' +
+          '<span class="mo-bar"><i id="moMood"></i></span>' +
+          '<b class="mo-v" id="moMoodN">—</b>' +
+        '</div>' +
+        '<p class="mo-say" id="moSay"></p>' +
+      '</div>',
 
+    music: () =>
+      '<div class="vi">' +
+        '<button class="vi-disc" id="muPlay" type="button" aria-label="播放">' +
+          '<span class="vi-groove" aria-hidden="true"></span>' +
+          '<span class="vi-label"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-music"/></svg></span>' +
+          '<span class="vi-hole" aria-hidden="true"></span>' +
+        '</button>' +
+        '<div class="vi-meta">' +
+          '<p class="vi-eyebrow">NOW PLAYING</p>' +
+          '<p class="vi-title" id="muTitle">想听什么，放给我</p>' +
+          '<p class="vi-artist" id="muArtist"></p>' +
+          '<div class="vi-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>' +
+        '</div>' +
+      '</div>',
+
+    /* 拍立得相册墙（g-4x2）：白边 + 微倾 + 质感阴影，横向滑动 */
     album: () =>
-      '<div class="al" id="alGrid"></div>',
+      '<div class="pl">' +
+        '<p class="pl-eyebrow">POLAROID</p>' +
+        '<div class="pl-rail" id="alGrid"></div>' +
+      '</div>',
 
     week: () =>
       '<div class="wk">' +
@@ -1408,8 +1445,13 @@
         '<p class="td-hint">点开看这天</p>' +
       '</div>',
 
+    /* 便签卡：半透明纸感 + 手写体，把「一句话」做成贴在桌面上的小纸条 */
     quote: () =>
-      '<p class="qt" id="qtText">—</p>',
+      '<div class="nt">' +
+        '<span class="nt-tape" aria-hidden="true"></span>' +
+        '<p class="nt-eyebrow">TODAY</p>' +
+        '<p class="qt" id="qtText">—</p>' +
+      '</div>',
   };
 
   function updateGrid() {
@@ -1425,7 +1467,11 @@
     // 状态卡：今天挑过的心情词，没挑就看他现在的
     setHTML('stAva', partnerAvaInner(''));
     setTxt('stWord', (S.moodLog || {})[todayStr()] || P.moodWord(S.persona));
-    setTxt('stSub', P.moodSub(S.persona));
+    // 状态卡只留「他在做什么」，那句情绪文案让给下面的情绪面板，避免同屏重复
+    setTxt('stSub', String(P.statusLine(S.persona, Date.now())).split('·')[0].trim());
+
+    // 情绪面板：精力 / 心情（真实 persona 值）+ 一句他的状态
+    renderMoodCard();
 
     // 设备格：浏览器给的真实电量，采不到就 —
     const d = S.life.device || {};
@@ -1447,26 +1493,61 @@
     renderQuote();
   }
 
-  /* 相册卡：2x2 缩略图，没图就一句「放第一张吧」 */
+  /* 情绪面板：精力 / 心情 两条极细进度条（真实 persona 数值）+ 一句他的话 */
+  function renderMoodCard() {
+    const bar = $('moEnergy');
+    if (!bar) return;
+    const p = S.persona || {};
+    const e = Math.max(0, Math.min(100, Math.round(p.energy === undefined ? 60 : p.energy)));
+    const m = Math.max(0, Math.min(100, Math.round(p.mood === undefined ? 58 : p.mood)));
+    setHTML('moAva', partnerAvaInner(''));
+    setTxt('moName', partnerName());
+    setTxt('moEnergyN', e + '%');
+    setTxt('moMoodN', m + '%');
+    setTxt('moSay', P.moodSub(S.persona));
+    const eb = $('moEnergy'), mb = $('moMood');
+    if (eb) eb.style.width = e + '%';
+    if (mb) mb.style.width = m + '%';
+  }
+
+  /* 拍立得相册墙：白边 + 微倾 + 质感阴影，横向滑动；没照片就给一张空白相纸 */
   function renderAlbumCard() {
     const box = $('alGrid');
     if (!box) return;
-    const photos = (S.life.photos || []).filter((p) => p.img).slice(0, 4);
+    const photos = (S.life.photos || []).filter((p) => p.img).slice(0, 8);
     const sig = photos.map((p) => p.id).join(',');
     if (box.dataset.sig === sig) return;   // 60 秒 tick 会反复来，没变就不重画
     box.dataset.sig = sig;
     box.innerHTML = '';
+    // 没照片时把这张卡收成两行高，别让一整块空白占着首页
+    const card = box.closest('.card');
+    if (card) card.classList.toggle('is-empty', !photos.length);
     if (!photos.length) {
-      const p = document.createElement('p');
-      p.className = 'al-empty';
-      p.textContent = '放第一张吧';
-      box.appendChild(p);
+      const ph = document.createElement('figure');
+      ph.className = 'pl-item pl-empty';
+      const frame = document.createElement('i');
+      frame.className = 'pl-img';
+      const cap = document.createElement('figcaption');
+      cap.className = 'pl-cap';
+      cap.textContent = '第一张照片放这儿';
+      ph.appendChild(frame);
+      ph.appendChild(cap);
+      box.appendChild(ph);
       return;
     }
-    photos.forEach((ph) => {
-      const i = document.createElement('i');
-      i.style.backgroundImage = 'url("' + ph.img + '")';
-      box.appendChild(i);
+    photos.forEach((ph, i) => {
+      const fig = document.createElement('figure');
+      fig.className = 'pl-item';
+      fig.style.setProperty('--tilt', ((i % 2 ? 1 : -1) * (1.4 + (i % 3) * 0.7)).toFixed(2) + 'deg');
+      const img = document.createElement('i');
+      img.className = 'pl-img';
+      img.style.backgroundImage = 'url("' + ph.img + '")';
+      const cap = document.createElement('figcaption');
+      cap.className = 'pl-cap';
+      cap.textContent = ph.cap || (ph.ts ? hhmm(ph.ts) : '');
+      fig.appendChild(img);
+      fig.appendChild(cap);
+      box.appendChild(fig);
     });
   }
 
@@ -2735,6 +2816,8 @@
       syncDayMark(m.ts);
       stream.appendChild(buildMessageNode(m).wrap);
     });
+    const miss = missYouNote();
+    if (miss) stream.appendChild(miss);
     scrollDown(true);
   }
 
@@ -4619,6 +4702,130 @@
     });
   }
 
+  /* ---------------- 氛围粒子（Canvas）：暗色雨滴/星尘，亮色阳光光斑 ----------------
+     性能约束：DPR 上限 2、约 30fps、粒子数随屏宽收敛、页面隐藏即停、
+     尊重 prefers-reduced-motion（直接不跑动画）。 */
+  function initAmbient() {
+    const cv = $('ambient');
+    if (!cv || !cv.getContext) return;
+    const ctx = cv.getContext('2d');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let W = 0, H = 0, dpr = 1, mode = '', parts = [], raf = 0, last = 0;
+
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function themeMode() {
+      return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    }
+
+    function build() {
+      mode = themeMode();
+      parts = [];
+      if (mode === 'light') {
+        for (let i = 0; i < 4; i++) {
+          parts.push({
+            x: Math.random() * W, y: Math.random() * H * 0.8,
+            r: 90 + Math.random() * 140,
+            vx: (Math.random() - 0.5) * 0.10, vy: (Math.random() - 0.5) * 0.08,
+            a: 0.14 + Math.random() * 0.14
+          });
+        }
+      } else {
+        const n = Math.round(Math.min(70, Math.max(26, W / 8)));
+        for (let i = 0; i < n; i++) {
+          parts.push({
+            x: Math.random() * W, y: Math.random() * H,
+            len: 10 + Math.random() * 22,
+            v: 1.1 + Math.random() * 1.9,
+            a: 0.09 + Math.random() * 0.2
+          });
+        }
+        for (let i = 0; i < 12; i++) {
+          parts.push({
+            star: true, x: Math.random() * W, y: Math.random() * H * 0.72,
+            r: 0.7 + Math.random() * 1.2, ph: Math.random() * 6.2832,
+            a: 0.16 + Math.random() * 0.3
+          });
+        }
+      }
+    }
+
+    function draw(ts) {
+      raf = requestAnimationFrame(draw);
+      if (document.hidden) return;
+      if (ts - last < 33) return;          // ≈30fps，够用且省电
+      last = ts;
+      ctx.clearRect(0, 0, W, H);
+      if (mode === 'light') {
+        parts.forEach((p) => {
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < -p.r) p.x = W + p.r;
+          if (p.x > W + p.r) p.x = -p.r;
+          if (p.y < -p.r) p.y = H + p.r;
+          if (p.y > H + p.r) p.y = -p.r;
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+          g.addColorStop(0, 'rgba(255,251,240,' + p.a + ')');
+          g.addColorStop(1, 'rgba(255,251,240,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill();
+        });
+        return;
+      }
+      parts.forEach((p) => {
+        if (p.star) {
+          const tw = 0.55 + 0.45 * Math.sin(ts / 900 + p.ph);
+          ctx.fillStyle = 'rgba(200,203,210,' + (p.a * tw).toFixed(3) + ')';
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill();
+          return;
+        }
+        p.y += p.v; p.x -= p.v * 0.18;
+        if (p.y > H + p.len) { p.y = -p.len; p.x = Math.random() * W; }
+        ctx.strokeStyle = 'rgba(200,203,210,' + p.a.toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x + p.len * 0.18, p.y + p.len);
+        ctx.stroke();
+      });
+    }
+
+    function start() {
+      resize();
+      build();
+      cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, W, H);
+      if (reduce) return;                  // 省电 / 无障碍：不做动态
+      raf = requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', () => { resize(); build(); });
+    if (window.MutationObserver) {
+      new MutationObserver(() => { if (themeMode() !== mode) start(); })
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    }
+    start();
+  }
+
+  /* 超过 12 小时没互动：底部推一张「委屈」小卡（只是渲染态，不写进历史/不落库） */
+  function missYouNote() {
+    const last = (S.chat && S.chat.length) ? S.chat[S.chat.length - 1].ts : 0;
+    if (!last) return null;
+    if ((Date.now() - last) / 3600000 < 12) return null;
+    const el = document.createElement('div');
+    el.className = 'miss-you';
+    el.innerHTML =
+      '<span class="my-face" aria-hidden="true">🥺</span>' +
+      '<span class="my-body"><b>知道你忙</b><span>心里空空的，想你。</span></span>';
+    return el;
+  }
+
   async function boot() {
     await seedIfEmpty();   // 第一次进站：没数据就 fetch 同级 seed.json 灌进来
     applyAppearance();     // 明暗 / 字体（head 内联脚本已挂过一次，这里兜底 + 同步设置页）
@@ -4631,6 +4838,7 @@
     applyChatUI();
     setupChatPanel();
     tickClocks();
+    initAmbient();         // 暗色雨滴/星尘、亮色阳光光斑
     updateSendState();
     syncDock();            // 新 dock 点亮 + 顶栏右侧图标（主屏态）
     syncTopbar();
