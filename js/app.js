@@ -153,7 +153,7 @@
     { id: 'calendar', name: '日',   icon: 'i-cal',   page: 'calendar' },
     { id: 'homeKey',  name: '主页', icon: 'i-home',  page: null },
     { id: 'between',  name: '之间', icon: 'i-heart', page: 'cards' },
-    { id: 'more',     name: '更多', icon: 'i-dots',  page: 'settings' },
+    { id: 'more',     name: '更多', icon: 'i-dots',  page: 'more' },
   ];
 
   /* 应用/dock 顺序可拖动换位，存本地；读出来时按注册表校准，缺的补默认 */
@@ -516,6 +516,7 @@
     countdown: $('countdown'),
     cards: $('cards'),
     calendar: $('calendar'),
+    more: $('more'),
   };
 
   let currentPage = null;
@@ -4808,6 +4809,17 @@
     if (tbChat) tbChat.addEventListener('click', () => openPage('chat'));
     const findMe = $('findMe');
     if (findMe) findMe.addEventListener('click', () => openPage('chat'));
+    /* 更多页：行点击 → 跳页 / 关于 / 帮助 */
+    const morePage = $('more');
+    if (morePage) morePage.addEventListener('click', (e) => {
+      const go = e.target.closest('[data-go]');
+      if (go) { openPage(go.dataset.go); return; }
+      const act = e.target.closest('[data-act]');
+      if (act) {
+        if (act.dataset.act === 'about') toast('潮 · TIDE · 一起过日子');
+        else if (act.dataset.act === 'help') toast('有事翻翻这里，翻不到就来问我。');
+      }
+    });
     const calPrev = $('calPrev'), calNext = $('calNext');
     if (calPrev) calPrev.addEventListener('click', () => shiftCalPage(-1));
     if (calNext) calNext.addEventListener('click', () => shiftCalPage(1));
