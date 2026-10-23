@@ -510,41 +510,73 @@
 </section>
 
 <!-- ============ 记忆库 ============ -->
-<section class="screen page mod-page" id="records" aria-label="记">
+<!-- ============ FLOWER · 花：日记 / 信 / 待办 ============ -->
+<section class="screen page mod-page fl-page" id="records" aria-label="花">
   <div class="rec-search">
-    <input type="search" id="recSearch" class="rec-search-input" placeholder="搜索记忆 / 相册 / 朋友圈…" aria-label="搜索" />
+    <input type="search" id="recSearch" class="rec-search-input" placeholder="搜索 日记 / 信 / 待办…" aria-label="搜索" />
   </div>
   <nav class="seg-bar" id="recordsSegBar" aria-label="分段">
-    <button type="button" class="seg-btn on" data-seg="memory">记忆</button>
-    <button type="button" class="seg-btn" data-seg="album">相册</button>
-    <button type="button" class="seg-btn" data-seg="moments">朋友圈</button>
+    <button type="button" class="seg-btn on" data-seg="all">ALL · 全部</button>
+    <button type="button" class="seg-btn" data-seg="diary">DIARY · 日记</button>
+    <button type="button" class="seg-btn" data-seg="letters">LETTERS · 信</button>
+    <button type="button" class="seg-btn" data-seg="tasks">TASKS · 待办</button>
   </nav>
   <div class="page-scroll">
-    <div class="seg-pane on" data-seg="memory">
-      <section class="glass mem-main">
-        <p class="mem-count"><b id="memCount">0</b><span>条记忆</span></p>
-        <p class="mem-sub">跟着他一起，跨对话保留。</p>
-      </section>
 
-      <section class="glass mem-card">
-        <header class="card-head"><h3>全部</h3><button class="text-btn" id="btnAddMemory2">添加</button></header>
-        <ul class="memories" id="allMemories"></ul>
-        <p class="hint" id="allMemoryHint" hidden>他会在聊天里自己记下你说的事，也可以手动加。</p>
-      </section>
-
-      <section class="glass mem-note">
-        <p class="hint">
-          现在存在这台设备的浏览器里。<br>
-          以后接跨窗口 / 跨平台的记忆同步时，这里是入口 ——
-          每条记忆都带来源和时间，才能被别的会话认出来。
-        </p>
-      </section>
+    <!-- 全部：一条时间线，日记/信/待办按日子混排 -->
+    <div class="seg-pane on" data-seg="all">
+      <p class="fl-stat"><b id="flStatDiary">0</b><i>DIARY</i><b id="flStatLetter">0</b><i>LETTERS</i><b id="flStatTask">0</b><i>TASKS</i></p>
+      <ul class="fl-list" id="flAll"></ul>
+      <p class="fl-empty" id="flAllEmpty" hidden>还没写下什么。今天也算一天。</p>
     </div>
 
-    <div class="seg-pane" data-seg="album" hidden>
+    <!-- 日记 -->
+    <div class="seg-pane" data-seg="diary" hidden>
+      <div class="fl-compose">
+        <textarea id="diaryText" rows="3" maxlength="2000" placeholder="今天……"></textarea>
+        <div class="fl-compose-row">
+          <span class="fl-tip">一行也算</span>
+          <button type="button" class="fl-send" id="diarySend">记下</button>
+        </div>
+      </div>
+      <ul class="fl-list" id="flDiary"></ul>
+      <p class="fl-empty" id="flDiaryEmpty" hidden>空着也没关系，想起来再写。</p>
+    </div>
+
+    <!-- 信 -->
+    <div class="seg-pane" data-seg="letters" hidden>
+      <ul class="fl-list" id="flLetters"></ul>
+      <p class="fl-empty" id="flLettersEmpty" hidden>还没有信。去「之间」写一封。</p>
+    </div>
+
+    <!-- 待办 -->
+    <div class="seg-pane" data-seg="tasks" hidden>
+      <div class="fl-compose fl-compose-line">
+        <input type="text" id="taskText" maxlength="120" placeholder="要做什么" aria-label="新的待办" />
+        <button type="button" class="fl-send" id="taskSend">加一条</button>
+      </div>
+      <ul class="fl-list" id="flTasks"></ul>
+      <p class="fl-empty" id="flTasksEmpty" hidden>今天不必把所有事情都做完。</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ MIRROR · 镜：相册 / 足迹 / 记忆 / 底座 ============ -->
+<section class="screen page mod-page mi-page" id="mirror" aria-label="镜">
+  <nav class="seg-bar" id="mirrorSegBar" aria-label="分段">
+    <button type="button" class="seg-btn on" data-seg="gallery">相册</button>
+    <button type="button" class="seg-btn" data-seg="moments">足迹</button>
+    <button type="button" class="seg-btn" data-seg="memory">记忆</button>
+    <button type="button" class="seg-btn" data-seg="system">底座</button>
+  </nav>
+  <div class="page-scroll">
+
+    <!-- 相册：拍立得墙 + 朋友圈碎片 -->
+    <div class="seg-pane on" data-seg="gallery">
       <div class="album-cats" id="albumCats" aria-label="按样式筛选"></div>
       <p class="hint" id="albumHint">第一张图放这儿</p>
-      <section class="glass album-cal" id="albumCal" hidden>
+      <section class="album-cal" id="albumCal" hidden>
         <div class="acal-nav">
           <button type="button" id="acalPrev">‹</button>
           <span id="acalTitle">—</span>
@@ -555,12 +587,11 @@
       </section>
       <div class="album-grid" id="albumGrid"></div>
       <input type="file" id="photoFile" accept="image/*" hidden>
-    </div>
 
-    <div class="seg-pane" data-seg="moments" hidden>
+      <p class="mi-sub">MOMENTS · 碎片</p>
       <p class="hint" id="momentsHint">没发过，发一条试试</p>
       <div id="momentList"></div>
-      <section class="glass moment-composer">
+      <section class="moment-composer">
         <textarea id="momentText" rows="2" maxlength="500" placeholder="这一刻的想法…"></textarea>
         <img id="momentPreview" alt="" hidden>
         <div class="moment-row">
@@ -570,10 +601,53 @@
         <input type="file" id="momentFile" accept="image/*" hidden>
       </section>
     </div>
+
+    <!-- 足迹：最近 30 天 -->
+    <div class="seg-pane" data-seg="moments" hidden>
+      <div class="ft-head">
+        <p class="ft-label">MOMENTS · 足迹</p>
+        <p class="ft-nums"><span><b id="ftTotal">0</b><i>天说过话</i></span><span><b id="ftMsgs">0</b><i>句</i></span></p>
+      </div>
+      <div class="ft-strip" id="ftStrip" aria-label="最近 30 天"></div>
+      <ul class="fl-list" id="ftDays"></ul>
+      <button class="ft-more" type="button" id="ftMore">打开完整日历</button>
+    </div>
+
+    <!-- 记忆 -->
+    <div class="seg-pane" data-seg="memory" hidden>
+      <section class="mem-main">
+        <div class="mem-ring" aria-hidden="true">
+          <svg viewBox="0 0 64 64">
+            <circle class="mr-track" cx="32" cy="32" r="26"></circle>
+            <circle class="mr-fill" id="memRing" cx="32" cy="32" r="26"></circle>
+          </svg>
+        </div>
+        <div class="mem-txt">
+          <p class="mem-count"><b id="memCount">0</b><span>条记忆</span></p>
+          <p class="mem-sub">跟着他一起，跨对话保留。</p>
+        </div>
+      </section>
+      <section class="mem-card">
+        <header class="card-head"><h3>全部</h3><button class="text-btn" id="btnAddMemory2">添加</button></header>
+        <ul class="memories" id="allMemories"></ul>
+        <p class="hint" id="allMemoryHint" hidden>他会在聊天里自己记下你说的事，也可以手动加。</p>
+      </section>
+      <p class="fl-empty">存在这台设备的浏览器里。以后接记忆同步，这里就是入口。</p>
+    </div>
+
+    <!-- 底座：设置入口 -->
+    <div class="seg-pane" data-seg="system" hidden>
+      <p class="fl-empty">MIRROR · 底座</p>
+      <div class="list-card">
+        <button class="row nav" type="button" data-go="settings"><svg class="row-ic"><use href="#i-gear"/></svg><span class="row-name">设置<small>称呼 · 起始日 · 接入 · 主动 · 数据</small></span></button>
+        <button class="row nav" type="button" data-go="theme"><svg class="row-ic"><use href="#i-palette"/></svg><span class="row-name">壁纸与桌面<small>背景 · 明暗 · 组件开关</small></span></button>
+        <button class="row nav" type="button" data-go="calendar"><svg class="row-ic"><use href="#i-cal"/></svg><span class="row-name">日历<small>课程 · 倒数 · 纪念日</small></span></button>
+        <button class="row nav" type="button" data-go="cards"><svg class="row-ic"><use href="#i-heart"/></svg><span class="row-name">之间<small>卡券 · 留言 · 心愿</small></span></button>
+      </div>
+    </div>
+
   </div>
 </section>
-
-<!-- ============ 课程表 ============ -->
 <section class="screen page" id="courses" aria-label="课程">
   <div class="page-scroll">
     <p class="hint">填好之后他会知道你今天有没有课、什么时候下课。</p>

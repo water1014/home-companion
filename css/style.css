@@ -7451,3 +7451,498 @@ html .quick .chip{
 /* 聊天正文两侧 24px */
 html .chat-page .stream{ padding: 16px 24px 8px !important; }
 html #chat .composer-wrap{ padding-left: 24px !important; padding-right: 24px !important; }
+
+/* ============================================================
+   V20 · 花 FLOWER（日记/信/待办） + 镜 MIRROR（相册/足迹/记忆/底座）
+   ============================================================ */
+
+/* ---------- 1. 两个容器页的共同骨架 ---------- */
+html .fl-page .page-scroll,
+html .mi-page .page-scroll{
+  padding: 8px 24px 120px !important;
+  gap: 0 !important;
+}
+/* 分段条：四个标签时收紧一点，别换行 */
+html .fl-page .seg-bar,
+html .mi-page .seg-bar{
+  gap: 22px !important;
+  padding: 12px 24px 0 !important;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+html .fl-page .seg-bar::-webkit-scrollbar,
+html .mi-page .seg-bar::-webkit-scrollbar{ display: none; }
+html .fl-page .seg-btn,
+html .mi-page .seg-btn{
+  flex: 0 0 auto;
+  font-size: 11.5px !important;
+  letter-spacing: .08em !important;
+  padding-bottom: 10px !important;
+}
+
+/* ---------- 2. 列表：一行一条发丝线 ---------- */
+html .fl-stat{
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 0 !important;
+  padding: 18px 0 16px;
+  border-bottom: 1px solid var(--k-line);
+  color: var(--k-ink3);
+}
+html .fl-stat b{
+  font-family: var(--k-display) !important;
+  font-size: 20px !important;
+  font-weight: 300 !important;
+  letter-spacing: -.02em !important;
+  color: var(--text) !important;
+  font-variant-numeric: tabular-nums;
+}
+html .fl-stat i{
+  font-style: normal;
+  font-size: 9px;
+  letter-spacing: .16em;
+  margin-right: 14px;
+  opacity: .8;
+}
+html .fl-stat i:last-child{ margin-right: 0; }
+
+html .fl-list{ list-style: none; margin: 0; padding: 0; }
+html .fl-item{
+  position: relative;
+  padding: 15px 0 16px;
+  border-bottom: 1px solid var(--k-line);
+  transition: opacity 200ms ease;
+}
+html .fl-item.tap{ cursor: pointer; -webkit-tap-highlight-color: transparent; }
+html .fl-item.tap:active{ opacity: .6; }
+html .fl-when{
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 6px !important;
+  font-size: 10px !important;
+  letter-spacing: .16em !important;
+  text-transform: uppercase;
+  color: var(--k-ink3) !important;
+  font-variant-numeric: tabular-nums;
+}
+html .fl-when em{
+  font-style: normal;
+  font-size: 9px !important;
+  letter-spacing: .18em !important;
+  opacity: .75;
+}
+html .fl-when em::before{ content: '·'; margin-right: 8px; opacity: .7; }
+html .fl-text{
+  margin: 0 !important;
+  font-size: 14px !important;
+  font-weight: 300 !important;
+  line-height: 1.8 !important;
+  letter-spacing: .02em;
+  color: var(--text) !important;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding-right: 22px;
+}
+html .fl-item.is-done .fl-text{
+  color: var(--k-ink3) !important;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--k-line);
+}
+html .fl-del{
+  position: absolute; right: 0; top: 12px;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border: 0; background: none; padding: 0;
+  font-size: 15px; line-height: 1;
+  color: var(--k-ink3);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 200ms ease;
+}
+html .fl-item:hover .fl-del,
+html .fl-item:focus-within .fl-del{ opacity: .7; }
+@media (hover: none){ html .fl-del{ opacity: .45; } }
+
+/* 待办的勾 */
+html .fl-item.task{ padding-left: 26px; }
+html .fl-check{
+  position: absolute; left: 0; top: 18px;
+  width: 15px; height: 15px;
+  padding: 0; cursor: pointer;
+  border: 1px solid var(--k-line);
+  border-radius: 50%;
+  background: none;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+html .fl-check.on{
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 3px var(--bg, #0e0e12);
+}
+
+html .fl-empty{
+  margin: 22px 0 !important;
+  font-size: 12px !important;
+  font-weight: 300;
+  line-height: 1.8 !important;
+  letter-spacing: .04em;
+  color: var(--k-ink3) !important;
+}
+
+/* ---------- 3. 写点什么 ---------- */
+html .fl-compose{
+  padding: 18px 0 20px;
+  border-bottom: 1px solid var(--k-line);
+}
+html .fl-compose textarea,
+html .fl-compose input[type="text"]{
+  width: 100%;
+  border: 0; border-radius: 0;
+  background: transparent !important;
+  padding: 0;
+  font-family: var(--k-serif);
+  font-size: 14.5px;
+  font-weight: 300;
+  line-height: 1.9;
+  letter-spacing: .03em;
+  color: var(--text);
+  resize: none;
+  outline: none;
+}
+html .fl-compose textarea::placeholder,
+html .fl-compose input::placeholder{ color: var(--k-ink3); }
+html .fl-compose-row{
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 10px;
+}
+html .fl-tip{
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--k-ink3);
+  opacity: .7;
+}
+html .fl-send{
+  border: 0; background: none; padding: 4px 0;
+  font-family: var(--k-sans);
+  font-size: 12px;
+  letter-spacing: .1em;
+  color: var(--k-ink2);
+  cursor: pointer;
+  position: relative;
+  transition: color 200ms ease;
+}
+html .fl-send::after{
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 1px; background: currentColor;
+  transform: scaleX(0); transform-origin: left center;
+  transition: transform 300ms cubic-bezier(.22,.61,.36,1);
+}
+html .fl-send:hover, html .fl-send:active{ color: var(--text); }
+html .fl-send:hover::after, html .fl-send:active::after{ transform: scaleX(1); }
+html .fl-compose-line{
+  display: flex; align-items: center; gap: 14px;
+}
+html .fl-compose-line input[type="text"]{ flex: 1 1 auto; }
+html .fl-compose-line .fl-send{ flex: 0 0 auto; }
+
+/* ---------- 4. 镜：足迹 ---------- */
+html .ft-head{ padding: 20px 0 14px; border-bottom: 1px solid var(--k-line); }
+html .ft-label{
+  margin: 0 0 10px !important;
+  font-size: 10px !important;
+  letter-spacing: .2em !important;
+  text-transform: uppercase;
+  color: var(--k-ink3) !important;
+}
+html .ft-nums{ display: flex; align-items: baseline; gap: 8px; margin: 0 !important; color: var(--k-ink3); }
+html .ft-nums b{
+  font-family: var(--k-display) !important;
+  font-size: 26px !important;
+  font-weight: 300 !important;
+  letter-spacing: -.02em !important;
+  color: var(--text) !important;
+  font-variant-numeric: tabular-nums;
+}
+html .ft-nums i{
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: .14em;
+  margin-right: 16px;
+  opacity: .8;
+}
+html .ft-nums i:last-child{ margin-right: 0; }
+
+html .ft-strip{
+  display: flex; align-items: flex-end; gap: 4px;
+  height: 34px;
+  padding: 16px 0 10px;
+  border-bottom: 1px solid var(--k-line);
+}
+html .ft-bar{
+  flex: 1 1 0;
+  display: block;
+  min-height: 3px;
+  border-radius: 1px;
+  background: var(--k-line);
+  transition: background 240ms ease;
+}
+html .ft-bar.l1{ background: rgba(200, 203, 210, .35); }
+html .ft-bar.l2{ background: rgba(200, 203, 210, .6); }
+html .ft-bar.l3{ background: var(--accent); }
+html[data-theme="light"] .ft-bar{ background: rgba(22, 22, 26, .14); }
+html[data-theme="light"] .ft-bar.l1{ background: rgba(22, 22, 26, .3); }
+html[data-theme="light"] .ft-bar.l2{ background: rgba(22, 22, 26, .5); }
+html[data-theme="light"] .ft-bar.l3{ background: var(--accent); }
+
+html .ft-more{
+  display: block; width: 100%;
+  margin: 22px 0 0;
+  padding: 12px 0;
+  border: 0; border-bottom: 1px solid var(--k-line);
+  background: none;
+  font-family: var(--k-sans);
+  font-size: 11.5px;
+  letter-spacing: .12em;
+  color: var(--k-ink2);
+  text-align: left;
+  cursor: pointer;
+}
+html .ft-more:active{ color: var(--text); }
+
+/* ---------- 5. 镜：相册里的朋友圈分段标题 ---------- */
+html .mi-sub{
+  margin: 30px 0 6px !important;
+  padding-top: 18px;
+  border-top: 1px solid var(--k-line);
+  font-size: 10px !important;
+  letter-spacing: .2em !important;
+  text-transform: uppercase;
+  color: var(--k-ink3) !important;
+}
+
+/* ---------- 6. 镜：底座分组行 ---------- */
+html .mi-page .list-card{
+  padding: 0 !important;
+  margin: 12px 0 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+html .mi-page .row{
+  min-height: 52px !important;
+  padding: 6px 0 !important;
+  border-bottom: 1px solid var(--k-line) !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+html .mi-page .row:last-child{ border-bottom: 1px solid var(--k-line) !important; }
+html .mi-page .row-ic{
+  width: 18px !important; height: 18px !important;
+  min-width: 18px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  stroke: var(--text-3) !important;
+  color: var(--text-3) !important;
+}
+html .mi-page .row-name{ font-size: 14px !important; font-weight: 300 !important; letter-spacing: .02em; }
+html .mi-page .row-name small{ display: block; margin-top: 2px; font-size: 11px !important; color: var(--k-ink3) !important; }
+
+/* ---------- 7. 相册/记忆搬过来后的容器微调 ---------- */
+html .mi-page .mem-main{ padding: 18px 0 14px; border-bottom: 1px solid var(--k-line); }
+html .mi-page .mem-card{ padding: 6px 0 0; }
+html .mi-page .mem-card .card-head{ padding: 12px 0 4px; }
+html .mi-page .album-cats{ padding-top: 14px; }
+
+/* ---------- V20.1 镜/相加相册与碎片收口：药丸、绿按钮、白块全部去掉 ---------- */
+/* 相册分类：改成细线文字标签 */
+html .cat-pill,
+html .album-cats .cat-pill{
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid transparent !important;
+  border-radius: 0 !important;
+  padding: 2px 0 5px !important;
+  font-size: 11px !important;
+  letter-spacing: .12em !important;
+  color: var(--k-ink3) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html .cat-pill.on{
+  background: transparent !important;
+  color: var(--text) !important;
+  border-bottom-color: currentColor !important;
+  box-shadow: none !important;
+}
+html .album-cats{ gap: 18px !important; padding: 4px 0 10px !important; border-bottom: 1px solid var(--k-line); }
+
+/* 相纸：细边框，不要白底 */
+html .album-cell{
+  background: transparent !important;
+  border: 1px solid var(--k-line) !important;
+  border-radius: 2px !important;
+  padding: 7px !important;
+  box-shadow: none !important;
+}
+html .album-cell img{ border-radius: 0 !important; }
+html .album-grid{ gap: 14px 12px !important; padding-bottom: 8px !important; }
+html .mi-page #albumHint{ margin: 12px 0 6px !important; font-size: 11.5px !important; color: var(--k-ink3) !important; }
+
+/* 朋友圈：卡片 → 细线，发送键 → 文字按钮 */
+html .moment-card,
+html .moment-card.glass{
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--k-line) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 14px 0 !important;
+  margin: 0 !important;
+}
+html .moment-composer{
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid var(--k-line) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 16px 0 8px !important;
+  margin-top: 8px !important;
+}
+html .moment-composer textarea{
+  font-family: var(--k-serif) !important;
+  font-size: 14px !important;
+  font-weight: 300 !important;
+  line-height: 1.85 !important;
+  color: var(--text) !important;
+}
+html .moment-composer textarea::placeholder{ color: var(--k-ink3) !important; }
+html .moment-composer img{ border-radius: 2px !important; border: 1px solid var(--k-line) !important; }
+html .moment-btn{
+  color: var(--k-ink3) !important;
+  font-size: 11.5px !important;
+  letter-spacing: .08em;
+}
+html .moment-send{
+  background: transparent !important;
+  color: var(--k-ink2) !important;
+  border: 0 !important;
+  border-bottom: 1px solid currentColor !important;
+  border-radius: 0 !important;
+  padding: 3px 0 !important;
+  font-size: 11.5px !important;
+  letter-spacing: .1em;
+}
+html .moment-send:active{ color: var(--text) !important; }
+
+/* 足迹数字：数字与标签成组，不挤在一起 */
+html .ft-nums{ gap: 0 !important; }
+html .ft-nums span{
+  display: inline-flex; align-items: baseline; gap: 6px;
+  margin-right: 24px;
+}
+html .ft-nums span:last-child{ margin-right: 0; }
+html .ft-nums i{ margin-right: 0 !important; }
+html .ft-strip{ gap: 3px !important; padding: 18px 0 12px !important; }
+html .ft-bar{ border-radius: 1px; }
+html .ft-bar:not(.l1):not(.l2):not(.l3){ opacity: .55; }
+
+/* ---------- V20.2 足迹数字改竖排（数字在上、标签在下），更像编辑体 ---------- */
+html .ft-nums{ align-items: flex-end !important; }
+html .ft-nums span{
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-right: 30px;
+}
+html .ft-nums span i{
+  font-size: 9.5px !important;
+  letter-spacing: .18em !important;
+  opacity: .75;
+  order: 2;
+}
+html .ft-nums span b{ order: 1; line-height: 1; }
+/* 相册空态与碎片之间不要再空出一大块 */
+html .mi-page #albumHint{ margin-bottom: 2px !important; }
+html .mi-page #momentList:empty{ display: none; }
+html .mi-page #momentsHint{ margin: 8px 0 4px !important; font-size: 11.5px !important; color: var(--k-ink3) !important; }
+
+/* ---------- V20.3 记忆环形圈：加载时从 0 顺时针长出来 ---------- */
+html .mi-page .mem-main{
+  display: flex; align-items: center; gap: 18px;
+  padding: 22px 0 18px;
+  border-bottom: 1px solid var(--k-line);
+}
+html .mem-ring{
+  flex: 0 0 auto;
+  width: 62px; height: 62px;
+  position: relative;
+}
+html .mem-ring svg{
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+html .mem-ring circle{
+  fill: none;
+  stroke-width: 1;
+}
+html .mr-track{ stroke: var(--k-line); }
+html .mr-fill{
+  stroke: var(--accent);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 900ms cubic-bezier(.22, .61, .36, 1);
+}
+html .mem-txt{ min-width: 0; }
+html .mi-page .mem-count{
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 0 !important;
+  color: var(--k-ink3);
+}
+html .mi-page .mem-count b{
+  font-family: var(--k-display) !important;
+  font-size: 30px !important;
+  font-weight: 300 !important;
+  letter-spacing: -.02em !important;
+  color: var(--text) !important;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+html .mi-page .mem-count span{ font-size: 10.5px !important; letter-spacing: .16em; }
+html .mi-page .mem-sub{
+  margin: 6px 0 0 !important;
+  font-size: 11.5px !important;
+  font-weight: 300;
+  line-height: 1.7 !important;
+  letter-spacing: .03em;
+  color: var(--k-ink3) !important;
+}
+@media (prefers-reduced-motion: reduce){
+  html .mr-fill{ transition: none !important; }
+}
+
+/* ---------- V20.4 搜索框：两套主题下都只留一条底线，并与内容 24px 对齐 ---------- */
+html .fl-page .rec-search{ padding: 12px 24px 2px !important; }
+html .rec-search-input,
+html[data-theme="light"] .rec-search-input,
+html[data-theme="dark"] .rec-search-input{
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--k-line) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 8px 0 9px !important;
+  font-size: 12.5px !important;
+  letter-spacing: .06em;
+  color: var(--text) !important;
+}
+html .rec-search-input:focus,
+html .rec-search-input:focus-visible{
+  border-bottom-color: var(--accent) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+html[data-theme="light"] .rec-search-input::placeholder{ color: var(--k-ink3) !important; }

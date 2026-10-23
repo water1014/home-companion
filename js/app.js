@@ -94,9 +94,9 @@
     { id: 'music',    name: '音乐', icon: 'i-music',   cat: 'now', desc: '想做成「一起听」：同一个进度条，两边同时听到同一秒。\n真同步需要服务端，纯前端只能做到手动对齐。' },
 
     /* 【过去】已经存下来的东西 */
-    { id: 'memory',   name: '记忆', icon: 'i-brain',   cat: 'past', page: 'records', seg: 'memory' },
-    { id: 'album',    name: '相册', icon: 'i-album',   cat: 'past', page: 'records', seg: 'album' },
-    { id: 'moments',  name: '朋友圈', icon: 'i-moments', cat: 'past', page: 'records', seg: 'moments' },
+    { id: 'memory',   name: '记忆', icon: 'i-brain',   cat: 'past', page: 'mirror', seg: 'memory' },
+    { id: 'album',    name: '相册', icon: 'i-album',   cat: 'past', page: 'mirror', seg: 'gallery' },
+    { id: 'moments',  name: '朋友圈', icon: 'i-moments', cat: 'past', page: 'mirror', seg: 'gallery' },
     { id: 'notes',    name: '记录', icon: 'i-note',    cat: 'past', desc: '聊天记录导出、日记流水，按时间堆在这里。' },
     { id: 'travel',   name: '旅行', icon: 'i-plane',   cat: 'past', desc: '想去哪、什么时候去、要带什么。攒够了就出发。' },
     { id: 'starsea',  name: '星海', icon: 'i-starsea', cat: 'past', desc: '一片只属于你们的夜空。看过的、想去的、说过的，都挂成星星。' },
@@ -152,8 +152,8 @@
   const DOCK_TABS = [
     { id: 'moon',   name: '月', en: 'MOON',   icon: 'i-home',  page: null },
     { id: 'water',  name: '水', en: 'WATER',  icon: 'i-chat',  page: 'chat' },
-    { id: 'flower', name: '花', en: 'FLOWER', icon: 'i-book',  page: 'records', seg: 'memory' },
-    { id: 'mirror', name: '镜', en: 'MIRROR', icon: 'i-gear',  page: 'settings' },
+    { id: 'flower', name: '花', en: 'FLOWER', icon: 'i-book',  page: 'records', seg: 'all' },
+    { id: 'mirror', name: '镜', en: 'MIRROR', icon: 'i-gear',  page: 'mirror',  seg: 'gallery' },
   ];
 
   /* 应用/dock 顺序可拖动换位，存本地；读出来时按注册表校准，缺的补默认 */
@@ -517,21 +517,23 @@
     cards: $('cards'),
     calendar: $('calendar'),
     more: $('more'),
+    mirror: $('mirror'),   // 容器页：相册 / 足迹 / 记忆 / 底座
   };
 
   /* 顶栏标题：页面 id → 中文标题（抽屉删掉后，标题由顶栏承担） */
   const PAGE_TITLES = {
     chat: '聊天',
     now: '现在',
-    records: '记',
-    settings: '我',
+    records: '花',
+    settings: '设置',
     todo: '待办',
-    theme: '外观',
+    theme: '壁纸与桌面',
     courses: '课程',
     countdown: '倒数',
     cards: '之间',
-    calendar: '日',
+    calendar: '日历',
     more: '更多',
+    mirror: '镜',
   };
 
   let currentPage = null;
@@ -651,7 +653,7 @@
   if (recSearchEl) {
     recSearchEl.addEventListener('input', () => {
       recSearchTerm = recSearchEl.value.trim().toLowerCase();
-      const seg = lastSeg('records') || 'memory';
+      const seg = lastSeg('records') || 'all';
       const fn = SEG_RENDER.records && SEG_RENDER.records[seg];
       if (fn) fn();
     });
@@ -663,10 +665,19 @@
       day: () => renderPartnerDay(),
       device: () => renderDevice(),
     },
+    /* 花 FLOWER：日记 / 信 / 待办（+ 全部时间线） */
     records: {
+      all: () => renderFlowerAll(),
+      diary: () => renderDiary(),
+      letters: () => renderLetters(),
+      tasks: () => renderTasks(),
+    },
+    /* 镜 MIRROR：相册 / 足迹 / 记忆 / 底座 */
+    mirror: {
+      gallery: () => { renderAlbum(); renderAlbumCal(); renderMoments(); },
+      moments: () => renderFootprint(),
       memory: () => renderMemoryPage(),
-      album: () => { renderAlbum(); renderAlbumCal(); },
-      moments: () => renderMoments(),
+      system: () => {},
     },
   };
 
@@ -675,6 +686,11 @@
     if (!box || !box.classList.contains('mod-page')) return;
     const bar = box.querySelector('.seg-bar');
     const panes = box.querySelectorAll('.seg-pane');
+    /* 旧入口可能还带着已经搬走的分段 key（记忆→镜、相册→镜…）：
+       找不到就落回第一段，别把整页清空 */
+    if (seg && panes.length && !box.querySelector('.seg-pane[data-seg="' + seg + '"]')) {
+      seg = panes[0].dataset.seg;
+    }
     let hit = null;
     panes.forEach((p) => {
       const on = p.dataset.seg === seg;
@@ -4552,6 +4568,255 @@
 
   /* ---------------- 记忆 ---------------- */
 
+  /* ============================================================
+     花 FLOWER：日记 / 信 / 待办
+     · 日记 S.life.diary  [{id,text,ts}]   ← 新开（之前没有独立日记）
+     · 信   S.life.mails  [{id,from,text,at}] ← 既有数据，只读预览
+     · 待办 S.life.todos  [{id,text,done,due}] ← 既有数据，可勾可加
+     ============================================================ */
+  function lifeList(key) {
+    if (!Array.isArray(S.life[key])) S.life[key] = [];
+    return S.life[key];
+  }
+  const FL_MO = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  function flDay(ts) {
+    const d = new Date(ts || 0);
+    if (isNaN(d.getTime())) return '—';
+    return FL_MO[d.getMonth()] + ' ' + d.getDate();
+  }
+  function flClock(ts) {
+    const d = new Date(ts || 0);
+    if (isNaN(d.getTime())) return '';
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  /* 一条记录：细线一行（日期 · 时间 / 正文 / 类型） */
+  function flRow(o) {
+    const li = document.createElement('li');
+    li.className = 'fl-item' + (o.done ? ' is-done' : '');
+    const when = document.createElement('p');
+    when.className = 'fl-when';
+    when.textContent = o.when || '';
+    if (o.tag) {
+      const t = document.createElement('em');
+      t.textContent = o.tag;
+      when.appendChild(t);
+    }
+    li.appendChild(when);
+    const tx = document.createElement('p');
+    tx.className = 'fl-text';
+    tx.textContent = o.text || '';
+    li.appendChild(tx);
+    if (o.onDelete) {
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'fl-del';
+      del.setAttribute('aria-label', '删掉这条');
+      del.textContent = '×';
+      del.addEventListener('click', (e) => { e.stopPropagation(); o.onDelete(); });
+      li.appendChild(del);
+    }
+    if (o.onClick) {
+      li.classList.add('tap');
+      li.tabIndex = 0;
+      li.addEventListener('click', o.onClick);
+      li.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); o.onClick(); }
+      });
+    }
+    return li;
+  }
+  function fillFl(id, rows) {
+    const ul = $(id);
+    if (!ul) return;
+    ul.innerHTML = '';
+    rows.forEach((r) => ul.appendChild(r));
+  }
+
+  /* 日记 */
+  function renderDiary() {
+    const all = lifeList('diary');
+    const q = recSearchTerm;
+    const src = q ? all.filter((d) => (d.text || '').toLowerCase().includes(q)) : all;
+    const rows = src.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0)).map((d) => flRow({
+      when: flDay(d.ts) + ' · ' + flClock(d.ts),
+      text: d.text,
+      onDelete: () => {
+        const i = S.life.diary.indexOf(d);
+        if (i >= 0) S.life.diary.splice(i, 1);
+        save(KEY.life, S.life);
+        renderDiary();
+        renderFlowerAll();
+      },
+    }));
+    fillFl('flDiary', rows);
+    const em = $('flDiaryEmpty');
+    if (em) em.hidden = rows.length > 0;
+  }
+
+  /* 信：只读预览，点开去「之间」读全文 */
+  function renderLetters() {
+    const all = (S.life.mails || []).slice();
+    const q = recSearchTerm;
+    const src = q ? all.filter((m) => (m.text || '').toLowerCase().includes(q)) : all;
+    const rows = src.slice().reverse().map((m) => flRow({
+      when: m.at ? flDay(Date.parse(m.at)) : '—',
+      tag: m.from || '',
+      text: (m.text || '').replace(/\s+/g, ' ').slice(0, 72),
+      onClick: () => openPage('cards'),
+    }));
+    fillFl('flLetters', rows);
+    const em = $('flLettersEmpty');
+    if (em) em.hidden = rows.length > 0;
+  }
+
+  /* 待办：可勾、可加 */
+  function renderTasks() {
+    const all = lifeList('todos');
+    const q = recSearchTerm;
+    const src = q ? all.filter((t) => (t.text || '').toLowerCase().includes(q)) : all;
+    const rows = src.slice().sort((a, b) => Number(!!a.done) - Number(!!b.done)).map((t) => {
+      const li = flRow({
+        when: t.due ? t.due.replace(/-/g, '.') : '随时',
+        text: t.text,
+        done: !!t.done,
+      });
+      li.classList.add('task');
+      li.insertBefore((() => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'fl-check' + (t.done ? ' on' : '');
+        b.setAttribute('aria-label', t.done ? '标记为未完成' : '标记为完成');
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          t.done = !t.done;
+          save(KEY.life, S.life);
+          renderTasks();
+          renderFlowerAll();
+        });
+        return b;
+      })(), li.firstChild);
+      return li;
+    });
+    fillFl('flTasks', rows);
+    const em = $('flTasksEmpty');
+    if (em) em.hidden = rows.length > 0;
+  }
+
+  /* 全部：日记 / 信 / 待办 混成一条时间线 */
+  function renderFlowerAll() {
+    const q = recSearchTerm;
+    const diary = lifeList('diary');
+    const mails = S.life.mails || [];
+    const todos = lifeList('todos');
+
+    setTxt('flStatDiary', String(diary.length));
+    setTxt('flStatLetter', String(mails.length));
+    setTxt('flStatTask', String(todos.filter((t) => !t.done).length));
+
+    const items = [];
+    diary.forEach((d) => items.push({
+      ts: d.ts || 0, tag: 'DIARY', text: d.text, go: () => openPage('records', 'diary'),
+    }));
+    mails.forEach((m) => items.push({
+      ts: Date.parse(m.at) || 0, tag: 'LETTER', text: (m.text || '').replace(/\s+/g, ' ').slice(0, 72),
+      go: () => openPage('cards'),
+    }));
+    todos.forEach((t) => items.push({
+      ts: t.due ? Date.parse(t.due) || 0 : 0, tag: 'TASK',
+      text: (t.done ? '✓ ' : '') + t.text, go: () => openPage('records', 'tasks'),
+    }));
+
+    const src = q ? items.filter((i) => (i.text || '').toLowerCase().includes(q)) : items;
+    const rows = src.sort((a, b) => b.ts - a.ts).slice(0, 40).map((i) => flRow({
+      when: i.ts ? flDay(i.ts) : '—',
+      tag: i.tag,
+      text: i.text,
+      onClick: i.go,
+    }));
+    fillFl('flAll', rows);
+    const em = $('flAllEmpty');
+    if (em) em.hidden = rows.length > 0;
+  }
+
+  /* 足迹：最近 30 天，按当天聊天条数分三档 */
+  function renderFootprint() {
+    const strip = $('ftStrip');
+    if (!strip) return;
+    const cnt = {};
+    (S.chat || []).forEach((m) => {
+      const d = new Date(m.ts || 0);
+      if (isNaN(d.getTime())) return;
+      const k = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+      cnt[k] = (cnt[k] || 0) + 1;
+    });
+    let total = 0;
+    Object.keys(cnt).forEach((k) => { total += cnt[k]; });
+    setTxt('ftTotal', String(Object.keys(cnt).length));
+    setTxt('ftMsgs', String(total));
+
+    strip.innerHTML = '';
+    const today = new Date();
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+      const k = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+      const n = cnt[k] || 0;
+      days.push({ d, n, k });
+      const bar = document.createElement('i');
+      bar.className = 'ft-bar' + (n ? (n >= 20 ? ' l3' : n >= 6 ? ' l2' : ' l1') : '');
+      bar.title = (d.getMonth() + 1) + '月' + d.getDate() + '日 · ' + (n ? n + ' 句' : '没说话');
+      bar.style.height = n ? Math.min(26, 6 + Math.round(n / 2)) + 'px' : '3px';
+      strip.appendChild(bar);
+    }
+
+    const rows = days.slice().reverse().filter((x) => x.n).slice(0, 8).map((x) => flRow({
+      when: flDay(x.d.getTime()),
+      tag: x.n >= 20 ? '很多' : x.n >= 6 ? '不少' : '',
+      text: '说了 ' + x.n + ' 句',
+      onClick: () => openPage('calendar'),
+    }));
+    fillFl('ftDays', rows);
+  }
+
+  /* 花 / 镜 的事件接线（DOM 已在页面里，这里一次性挂上） */
+  (function wireFlower() {
+    const dSend = $('diarySend');
+    const dText = $('diaryText');
+    if (dSend && dText) {
+      const save1 = () => {
+        const v = (dText.value || '').trim();
+        if (!v) { dText.focus(); return; }
+        lifeList('diary').push({ id: 'dy' + Date.now(), text: v, ts: Date.now() });
+        save(KEY.life, S.life);
+        dText.value = '';
+        renderDiary();
+        renderFlowerAll();
+      };
+      dSend.addEventListener('click', save1);
+      dText.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') save1();
+      });
+    }
+    const tSend = $('taskSend');
+    const tText = $('taskText');
+    if (tSend && tText) {
+      const add = () => {
+        const v = (tText.value || '').trim();
+        if (!v) { tText.focus(); return; }
+        lifeList('todos').push({ id: 'td' + Date.now(), text: v, done: false, due: '' });
+        save(KEY.life, S.life);
+        tText.value = '';
+        renderTasks();
+        renderFlowerAll();
+      };
+      tSend.addEventListener('click', add);
+      tText.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+    }
+    const ftMore = $('ftMore');
+    if (ftMore) ftMore.addEventListener('click', () => openPage('calendar'));
+  })();
+
   function renderMemoryPage() {
     const ul = $('allMemories');
     if (!ul) return;
@@ -4561,6 +4826,18 @@
 
     $('memCount').textContent = facts.length;
     $('allMemoryHint').hidden = facts.length > 0;
+
+    /* 环形进度：0 → 已记下的比例（上限按 40 条算） */
+    const ring = $('memRing');
+    if (ring) {
+      const C = 2 * Math.PI * 26;
+      const pct = Math.min(1, facts.length / 40);
+      ring.style.strokeDasharray = C.toFixed(2);
+      ring.style.strokeDashoffset = C.toFixed(2);
+      requestAnimationFrame(() => {
+        ring.style.strokeDashoffset = (C * (1 - pct)).toFixed(2);
+      });
+    }
 
     ul.innerHTML = '';
     src.slice().reverse().forEach((f) => {
@@ -5303,21 +5580,25 @@
     const findMe = $('findMe');
     if (findMe) findMe.addEventListener('click', () => openPage('chat'));
     /* 更多页：行点击 → 跳页 / 关于 / 帮助 */
-    const morePage = $('more');
-    if (morePage) morePage.addEventListener('click', (e) => {
-      const go = e.target.closest('[data-go]');
-      if (go) { openPage(go.dataset.go); return; }
-      const act = e.target.closest('[data-act]');
-      if (act) {
-        if (act.dataset.act === 'about') toast('潮 · TIDE · 一起过日子');
-        else if (act.dataset.act === 'help') toast('有事翻翻这里，翻不到就来问我。');
-        else if (act.dataset.act === 'edit') {
-          // 编辑桌面：复用设置页那个按钮（回主屏 + 进编辑态）
-          const btn = $('btnEditLayout');
-          if (btn) btn.click();
-          else { closePage(); }
+    /* 更多页 / 镜·底座：data-go 跳页、data-act 动作（两个页面同一套语义） */
+    ['more', 'mirror'].forEach((pid) => {
+      const box = $(pid);
+      if (!box) return;
+      box.addEventListener('click', (e) => {
+        const go = e.target.closest('[data-go]');
+        if (go) { openPage(go.dataset.go); return; }
+        const act = e.target.closest('[data-act]');
+        if (act) {
+          if (act.dataset.act === 'about') toast('潮 · TIDE · 一起过日子');
+          else if (act.dataset.act === 'help') toast('有事翻翻这里，翻不到就来问我。');
+          else if (act.dataset.act === 'edit') {
+            // 编辑桌面：复用设置页那个按钮（回主屏 + 进编辑态）
+            const btn = $('btnEditLayout');
+            if (btn) btn.click();
+            else { closePage(); }
+          }
         }
-      }
+      });
     });
     const calPrev = $('calPrev'), calNext = $('calNext');
     if (calPrev) calPrev.addEventListener('click', () => shiftCalPage(-1));
@@ -5338,7 +5619,7 @@
       });
     }
     const moreMem = $('btnHomeMemories');
-    if (moreMem) moreMem.addEventListener('click', () => openPage('records', 'memory'));
+    if (moreMem) moreMem.addEventListener('click', () => openPage('mirror', 'memory'));
 
     renderDots();
     // 字体加载完/旋转屏幕后重新量一次宽度
