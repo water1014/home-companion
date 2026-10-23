@@ -4112,8 +4112,9 @@ html .dock .tile svg {
       视觉沿用现有 token（var(--card) + var(--line) + var(--text)），不引入新皮。
    ============================================================ */
 
-/* 顶栏汉堡：和右侧图标同尺寸，只是位置在最左 */
-.topbar .tb-ham { margin-left: -6px; }
+/* 顶栏汉堡：和右侧图标同尺寸，只是位置在最左。
+   抽屉开着时它要还能点（再点一下关）——提到遮罩(38)/抽屉(39) 之上 */
+.topbar .tb-ham { margin-left: -6px; position: relative; z-index: 41; }
 
 /* 遮罩：点它关抽屉 */
 .drawer-mask {
