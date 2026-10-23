@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v42a';
+  window.__TIDE_MARK = 'LOCAL-v42b';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -106,11 +106,11 @@
     { id: 'courses',  name: '课程', icon: 'i-course',  cat: 'next', page: 'courses' },
     { id: 'countdown', name: '倒数', icon: 'i-hourglass', cat: 'next', page: 'countdown' },
     { id: 'anniv',    name: '纪念日', icon: 'i-heart', cat: 'next', desc: '从倒数里分出来的一页：在一起多少天，以及每年要过的那几个日子。页面下一步做。' },
-    { id: 'calendar', name: '日历', icon: 'i-cal',     cat: 'next', desc: '纪念日、约定、他的作息。点某一天，能看见那天发生了什么。' },
+    { id: 'calendar', name: '日历', icon: 'i-cal',     cat: 'next', page: 'calendar', desc: '纪念日、约定、他的作息。点某一天，能看见那天发生了什么。' },
 
     /* 【之间】两个人互相给的东西 */
     { id: 'cards',    name: '卡券', icon: 'i-ticket',  cat: 'between', page: 'cards' },
-    { id: 'message',  name: '留言', icon: 'i-mail',    cat: 'between', page: 'message' },
+    { id: 'message',  name: '留言', icon: 'i-mail',    cat: 'between', desc: '他给你留的话。写了就送到，不像信要等时候。\n数据已经在攒了，界面下一批接。' },
     { id: 'letter',   name: '信',   icon: 'i-mail',    cat: 'between', desc: '写了但不急着让你看到的，攒着。到点才拆。' },
     { id: 'wish',     name: '心愿', icon: 'i-spark',   cat: 'between', desc: '想一起做的事。做掉一件，划掉一件。' },
     { id: 'game',     name: '游戏', icon: 'i-game',    cat: 'between', desc: '不止一个。石头剪刀布、猜数字、真心话……能一起耗时间的小东西。下一批做。' },
