@@ -7971,3 +7971,264 @@ html[data-theme="light"] .rec-search-input::placeholder{ color: var(--k-ink3) !i
 @media (prefers-reduced-motion: reduce) {
   .msg .bubble em.act { animation: none; }
 }
+
+/* ============================================================
+   MOON 首页 · 高保真视觉重做（Kept / 高定风）
+   —— 全屏高清壁纸 + Bento 错落 + 毛玻璃 + 大号衬线数字
+      只改主屏（#home 内），不动其他页面；以下规则追加在末尾，
+      覆盖上面「镜花水月」那套发丝线样式（同特异性，后写生效）
+   ============================================================ */
+
+/* ---------- 1. 壁纸透出来：主屏铺高清壁纸 + 极暗遮罩 ---------- */
+#home { position: relative; isolation: isolate; }
+#home::before,
+#home::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+/* 高清壁纸层：默认用自带的 wall.jpg，设置里上传的图会顶掉它 */
+#home::before {
+  background:
+    var(--wall-img, url("../icons/wall.jpg")) center / cover no-repeat,
+    linear-gradient(168deg, #2b2438 0%, #191428 55%, #241d33 100%);
+}
+/* 遮罩：压暗保文字清晰；亮色主题换成压亮 */
+#home::after {
+  background: linear-gradient(180deg,
+      rgba(9, 7, 16, 0.62) 0%,
+      rgba(9, 7, 16, 0.30) 42%,
+      rgba(9, 7, 16, 0.58) 100%);
+}
+html[data-theme="light"] #home::after {
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.72) 0%,
+      rgba(255, 255, 255, 0.52) 44%,
+      rgba(255, 255, 255, 0.70) 100%);
+}
+/* 壁纸上的内容（顶栏/卡片/底栏）提上来，并统一用亮色文字 */
+#home .topbar, #home .home-pager, #home .dock { position: relative; z-index: 1; }
+#home .home-page { position: relative; z-index: 1; }
+
+/* ---------- 2. Bento 错落布局 ---------- */
+html .home-page[data-page="0"] {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  align-content: start;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+/* 天数大卡横跨全屏；状态与音乐两小卡并列同一行；入口卡在最下横跨
+   （DOM 顺序是 head → now → acts → music，必须显式给行号，否则音乐会被挤到入口下面） */
+html .moon-head { grid-column: 1 / -1 !important; grid-row: 1 !important; }
+html .mn-now    { grid-column: 1 / 2 !important;  grid-row: 2 !important; }
+html .mn-music  { grid-column: 2 / 3 !important;  grid-row: 2 !important; }
+html .mn-acts   { grid-column: 1 / -1 !important; grid-row: 3 !important; }
+
+/* ---------- 3. 毛玻璃卡片（两层阴影，真正浮起来） ---------- */
+html .moon-head,
+html .mn-now,
+html .mn-music,
+html .mn-acts {
+  position: relative;
+  background: rgba(255, 255, 255, 0.10) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.20) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.20) !important;
+  border-radius: 24px !important;
+  padding: 20px 20px !important;
+  margin: 0 !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.14),
+    0 8px 32px rgba(0, 0, 0, 0.20) !important;
+  transition: transform 320ms var(--ease), box-shadow 320ms var(--ease);
+}
+/* 亮色主题：毛玻璃改成白色半透 + 柔阴影 */
+html[data-theme="light"] .moon-head,
+html[data-theme="light"] .mn-now,
+html[data-theme="light"] .mn-music,
+html[data-theme="light"] .mn-acts {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow:
+    0 2px 8px rgba(28, 28, 40, 0.06),
+    0 8px 32px rgba(28, 28, 40, 0.10) !important;
+}
+/* 悬停上浮 + 阴影变大 */
+html .moon-head:hover,
+html .mn-now:hover,
+html .mn-music:hover,
+html .mn-acts:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.16),
+    0 18px 48px rgba(0, 0, 0, 0.28) !important;
+}
+/* 音乐小卡轻微旋转，悬停归正 —— 错落感 */
+html .mn-music { transform: rotate(-1.4deg); }
+html .mn-music:hover { transform: rotate(0deg) translateY(-4px); }
+
+/* 卡内文字在暗壁纸上统一提亮 */
+html .moon-head, html .mn-now, html .mn-music, html .mn-acts { color: #fff; }
+html[data-theme="light"] .moon-head,
+html[data-theme="light"] .mn-now,
+html[data-theme="light"] .mn-music,
+html[data-theme="light"] .mn-acts { color: var(--text); }
+
+/* ---------- 4. 大号衬线数字 + 时间居中 + 右侧装饰 ---------- */
+html .moon-head {
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr !important;
+  grid-template-areas:
+    "tag  time  deco"
+    "days days days" !important;
+  align-items: center;
+  gap: 14px 10px !important;
+  padding: 24px 22px 26px !important;
+}
+html .mn-tag   { grid-area: tag;  margin: 0 !important; }
+html .mn-time  {
+  grid-area: time;
+  text-align: center !important;
+  font-size: clamp(46px, 13.5vw, 66px) !important;
+}
+html .mn-names { grid-area: deco; text-align: right !important; margin: 0 !important; }
+html .mn-days  {
+  grid-area: days;
+  justify-content: center !important;
+  margin: 4px 0 0 !important;
+}
+html .mn-days b {
+  font-size: clamp(92px, 27vw, 132px) !important;
+  text-shadow: 0 2px 34px rgba(0, 0, 0, 0.32);
+}
+
+/* 右侧「加点东西」：一颗带呼吸光晕的小圆点 */
+html .mn-names::before {
+  content: "";
+  display: inline-block;
+  width: 6px; height: 6px;
+  margin-right: 8px;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: var(--accent);
+  animation: mnPulse 2.8s ease-in-out infinite;
+}
+@keyframes mnPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(150, 130, 240, 0.55); opacity: 0.95; }
+  50%      { box-shadow: 0 0 0 8px rgba(150, 130, 240, 0); opacity: 0.5; }
+}
+
+/* ---------- 5. 英文标签：极小、大写、字距极宽（杂志感） ---------- */
+html .mn-tag em, html .mn-tag span,
+html .mn-days i,
+html .mn-label em,
+html .mn-nums i {
+  font-size: 10px !important;
+  letter-spacing: 0.2em !important;
+  text-transform: uppercase;
+}
+/* 卡内文字在暗壁纸上提亮（覆盖镜花水月的灰） */
+html .mn-time, html .mn-days b, html .mn-names,
+html .mn-nums b, html .mn-say, html .mn-act em, html .mn-act span {
+  color: #fff !important;
+}
+html .mn-tag, html .mn-days i, html .mn-label, html .mn-nums i {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+html[data-theme="light"] .mn-time, html[data-theme="light"] .mn-days b,
+html[data-theme="light"] .mn-names, html[data-theme="light"] .mn-nums b,
+html[data-theme="light"] .mn-say, html[data-theme="light"] .mn-act em,
+html[data-theme="light"] .mn-act span { color: var(--text) !important; }
+html[data-theme="light"] .mn-tag, html[data-theme="light"] .mn-days i,
+html[data-theme="light"] .mn-label, html[data-theme="light"] .mn-nums i {
+  color: var(--k-ink3) !important;
+}
+
+/* ---------- 6. 小卡内部适配（状态卡 / 音乐卡） ---------- */
+html .mn-now { padding: 18px 18px 20px !important; }
+html .mn-nums { gap: 16px !important; flex-wrap: wrap; }
+html .mn-wave { height: 34px !important; margin: 0 0 12px !important; }
+html .mn-wave path { stroke: rgba(255, 255, 255, 0.78) !important; opacity: 0.7 !important; }
+html[data-theme="light"] .mn-wave path { stroke: var(--accent) !important; opacity: 0.55 !important; }
+
+/* 音乐小卡：竖排三段式 —— 歌名在上、播放键沉到右下、进度条贴底，留白也是设计 */
+html .mn-music {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding: 18px 16px 16px !important;
+  margin-top: 0 !important;
+}
+html .mn-mu-meta { display: flex !important; flex-direction: column !important; gap: 3px; min-width: 0; }
+html .mn-mu-meta b {
+  font-size: 13px !important;
+  max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+html .mn-mu-meta i { font-size: 10.5px !important; letter-spacing: 0.12em; opacity: 0.66; }
+html .mn-mu-time { display: none !important; }        /* 窄卡放不下，先收起 */
+/* 进度条：平时也能看见一条细线，播放时从左往右走 */
+html .mn-mu-track {
+  position: static !important;
+  width: 100% !important;
+  height: 2px !important;
+  border-radius: 2px !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+html[data-theme="light"] .mn-mu-track { background: rgba(28, 28, 40, 0.14) !important; }
+html .mn-mu-play {
+  width: 36px !important; height: 36px !important;
+  align-self: flex-end !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+}
+
+/* 入口卡：WRITE / TALK 两个小卡并列 */
+html .mn-acts {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  padding: 16px !important;
+}
+html .mn-act {
+  align-items: center !important;
+  justify-content: center;
+  padding: 14px 10px !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  transition: transform 260ms var(--ease), background 260ms var(--ease);
+}
+html .mn-act:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.16) !important; }
+html[data-theme="light"] .mn-act { background: rgba(255, 255, 255, 0.5) !important; border-color: rgba(0,0,0,.06) !important; }
+
+/* ---------- 7. 底栏：悬浮胶囊 + 毛玻璃（全局组件，跟着一起提质感） ---------- */
+html .dock,
+html .dock.glass {
+  background: rgba(255, 255, 255, 0.12) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
+  backdrop-filter: blur(24px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.20) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.20) !important;
+  border-radius: 30px !important;
+  margin: 0 18px calc(18px + var(--safe-b)) !important;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.18),
+    0 10px 34px rgba(0, 0, 0, 0.30) !important;
+}
+html[data-theme="light"] .dock {
+  background: rgba(255, 255, 255, 0.62) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow:
+    0 2px 10px rgba(28, 28, 40, 0.08),
+    0 10px 30px rgba(28, 28, 40, 0.12) !important;
+}

@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v53';
+  window.__TIDE_MARK = 'LOCAL-v54';
 
   const P = window.Persona;
   const LLM = window.LLM;
