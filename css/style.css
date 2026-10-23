@@ -5203,3 +5203,35 @@ html .c-between .bt-cell .tile-num{ font-size: 30px !important; line-height: 1.0
 /* V8 · dock 选中态加强：实心银圆 + 深色图标（参考图 active 圆形） */
 html .dock .tile.on .tile-ic{ background: var(--accent) !important; color: var(--accent-ink) !important; }
 html .dock .tile.on .tile-name{ color: var(--accent) !important; }
+
+/* V9 · 编辑风时间头 + 主视觉名字 + 引言编辑化（参考图 21:14 / OUR DAYS / FROM COVE） */
+html .ed-head{ margin: 2px 2px 14px; }
+html .ed-date{
+  margin: 0; font-family: var(--font-sans);
+  font-size: 11px; letter-spacing: .30em; text-transform: uppercase; color: var(--text-3);
+}
+html .ed-time{
+  margin: 4px 0 0; font-family: var(--font-serif);
+  font-size: clamp(54px, 18vw, 82px); line-height: .92; font-weight: 300;
+  letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+}
+html .ed-hello{ margin: 8px 0 0; font-size: 12.5px; letter-spacing: .03em; color: var(--text-2); }
+html .c-days .days-names{
+  margin: 6px 0 2px; font-family: var(--font-serif); font-style: italic;
+  font-size: 13px; letter-spacing: .05em; color: var(--text-2);
+}
+html .c-quote .qt{
+  font-family: var(--font-serif); font-size: 16.5px !important;
+  line-height: 1.72 !important; color: var(--text) !important; text-align: left;
+}
+html .c-quote .qt::before{
+  content: 'TODAY'; display: block; margin-bottom: 8px;
+  font-family: var(--font-sans); font-size: 10px; font-weight: 600;
+  letter-spacing: .3em; color: var(--text-3);
+}
+
+/* V9b · 主视觉加高、字号略缩，避免 since 被卡片裁掉 */
+html .c-days{ min-height: 202px !important; }
+html .c-days .days{ gap: 1px !important; }
+html .c-days .days-num{ font-size: clamp(42px, 12vw, 56px) !important; }
+html .c-days .days-pair{ transform: scale(.8) !important; margin-bottom: 0 !important; }

@@ -1266,7 +1266,7 @@
     quote:   { page: 0, size: 'g-4x2', name: '一句话', go: null },
   };
   /* 美化页开关的列举顺序 = 桌面从上到下 */
-  const DT_ORDER = ['today', 'days', 'status', 'chat', 'between', 'music', 'device', 'album', 'week', 'quote'];
+  const DT_ORDER = ['days', 'status', 'chat', 'between', 'music', 'device', 'album', 'week', 'quote'];
 
   /* 收起了哪些卡片：存 S.settings.widgets.hidden。
      老配置里是旧组件 id（pair/clock/quad…），这里只认 DT_CARDS 里有的。
@@ -1375,6 +1375,7 @@
           '<div class="pair-ava d56 me" id="daysAvaM"></div>' +
         '</div>' +
         '<p class="days-num" id="daysNum">—</p>' +
+        '<p class="days-names" id="daysNames"></p>' +
         '<p class="days-since" id="daysSince">since —</p>' +
       '</div>',
 
@@ -1444,8 +1445,10 @@
     setHTML('daysAvaP', partnerAvaInner(''));
     setHTML('daysAvaM', myAvaInner(''));
     setTxt('daysNum', String(daysSince()));
+    setTxt('daysNames', partnerName() + ' with ' + (S.memory.userName || '我'));
     setTxt('daysSince', 'since ' + (S.memory.startDate || todayStr()).replace(/-/g, '.'));
     renderToday();
+    renderEdHead();
 
     // 状态卡：今天挑过的心情词，没挑就看他现在的
     setHTML('stAva', partnerAvaInner(''));
@@ -1534,6 +1537,20 @@
     const W = ['周日','周一','周二','周三','周四','周五','周六'];
     setTxt('tdDay', String(now.getDate()));
     setTxt('tdMeta', M[now.getMonth()] + ' · ' + W[now.getDay()]);
+  }
+
+  /* 编辑风时间头：大写日期 + 超大时间 + 按时间问候（纯真实时间） */
+  function renderEdHead() {
+    if (!$('edTime')) return;
+    const now = new Date();
+    const D = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    const MO = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    setTxt('edDate', D[now.getDay()] + ', ' + MO[now.getMonth()] + ' ' + now.getDate());
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    setTxt('edTime', hh + ':' + mm);
+    const h = now.getHours();
+    setTxt('edHello', h < 5 ? '夜深了。' : h < 11 ? '早上好。' : h < 13 ? '中午好。' : h < 18 ? '下午好。' : h < 23 ? '晚上好。' : '夜深了。');
   }
 
   /** 首页里的一行应用：直接吃首页名单里的一chunk（4 个） */
