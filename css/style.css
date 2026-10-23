@@ -100,23 +100,6 @@ button { font-family: inherit; }
   text-align: right;
 }
 
-/* 本月小结 */
-.stat-card {
-  display: flex;
-  padding: 16px 8px;
-}
-.stat { flex: 1; text-align: center; }
-.stat b {
-  display: block;
-  font-size: 26px;
-  font-weight: 300;
-  color: var(--ink);
-  line-height: 1.15;
-  font-variant-numeric: tabular-nums;
-}
-.stat span { font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.08em; }
-.stat + .stat { border-left: 1px solid rgba(60, 55, 70, 0.06); }
-
 /* 占位页说明 */
 .todo-desc {
   margin: 12px 26px 0;
@@ -332,9 +315,11 @@ button { font-family: inherit; }
 .home { z-index: 10; }
 
 /* ============================================================
-   主屏：一屏上下滚动。四栏栅格，栏间距 12，左右内边距 16
-   卡片只有 1x1 / 2x1 / 2x2 / 4x1 / 4x2 五种
-   字号只有 44 / 20 / 15 / 11 四档；间距只有 4 / 8 / 12 / 16 / 24 / 32
+   主屏：杂志式拼贴。四栏栅格，行高 88，栏间距 12，左右内边距 16
+   卡片只有 1x1 / 2x1 / 2x2 / 4x1 / 4x2 五种，同一排不许两张同尺寸
+   顺序和尺寸固定（js/app.js GRID_GROUPS），不长按拖动：
+   天数 4x2 → 状态 2x2 + 设备 2x1 + 聊天 1x1 → 之间 4x1 → 音乐 4x1
+   → 相册 2x2 + 一周 2x2 → 一句话 4x1
    ============================================================ */
 
 .home-pager {
@@ -358,213 +343,177 @@ button { font-family: inherit; }
   gap: 12px;
 }
 .home-page > * { flex-shrink: 0; }
-.home-pager.dragging { cursor: grabbing; user-select: none; }
-.home-pager.dragging * { user-select: none; }
 
-/* 四栏栅格 */
+/* 主屏 = 六个大组纵向排：组之间 24px（12 的缝 + 12 的额外margin），
+   组内才是四栏栅格，卡片之间 12px。375 宽下列宽 (375-32-36)/4≈77，行高 88 */
 .grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.grp-box {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 88px;
   gap: 12px;
-  margin-top: 8px;
 }
+.grp-box + .grp-box { margin-top: 12px; }
+/* 五种尺寸，一种卡一个，不许多 */
 .g-4x2 { grid-column: span 4; grid-row: span 2; }
 .g-4x1 { grid-column: span 4; }
 .g-2x2 { grid-column: span 2; grid-row: span 2; }
 .g-2x1 { grid-column: span 2; }
-.g-1x1 { grid-column: span 1; aspect-ratio: 1 / 1; }
+.g-1x1 { grid-column: span 1; }
 
-/* 卡片：深色玻璃 */
+/* 卡片：深色玻璃，一律不投影 */
 .card {
   position: relative;
-  background: rgba(255, 255, 255, 0.12);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  backdrop-filter: blur(20px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.10);
+  -webkit-backdrop-filter: blur(24px) saturate(1.1);
+  backdrop-filter: blur(24px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 24px;
+  box-shadow: none;
   padding: 16px;
   color: #fff;
   overflow: hidden;
   text-align: left;
 }
-.card.dragging { opacity: 0.4; }
-
-/* 四档字号 */
-.t-44 { font-size: 44px; line-height: 1; font-weight: 300; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.t-20 { font-size: 20px; line-height: 1.3; font-weight: 500; }
-.t-15 { font-size: 15px; line-height: 1.5; }
-.t-11 { font-size: 11px; line-height: 1.4; letter-spacing: 0.04em; }
-.dim { color: rgba(255, 255, 255, 0.62); }
-.accent { color: #ff7a9c; }
-.accent2 { color: #6ec6ff; }
-
-/* 状态大卡 4x2：他是谁 + 今天怎样 */
-.c-status { display: flex; flex-direction: column; justify-content: flex-end; min-height: 168px; }
-.c-status .who { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.c-status .ava {
-  width: 44px; height: 44px; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  display: grid; place-items: center; font-size: 20px; overflow: hidden;
+/* 点得动的卡：按下去收一点，不加投影 */
+.card.tap { cursor: pointer; transition: transform 0.18s var(--ease), background 0.18s var(--ease); }
+.card.tap:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.14); }
+/* 主屏卡上的未读红点（聊天格）：有消息才 .show */
+.card .badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pink);
+  display: none;
 }
-.c-status .ava img { width: 100%; height: 100%; object-fit: cover; }
+.card .badge.show { display: block; }
+
 /* 呼吸点：会动的第一处 */
 .breath {
-  width: 8px; height: 8px; border-radius: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: #ff7a9c;
   box-shadow: 0 0 0 0 rgba(255, 122, 156, 0.55);
   animation: breath 2.8s ease-in-out infinite;
 }
 @keyframes breath {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255, 122, 156, 0.45); opacity: 1; }
-  50%      { box-shadow: 0 0 0 8px rgba(255, 122, 156, 0); opacity: 0.72; }
-}
-/* 水纹：会动的第二处 */
-.ripple { position: absolute; right: -24px; top: -24px; width: 160px; height: 160px; pointer-events: none; }
-.ripple i {
-  position: absolute; inset: 0; border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  animation: ripple 4.2s ease-out infinite;
-}
-.ripple i:nth-child(2) { animation-delay: 1.4s; }
-.ripple i:nth-child(3) { animation-delay: 2.8s; }
-@keyframes ripple {
-  0%   { transform: scale(0.4); opacity: 0; }
-  30%  { opacity: 0.7; }
-  100% { transform: scale(1.5); opacity: 0; }
+  50%      { box-shadow: 0 0 0 7px rgba(255, 122, 156, 0); opacity: 0.72; }
 }
 
-/* 音乐条 4x1 */
-.c-music { display: flex; align-items: center; gap: 12px; }
-.c-music .cover {
-  width: 44px; height: 44px; border-radius: 12px; flex: 0 0 auto;
-  background: rgba(255, 255, 255, 0.16);
-  display: grid; place-items: center;
-}
-.c-music .cover svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.6; }
-.c-music .meta { min-width: 0; flex: 1; }
-.c-music .meta p { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* 进度流动：会动的第三处 */
-.c-music .bar { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.2); margin-top: 8px; overflow: hidden; }
-.c-music .bar i {
-  display: block; height: 100%; width: 40%;
-  background: linear-gradient(90deg, rgba(255, 122, 156, 0.2), #ff7a9c);
-  animation: flow 3.6s linear infinite;
-}
-@keyframes flow { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
-
-/* 小格 1x1：图标 + 一行说明 */
-.c-mini { display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
-.c-mini svg { width: 24px; height: 24px; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-
-/* 数据卡 2x2：数字最大，说明最小 */
-.c-data { display: flex; flex-direction: column; justify-content: space-between; }
-.c-data .row + .row { margin-top: 16px; }
-.c-data .num { display: flex; align-items: baseline; gap: 4px; }
-.c-data .unit { font-size: 11px; color: rgba(255, 255, 255, 0.62); }
-
-/* 一句话卡 4x1 */
-.c-said .txt { margin: 8px 0 0; }
-
-/* 主屏下方这几张（日历 / 纪念日 / 统计）也统一成 22 圆角 */
-.home-page .glass { border-radius: 22px; }
-
-/* 页面指示点 */
-.pager-dots {
-  flex: 0 0 auto;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-.pager-dots button {
-  width: 6px;
-  height: 6px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(60, 55, 70, 0.18);
-  cursor: pointer;
-  transition: width 0.3s var(--ease-ios), background 0.3s var(--ease-ios);
-}
-.pager-dots button.on {
-  width: 16px;
-  border-radius: 3px;
-  background: rgba(60, 55, 70, 0.4);
-}
-
-/* 这一周（有没有说话） */
-.week-card { padding: 15px 18px 16px; }
-
-.week-sub { font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em; }
-.week-row {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-top: 12px;
-}
-.week-day {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-.wd-name { font-size: 10px; color: var(--ink-3); letter-spacing: 0.05em; }
-.wd-dot {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 11.5px;
-  color: var(--ink-3);
-  background: rgba(70, 65, 80, 0.05);
+/* ---- 1. 双人天数卡 4x2：两个圆头像夹一条浪，下面一个大数字 ---- */
+.days { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 10px; }
+.days-pair { display: flex; align-items: center; gap: 10px; }
+.days-wave { width: 72px; height: 12px; display: block; flex: 0 0 auto; }
+.days-num {
+  margin: 0;
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 300;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
-.week-day.on .wd-dot {
-  background: linear-gradient(145deg, #f7cdd8, #e9a0b4);
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(224, 127, 151, 0.28);
-}
-.week-day.today .wd-dot { outline: 1.5px solid rgba(232, 140, 162, 0.55); outline-offset: 2px; }
+.days-since { margin: 0; font-size: 11px; line-height: 1.2; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.5); }
+.pair-ava.d56 { width: 56px; height: 56px; font-size: 22px; box-shadow: none; }
+.pair-ava.d36 { width: 36px; height: 36px; font-size: 15px; box-shadow: none; }
+.pair-ava img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
-/* 他最近说的一句 */
-.quote-card {
-  position: relative;
-  padding: 15px 18px 13px;
+/* ---- 2. 状态卡 2x2：头像左上 / 心情词居中 / 一句话垫底 / 呼吸点右下 ---- */
+.c-status { display: grid; grid-template-rows: auto 1fr auto; align-items: center; }
+.st-word { margin: 0; font-size: 28px; font-weight: 300; line-height: 1.25; }
+.st-sub { margin: 0; font-size: 11px; line-height: 1.6; color: rgba(255, 255, 255, 0.62); }
+.st-dot { position: absolute; right: 14px; bottom: 14px; }
+
+/* ---- 2. 设备格 2x1 / 聊天格 1x1：数字或图标 + 一行小字 ---- */
+.c-device { display: flex; align-items: center; justify-content: center; }
+.dv { display: flex; align-items: baseline; gap: 8px; }
+.c-chat { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.g-ic { width: 28px; height: 28px; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.tile-num { margin: 0; font-size: 28px; font-weight: 300; line-height: 1; font-variant-numeric: tabular-nums; }
+.tile-num i { font-style: normal; font-size: 11px; font-weight: 400; color: rgba(255, 255, 255, 0.62); margin-left: 2px; }
+.tile-t { margin: 0; font-size: 11px; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.62); }
+
+/* ---- 3. 之间卡 4x1：一行三格，点整卡进之间 ---- */
+.bt { display: flex; align-items: center; height: 100%; }
+.bt-cell { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bt-cell + .bt-cell { border-left: 1px solid rgba(255, 255, 255, 0.12); }
+
+/* ---- 4. 音乐条 4x1：封面 44 + 歌名歌手 + 播放键 28 + 2px 进度 ---- */
+.c-music { display: flex; flex-direction: column; }
+.mu { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.mu-cover {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.14);
+  display: grid;
+  place-items: center;
+}
+.mu-cover svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.mu-meta { flex: 1; min-width: 0; }
+.mu-title { margin: 0; font-size: 15px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mu-artist { margin: 2px 0 0; font-size: 11px; line-height: 1.4; color: rgba(255, 255, 255, 0.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mu-play {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0;
   cursor: pointer;
-  transition: transform 0.2s var(--ease);
+  background: rgba(255, 255, 255, 0.16);
+  display: grid;
+  place-items: center;
+  transition: transform 0.18s var(--ease), background 0.18s var(--ease);
 }
-.quote-card:active { transform: scale(0.985); }
-.quote-card::before {
-  content: "\201C";
-  position: absolute;
-  top: 6px;
-  left: 11px;
-  font-family: Georgia, "Songti SC", serif;
-  font-size: 30px;
-  line-height: 1;
-  color: rgba(232, 140, 162, 0.32);
+.mu-play:active { transform: scale(0.9); background: rgba(255, 255, 255, 0.24); }
+.mu-play svg { width: 12px; height: 12px; fill: #fff; }
+.mu-play .ic-pause { display: none; }
+.c-music.playing .mu-play .ic-play { display: none; }
+.c-music.playing .mu-play .ic-pause { display: block; }
+.mu-bar { height: 2px; border-radius: 1px; background: rgba(255, 255, 255, 0.18); margin-top: 8px; overflow: hidden; }
+.mu-bar i {
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), #fff);
+  animation: muProg 3.6s var(--ease) infinite;
 }
-.quote-text {
-  margin: 0 0 5px;
-  padding-left: 17px;
-  font-size: 13px;
-  line-height: 1.72;
-  color: var(--ink-2);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.quote-from {
-  margin: 0;
-  padding-left: 17px;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: var(--ink-3);
-}
+/* 进度流动：会动的第二处 */
+@keyframes muProg { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+
+/* ---- 5. 相册卡 2x2：2x2 缩略图，8 缝 12 圆角；没图就一句话 ---- */
+.al { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; height: 100%; }
+.al i { border-radius: 12px; background-size: cover; background-position: center; background-color: rgba(255, 255, 255, 0.08); }
+.al-empty { margin: 0; display: grid; place-items: center; font-size: 11px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.5); }
+
+/* ---- 5. 一周卡 2x2：七个 24px 方块四档深浅，聊得多越深 ---- */
+.wk { display: flex; flex-direction: column; height: 100%; }
+.wk-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.wk-d { width: 24px; height: 24px; border-radius: 6px; background: rgba(255, 255, 255, 0.10); }
+.wk-d.l1 { background: rgba(255, 255, 255, 0.24); }
+.wk-d.l2 { background: rgba(255, 255, 255, 0.44); }
+.wk-d.l3 { background: rgba(255, 255, 255, 0.70); }
+.wk-d.today { outline: 1.5px solid rgba(255, 255, 255, 0.55); outline-offset: 2px; }
+.wk-sub { margin: auto 0 0; font-size: 11px; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.62); }
+
+/* ---- 6. 一句话卡 4x1：整卡只有一句，居中 ---- */
+.c-quote { display: grid; place-items: center; }
+.qt { margin: 0; font-size: 15px; line-height: 1.7; text-align: center; }
+
+
+/* 「这周说了 N 天」（mood 页今天他说过 的计数也用这个类，别删） */
+.week-sub { font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em; }
 
 .statusbar {
   display: flex;
@@ -582,84 +531,6 @@ button { font-family: inherit; }
   width: 6px; height: 6px; border-radius: 50%;
   background: #7fc79a;
   box-shadow: 0 0 0 3px rgba(127, 199, 154, 0.18);
-}
-
-/* 时钟卡 */
-
-.clock-card { padding: 18px 22px 16px; }
-
-.clock-row { display: flex; align-items: flex-end; gap: 16px; }
-
-.big-clock {
-  margin: 0;
-  font-size: 64px;
-  font-weight: 200;
-  line-height: 0.95;
-  letter-spacing: 0.01em;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.clock-side { padding-bottom: 6px; min-width: 0; }
-
-.clock-date {
-  margin: 0;
-  font-size: 12px;
-  color: var(--ink-2);
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-}
-
-.clock-sub {
-  margin-top: 3px;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-size: 11.5px;
-  color: var(--pink-deep);
-  cursor: pointer;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
-}
-.clock-sub::before { content: "♥ "; color: var(--pink); }
-
-/* 天数卡 */
-
-.days-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px;
-}
-
-.days-mid { flex: 1; text-align: center; }
-
-.days-num {
-  margin: 0;
-  font-size: 46px;
-  font-weight: 200;
-  line-height: 1;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.days-label {
-  margin: 4px 0 6px;
-  font-size: 9.5px;
-  letter-spacing: 0.3em;
-  color: var(--ink-3);
-}
-
-.pulse-line { width: 120px; height: 14px; }
-.pulse-line path {
-  fill: none;
-  stroke: #eba9ba;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 /* App 网格 */
@@ -732,78 +603,6 @@ button { font-family: inherit; }
   display: none;
 }
 .tile .badge.show { display: block; }
-
-/* 日历卡 */
-
-.cal-card { padding: 16px 18px 14px; }
-
-.cal-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.cal-head h2 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--ink);
-}
-
-.cal-mark { color: var(--pink); font-size: 13px; }
-
-.cal-week, .cal-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px 0;
-  text-align: center;
-}
-
-.cal-week span {
-  font-size: 10px;
-  color: var(--ink-3);
-  letter-spacing: 0.1em;
-  padding-bottom: 6px;
-}
-.cal-week .wk { color: #d998a8; }
-
-.cal-grid span {
-  position: relative;
-  z-index: 0;
-  font-size: 12.5px;
-  line-height: 30px;
-  height: 30px;
-  color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
-}
-
-.cal-grid .pad { visibility: hidden; }
-
-.cal-grid .today { color: #fff; font-weight: 600; }
-.cal-grid .today::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 3px 8px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #f2a8ba, #e07f97);
-  box-shadow: 0 4px 10px rgba(224, 127, 151, 0.4);
-}
-
-.cal-grid .anniv { color: var(--pink-deep); font-weight: 600; }
-.cal-grid .anniv::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 2px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--pink);
-  transform: translateX(-50%);
-}
 
 /* Dock */
 
@@ -1431,7 +1230,8 @@ button.row { cursor: pointer; }
 @media (min-width: 820px) {
   .lock-time { font-size: 76px; }
   .big-clock { font-size: 58px; }
-  .home-page, .page-scroll { padding-left: 22px; padding-right: 22px; }
+  .page-scroll { padding-left: 22px; padding-right: 22px; }
+  .home-page { padding-left: 16px; padding-right: 16px; }
 }
 
 @media (max-height: 780px) {
@@ -1441,21 +1241,11 @@ button.row { cursor: pointer; }
   .app-grid-all .tile-ic { width: 45px; height: 45px; border-radius: 14px; }
   .app-grid-all .tile-ic svg { width: 19px; height: 19px; }
   .app-grid-all .tile-name { font-size: 9px; }
-  .stat-card { display: none; }
   .main-card { padding: 24px 22px 20px; }
   .main-ava { width: 66px; height: 66px; font-size: 19px; }
   .main-ring { width: 112px; height: 112px; margin-left: -56px; top: 18px; }
-  .clock-card { padding: 14px 20px 12px; }
-  .big-clock { font-size: 50px; }
-  .days-card { padding: 13px 18px; }
-  .days-num { font-size: 38px; }
-  .days-label { margin: 2px 0 4px; }
   .app-grid { gap: 12px 6px; }
   .tile-ic { width: 52px; height: 52px; border-radius: 17px; }
-  .quote-card { padding: 11px 16px 10px; }
-  .quote-text { -webkit-line-clamp: 1; }
-  .cal-card { padding: 12px 16px 10px; }
-  .cal-grid span { line-height: 26px; height: 26px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1466,23 +1256,6 @@ button.row { cursor: pointer; }
   }
 }
 
-/* 纪念日 */
-.anniv-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 20px;
-}
-.anniv-label { margin: 0; font-size: 9.5px; letter-spacing: 0.18em; color: var(--ink-3); }
-.anniv-name { margin: 6px 0 0; font-size: 14px; color: var(--ink); letter-spacing: 0.02em; }
-.anniv-num { display: flex; align-items: baseline; gap: 4px; }
-.anniv-num b {
-  font-size: 32px;
-  font-weight: 300;
-  color: var(--pink-deep);
-  font-variant-numeric: tabular-nums;
-}
-.anniv-num span { font-size: 11px; color: var(--ink-3); }
 .statusbar .page-label { text-align: right; }
 
 /* 第三页「他」 */
@@ -1794,13 +1567,6 @@ button.row { cursor: pointer; }
   50%      { opacity: 0.55; box-shadow: 0 0 0 5px rgba(127, 199, 154, 0.06); }
 }
 
-/* 引号轻轻浮动 */
-.quote-card::before { animation: quoteFloat 7s ease-in-out infinite; }
-@keyframes quoteFloat {
-  0%, 100% { transform: translateY(0); opacity: 0.28; }
-  50%      { transform: translateY(-3px); opacity: 0.45; }
-}
-
 /* 解锁后他先开口的那一条 */
 .msg.first-pop { animation: popIn 0.6s var(--ease-ios) both; }
 @keyframes popIn {
@@ -1811,7 +1577,7 @@ button.row { cursor: pointer; }
 /* 首屏：状态栏在流内，组件区吃满剩余高度 */
 .home-page:first-of-type {
   justify-content: start;
-  gap: 10px;
+  gap: 12px;
   padding-top: calc(14px + var(--safe-t));
   grid-template-rows: auto minmax(0, 1fr);
 }
@@ -1824,20 +1590,14 @@ button.row { cursor: pointer; }
 
 /* 矮屏最终覆盖（放在最后，确保生效）：21 个格子必须一屏装下 */
 @media (max-height: 780px) {
-  .home-page { gap: 10px; }
-  .home-page:first-of-type { gap: 12px; }
   .app-grid-all { gap: 8px 4px; padding: 4px 2px 0; }
   .app-grid-all .tile-ic { width: 44px; height: 44px; border-radius: 14px; }
   .app-grid-all .tile-ic svg { width: 19px; height: 19px; }
   .app-grid-all .tile-name { font-size: 9px; line-height: 1.3; }
-  .stat-card { display: none; }
-  .cal-card { padding: 12px 16px 10px; }
-  .cal-grid span { line-height: 25px; height: 25px; }
 }
 
 /* 极矮屏（≤660）：再收一档 */
 @media (max-height: 660px) {
-  .home-page { gap: 8px; }
   .app-grid-all { gap: 6px 2px; }
   .app-grid-all .tile-ic { width: 41px; height: 41px; border-radius: 13px; }
   .app-grid-all .tile-name { font-size: 8.5px; }
@@ -1845,7 +1605,6 @@ button.row { cursor: pointer; }
   .main-ava { width: 60px; height: 60px; font-size: 18px; }
   .main-ring { width: 102px; height: 102px; margin-left: -51px; top: 14px; }
   .today-card { padding: 12px 20px; }
-  .quote-card { padding: 12px 16px 10px; }
 }
 
 /* ============================================================
@@ -1898,7 +1657,7 @@ button.row { cursor: pointer; }
 }
 .home-page:first-of-type {
   justify-content: start;
-  gap: 10px;
+  gap: 12px;
   padding-top: calc(14px + var(--safe-t));
   grid-template-rows: auto minmax(0, 1fr);
 }
@@ -1909,8 +1668,6 @@ button.row { cursor: pointer; }
   top: auto;
 }
 .home-page > * { min-width: 0; grid-column: span 4; }
-.home-page > .mini-tile { grid-column: span 1; }
-.home-page > .data-card { grid-column: span 2; }
 .app-grid-all { grid-column: span 4; }
 
 /* 大卡 */
@@ -1975,29 +1732,6 @@ button.row { cursor: pointer; }
   font-size: 9px;
   letter-spacing: 0.18em;
   color: var(--ink-3);
-}
-
-/* 水纹：唯一会一直动的东西 */
-.ripple {
-  position: absolute;
-  left: -8%;
-  right: -8%;
-  bottom: -8px;
-  width: 116%;
-  height: 66px;
-  opacity: 0.6;
-  pointer-events: none;
-}
-.wv path {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.9);
-  stroke-width: 1.1;
-}
-.wv.w1 { animation: waveMove 12s linear infinite; }
-.wv.w2 { animation: waveMove 19s linear infinite reverse; opacity: 0.6; }
-@keyframes waveMove {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-200px); }
 }
 
 /* 音乐横条 */
@@ -2099,12 +1833,8 @@ button.row { cursor: pointer; }
 .app-grid-all .tile-ic { width: 58px; height: 58px; border-radius: 18px; }
 .app-grid-all .tile-name { font-size: 9.5px; }
 
-/* 第三页：日历满宽，纪念日与周报各占两格 */
-.home-page > .anniv-card { grid-column: span 2; }
-.home-page > .week-card { grid-column: span 2; }
-
 @media (max-height: 780px) {
-  .home-page { gap: 8px; padding-left: 14px; padding-right: 14px; }
+  .home-page { gap: 8px; padding-left: 16px; padding-right: 16px; }
   .big-card { min-height: 224px; padding: 16px; }
   .main-ava { width: 44px; height: 44px; flex-basis: 44px; font-size: 15px; }
   .main-name { font-size: 15.5px; }
@@ -2115,10 +1845,6 @@ button.row { cursor: pointer; }
   .app-grid-all .tile-ic svg { width: 21px; height: 21px; }
   .app-grid-all .tile-name { font-size: 9px; }
   .data-num b { font-size: 42px; }
-  .cal-card { padding: 12px 14px 10px; }
-  .cal-grid span { line-height: 25px; height: 25px; }
-  .anniv-card, .week-card { padding: 12px 14px; }
-  .anniv-num b { font-size: 26px; }
 }
 
 /* —— 首屏修正：文字不溢出、同一行等高 —— */
@@ -2130,8 +1856,6 @@ button.row { cursor: pointer; }
 .big-card { min-height: 306px; }
 .big-body { margin-top: auto; padding-bottom: 54px; }
 .big-quote { max-width: 27ch; }
-.ripple { bottom: -4px; height: 72px; opacity: 0.75; }
-.wv path { stroke: rgba(255, 255, 255, 0.95); }
 .statusbar { color: var(--ink-2); }
 
 @media (max-height: 780px) {
@@ -2139,10 +1863,6 @@ button.row { cursor: pointer; }
   .big-body { padding-bottom: 42px; }
   .big-quote { max-width: 24ch; }
 }
-
-/* —— 第三页：纪念日与周报都满宽，别挤 —— */
-.home-page > .anniv-card { grid-column: span 4; }
-.home-page > .week-card { grid-column: span 4; }
 
 /* —— 大卡：文字别沉到底，中间不要挖洞 —— */
 .big-body { margin-top: 26px; padding-bottom: 58px; }
@@ -2211,25 +1931,6 @@ button.row { cursor: pointer; }
 }
 .bento.editing .w { animation: none; }
 
-.edit-done {
-  position: absolute;
-  right: 16px;
-  bottom: 12px;
-  z-index: 12;
-  padding: 8px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  color: var(--ink);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  box-shadow: 0 6px 18px rgba(120, 110, 130, 0.12);
-}
-.edit-done[hidden] { display: none; }
-
 /* 组件：情侣 */
 .w-pair {
   display: flex;
@@ -2272,31 +1973,6 @@ button.row { cursor: pointer; }
   justify-content: center;
   padding: 6px 12px;
 }
-.days-num {
-  margin: 0;
-  font-family: Georgia, "Songti SC", "Times New Roman", serif;
-  font-style: italic;
-  font-size: 42px;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: -0.01em;
-  color: #43434c;
-  font-variant-numeric: tabular-nums;
-}
-.days-label {
-  margin: 3px 0 5px;
-  font-size: 8px;
-  letter-spacing: 0.36em;
-  color: var(--ink-3);
-}
-.pulse-line { width: 132px; height: 12px; }
-.pulse-line path {
-  fill: none;
-  stroke: rgba(120, 115, 130, 0.4);
-  stroke-width: 1.2;
-  stroke-linecap: round;
-}
-
 /* 组件：时钟 */
 .w-clock {
   display: flex;
@@ -2454,18 +2130,8 @@ button.row { cursor: pointer; }
 }
 .mini-tile svg { stroke: var(--inkc, #b96a82); }
 
-.page-dots-hint {
-  grid-column: span 4;
-  text-align: center;
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  color: var(--ink-3);
-}
-.page-dots-hint[hidden] { display: none; }
-
 @media (max-height: 780px) {
   .bento { grid-auto-rows: 78px; gap: 8px; }
-  .days-num { font-size: 36px; }
   .clock-time { font-size: 44px; }
   .pa { width: 46px; height: 46px; font-size: 14px; }
   .quad .tile-ic { width: 36px; height: 36px; border-radius: 12px; }
@@ -2480,7 +2146,6 @@ button.row { cursor: pointer; }
   .diary-meta { margin-top: 4px; font-size: 7px; }
   .pair-avas { gap: 18px; }
   .pair-names { font-size: 9px; gap: 22px; }
-  .days-num { font-size: 34px; }
   .clock-time { font-size: 42px; }
   .mkicker { font-size: 7px; }
   .mtitle { font-size: 12px; }
@@ -2563,7 +2228,6 @@ button.row { cursor: pointer; }
 
 /* 文字层级收一档 */
 .clock-time { color: #1f232b; }
-.days-num { color: #1f232b; }
 .main-name, .mtitle, .diary-kicker { color: #2a2e36; }
 .main-status, .clock-date, .diary-text, .mb-sub { color: #8b909a; }
 
@@ -2777,12 +2441,6 @@ body.widget-editing .sb-right { opacity: 0; }
 .day-row.inferred .row-name em { color: #b0b4bc; }
 .day-note { padding: 12px 14px; }
 
-/* --- 第 3 页新卡 --- */
-.dev-card { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
-.dev-line { font-size: 12px; color: #6f7480; margin-top: 2px; }
-.dev-card .anniv-num { flex: 0 0 auto; }
-.dev-card[hidden], #cdCard[hidden] { display: none; }
-
 /* --- 日历上的倒数日小点 --- */
 .cal-grid span.cd { position: relative; color: #1f232b; font-weight: 600; }
 .cal-grid span.cd::after {
@@ -2903,11 +2561,6 @@ body[data-wallimg="1"] .bg {
 /* ---- 厚玻璃 ---- */
 .glass,
 .dock.glass,
-.cal-card,
-.anniv-card,
-.week-card,
-.stat-card,
-.dev-card,
 .list-card {
   background: rgba(255, 255, 255, 0.34) !important;
   border: 1px solid rgba(255, 255, 255, 0.52) !important;
@@ -2923,20 +2576,6 @@ body[data-wallimg="1"] .bg {
 /* 卡片内部留白更松 */
 .w-pair, .w-days, .w-said, .w-diary { padding-left: 18px; padding-right: 18px; }
 
-/* ---- 大字 ---- */
-.days-num {
-  font-size: 46px !important;
-  font-weight: 300;
-  letter-spacing: -0.02em;
-  color: #23262d;
-  font-variant-numeric: tabular-nums;
-}
-.days-label {
-  font-size: 8.5px !important;
-  letter-spacing: 0.4em !important;
-  color: rgba(70, 74, 86, 0.5) !important;
-  text-transform: uppercase;
-}
 .clock-time {
   font-size: 44px !important;
   font-weight: 300;
@@ -2993,14 +2632,6 @@ body[data-wallimg="1"] .bg {
 .statusbar { color: rgba(56, 60, 72, 0.66); }
 .sb-date-mini, .page-label { color: rgba(56, 60, 72, 0.5); letter-spacing: 0.1em; }
 .page-label { font-size: 9px; letter-spacing: 0.2em; }
-
-/* ---- 分页圆点 ---- */
-.pager-dots button {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: rgba(60, 64, 76, 0.18);
-  border: none; padding: 0;
-}
-.pager-dots button.on { background: rgba(60, 64, 76, 0.55); width: 14px; border-radius: 3px; }
 
 /* ---- 壁纸选择 ---- */
 .wall-row {
@@ -3069,11 +2700,6 @@ body[data-wallimg="1"] .bg {
 /* 覆盖旧"极简版"里用 !important 关掉的毛玻璃与颗粒 */
 .glass,
 .dock.glass,
-.cal-card,
-.anniv-card,
-.week-card,
-.stat-card,
-.dev-card,
 .list-card {
   backdrop-filter: blur(20px) saturate(1.35) !important;
   -webkit-backdrop-filter: blur(20px) saturate(1.35) !important;
@@ -3250,11 +2876,8 @@ body[data-wall="photo"] .statusbar { color: rgba(44, 48, 58, 0.72); }
 .quad .tile-ic svg { width: 17px; height: 17px; }
 
 /* 每页别贴边：上下留白，网格不要铺满整个高度 */
-.home-page { padding-left: 20px !important; padding-right: 20px !important; }
+.home-page { padding-left: 16px !important; padding-right: 16px !important; }
 .app-grid-all { align-content: start !important; padding-bottom: 24px; }
-
-/* 第四页也别塞满：统计条先收起来（想看回来跟我说） */
-.stat-card { display: none !important; }
 
 /* 音乐卡收成一行高：小封面、少一行字 */
 .w-music { padding: 12px 18px !important; }
@@ -3337,11 +2960,6 @@ body[data-wall="photo"] .bg {
    ============================================================ */
 .glass,
 .dock.glass,
-.cal-card,
-.anniv-card,
-.week-card,
-.stat-card,
-.dev-card,
 .list-card {
   background: rgba(255, 255, 255, 0.4) !important;
   border: 1px solid rgba(255, 255, 255, 0.62) !important;
@@ -3404,11 +3022,6 @@ body[data-wall="photo"] .bg {
 /* 卡片：近白、22px 圆角、极软的影，边几乎看不见 */
 .glass,
 .dock.glass,
-.cal-card,
-.anniv-card,
-.week-card,
-.stat-card,
-.dev-card,
 .list-card {
   background: rgba(255, 255, 255, 0.72) !important;
   border: 1px solid rgba(255, 255, 255, 0.6) !important;
@@ -3437,29 +3050,8 @@ body[data-wall="photo"] .bg {
   text-shadow: 0 0 6px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(255, 255, 255, 0.85);
 }
 
-/* 点缀字：小、疏、灰 */
-.days-label,
-.mkicker,
-.clock-sub,
-.diary-date,
-.said-kicker,
-.anniv-label,
-.stat span {
-  letter-spacing: 0.18em;
-  color: var(--ink-3) !important;
-}
-
-/* 数字与时钟：极细、干净的无衬线（去掉斜体衬线） */
-.days-num,
-.clock-time { color: #3f434a !important; }
-.clock-time { font-weight: 200; }
-.days-num {
-  font-family: inherit;
-  font-style: normal;
-  font-weight: 200;
-  font-size: 44px;
-  letter-spacing: 0.02em;
-}
+/* 时钟：极细、干净的无衬线（去掉斜体衬线） */
+.clock-time { color: #3f434a !important; font-weight: 200; }
 
 /* 日记/他说正文：回到干净的灰（不用楷体） */
 .diary-text,
@@ -3476,8 +3068,7 @@ body[data-wall="photo"] .bg {
   color: var(--ink-2) !important;
 }
 
-/* 潮青点缀，只给该有的地方：心跳线、进度条、播放键、状态点、心 */
-.pulse-line path { stroke: rgba(111, 157, 151, 0.6) !important; }
+/* 潮青点缀，只给该有的地方：进度条、播放键、状态点、心 */
 .mbar i { background: var(--tide) !important; }
 .mplay { color: var(--tide) !important; }
 .sb-dot { background: var(--tide) !important; }
@@ -4223,8 +3814,6 @@ section.home-page > * { flex-shrink: 0; }
 /* 主屏卡片内修复：UA 的 p margin、旧 .row 列表规则渗漏、小格图标 */
 .card p { margin: 0; }
 .card .row { color: #fff; padding: 0; border: 0; font-size: inherit; text-align: left; }
-.c-album, .c-mail { display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
-.c-album svg, .c-mail svg { width: 24px; height: 24px; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 /* 主屏可读性：白字轻阴影；状态栏在深底上白化 */
 .card { text-shadow: 0 1px 10px rgba(0, 0, 0, 0.22); }
 section.home-page .statusbar,
@@ -4233,8 +3822,6 @@ section.home-page .statusbar #sbState { color: rgba(255, 255, 255, 0.88); }
 section.home-page .statusbar .sb-dot { background: #6ec6ff; }
 /* 深底上白色光斑太抢，主屏里压掉 */
 section.home-page .bg-blob { opacity: 0.12; }
-/* 1x1 小卡：说明一行截断，不溢出 */
-.c-album .t-11, .c-mail .t-11 { width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* 「我」页的全部应用 */
 .set-apps-card { padding: 16px; }
 .set-apps-card .app-grid-all { padding: 4px 0 0; }

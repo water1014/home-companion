@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v40';
+  window.__TIDE_MARK = 'LOCAL-v41';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -617,11 +617,11 @@
   /* 未读角标 */
 
   function addBadge(appId) {
-    document.querySelectorAll(`.tile[data-app="${appId}"] .badge, .dock .tile[data-app="${appId}"] .badge`)
+    document.querySelectorAll(`.tile[data-app="${appId}"] .badge, .dock .tile[data-app="${appId}"] .badge, .card[data-app="${appId}"] .badge`)
       .forEach((b) => b.classList.add('show'));
   }
   function clearBadge(appId) {
-    document.querySelectorAll(`.tile[data-app="${appId}"] .badge`)
+    document.querySelectorAll(`.tile[data-app="${appId}"] .badge, .card[data-app="${appId}"] .badge`)
       .forEach((b) => b.classList.remove('show'));
   }
 
@@ -776,6 +776,7 @@
 
   function renderCalendar() {
     const grid = $('calGrid');
+    if (!grid) return;   // 日历卡已不在主屏；倒数页删改日子时还会调到这
     const now = new Date();
     const y = now.getFullYear();
     const m = now.getMonth();
@@ -902,52 +903,7 @@
     $('statFacts').textContent = (S.memory.facts || []).length;
   }
 
-  /* 这一周：哪几天说过话 */
-  function renderWeek() {
-    const row = $('weekRow');
-    if (!row) return;
-
-    const spoken = new Set(S.chat.map((m) => new Date(m.ts).toDateString()));
-    const today = new Date();
-    const names = '日一二三四五六';
-
-    row.innerHTML = '';
-    let count = 0;
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today.getTime() - i * 86400000);
-      const on = spoken.has(d.toDateString());
-      if (on) count++;
-
-      const cell = document.createElement('div');
-      cell.className = 'week-day' + (on ? ' on' : '') + (i === 0 ? ' today' : '');
-
-      const nm = document.createElement('span');
-      nm.className = 'wd-name';
-      nm.textContent = names[d.getDay()];
-
-      const dt = document.createElement('span');
-      dt.className = 'wd-dot';
-      dt.textContent = d.getDate();
-
-      cell.appendChild(nm);
-      cell.appendChild(dt);
-      row.appendChild(cell);
-    }
-
-    setTxt('weekSub', count ? '这周说了 ' + count + ' 天' : '这周还空着');
-  }
-
   /* 他最近说的一句 */
-  function renderQuote() {
-    const el = $('quoteText');
-    if (!el) return;
-    const last = S.chat.slice().reverse().find((m) => !isMine(m) && m.text);
-    el.textContent = last ? last.text.replace(/\n+/g, ' ') : '第一句话，等你先说。';
-    setTxt('quoteFrom', last ? '他 · ' + hhmm(last.ts) : '他在这儿，没走');
-  }
-
-  /* 主屏第二页：他记得的事（只读，最多 4 条） */
   function renderHomeMemories() {
     const ul = $('homeMemories');
     if (!ul) return;
@@ -1161,175 +1117,224 @@
   }
 
   /* ============================================================
-     首屏：四栏栅格里从上到下固定五块
-     4x2 状态大卡 → 4x1 音乐条 → 2x1 + 1x1 + 1x1 → 2x2 数据卡 → 4x1 一句话卡
-     顺序可以长按拖动换，存在 homeOrder 里；不拖就永远是这个顺序。
+     主屏：杂志式拼贴（四栏栅格，顺序和尺寸固定，不长按拖动）
+     4x2 天数卡 → 2x2 状态卡 + 2x1 设备格 + 1x1 聊天格
+     → 4x1 之间卡 → 4x1 音乐条 → 2x2 相册卡 + 2x2 一周卡 → 4x1 一句话卡
+     同一排内不许同尺寸；第 5 排两个 2x2 是需求方确认的例外。
+     第 2 排 4+2+1=7 格占 8 格位，右下角留一格空（五种尺寸里没有
+     1x2/3x2，填不满；要填满得把聊天格升 2x1 或状态卡升 4x2）。
      ============================================================ */
   const GRID_SIZE = {
-    status: 'g-4x2', music: 'g-4x1', next: 'g-2x1',
-    album: 'g-1x1', mail: 'g-1x1', data: 'g-2x2', said: 'g-4x1',
+    days: 'g-4x2', status: 'g-2x2', chat: 'g-1x1', device: 'g-2x1',
+    between: 'g-4x1', music: 'g-4x1', album: 'g-2x2', week: 'g-2x2', quote: 'g-4x1',
   };
-  const GRID_DEFAULT = ['status', 'music', 'next', 'album', 'mail', 'data', 'said'];
+  /* 主屏九块的顺序（按大组读，渲染看 GRID_GROUPS） */
+  const GRID_DEFAULT = ['days', 'status', 'device', 'chat', 'between', 'music', 'album', 'week', 'quote'];
+  /* 大组：组与组之间 24px，组内卡片之间 12px（css 的 .grid/.grp-box） */
+  const GRID_GROUPS = [['days'], ['status', 'device', 'chat'], ['between'], ['music'], ['album', 'week'], ['quote']];
+  /* 点哪张卡进哪个页（之间页还没做，先落唯一的之间功能——卡券页） */
+  const GRID_GO = { chat: 'chat', device: 'device', between: 'cards', album: 'album' };
+
+  /* 一句话卡：每天一句，按本地日期从数组里取 */
+  const QUOTES = [
+    '潮水每天都会来，我也是。',
+    '你说话的时候，海面是亮的。',
+    '不用赶，潮汐不等谁，但总归会来。',
+    '今天也想了你一遍，不多不少。',
+    '把日子过慢一点，才听得见回音。',
+    '你在的时候，连沉默都是温的。',
+    '月亮把海面铺平，替我说晚安。',
+    '有些话不必说完，潮会替我记得。',
+    '晴天有晴天的好，雨天有雨天的静。',
+    '所有的离开，都是为了回来。',
+    '海那么大，我只想回到你这片。',
+    '慢慢来，我们有一整个余生。',
+  ];
 
   const GRID_HTML = {
-    status: () =>
-      '<div class="ripple"><i></i><i></i><i></i></div>' +
-      '<div class="who">' +
-        '<div class="ava" id="gAva">满</div>' +
-        '<div>' +
-          '<p class="t-20" id="gName">—</p>' +
-          '<p class="t-11 dim"><i class="breath" style="display:inline-block;vertical-align:middle;margin-right:4px"></i><span id="gHome">在家</span></p>' +
+    days: () =>
+      '<div class="days">' +
+        '<div class="days-pair">' +
+          '<div class="pair-ava d56 partner" id="daysAvaP"></div>' +
+          '<svg class="days-wave" viewBox="0 0 72 12" aria-hidden="true">' +
+            '<path d="M0 6 Q 9 1 18 6 T 36 6 T 54 6 T 72 6" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1"/>' +
+          '</svg>' +
+          '<div class="pair-ava d56 me" id="daysAvaM"></div>' +
         '</div>' +
-      '</div>' +
-      '<p class="t-11 dim">TODAY</p>' +
-      '<p class="t-15" id="gStatus">…</p>',
-
-    music: () =>
-      '<div class="cover"><svg viewBox="0 0 24 24"><use href="#i-music"/></svg></div>' +
-      '<div class="meta">' +
-        '<p class="t-11 dim">NOW PLAYING</p>' +
-        '<p class="t-15" id="gSong">—</p>' +
-      '</div>' +
-      '<div class="bar"><i></i></div>',
-
-    next: () =>
-      '<p class="t-11 dim">接下来</p>' +
-      '<p class="t-20"><span id="gNextDays">—</span> <span class="t-11 dim">天后</span></p>' +
-      '<p class="t-11 dim" id="gNextName">—</p>',
-
-    album: () =>
-      '<svg viewBox="0 0 24 24"><use href="#i-photo"/></svg>' +
-      '<p class="t-20" id="gAlbumN">0</p>' +
-      '<p class="t-11 dim" id="gAlbumT">张照片</p>',
-
-    mail: () =>
-      '<svg viewBox="0 0 24 24"><use href="#i-mail"/></svg>' +
-      '<p class="t-20" id="gMailN">0</p>' +
-      '<p class="t-11 dim" id="gMailT">条留言</p>',
-
-    data: () =>
-      '<div class="row">' +
-        '<p class="t-11 dim">心率</p>' +
-        '<p class="num"><span class="t-44" id="gBpm">—</span><span class="unit">bpm</span></p>' +
-      '</div>' +
-      '<div class="row">' +
-        '<p class="t-11 dim">电量</p>' +
-        '<p class="num"><span class="t-44" id="gBat">—</span><span class="unit">%</span></p>' +
+        '<p class="days-num" id="daysNum">—</p>' +
+        '<p class="days-since" id="daysSince">since —</p>' +
       '</div>',
 
-    said: () =>
-      '<p class="t-11 dim">他想对你说</p>' +
-      '<p class="t-15 txt" id="gSaid">…</p>',
+    status: () =>
+      '<div class="pair-ava d36 partner st-ava" id="stAva"></div>' +
+      '<p class="st-word" id="stWord">—</p>' +
+      '<p class="st-sub" id="stSub"></p>' +
+      '<i class="breath st-dot" aria-hidden="true"></i>',
+
+    chat: () =>
+      '<svg class="g-ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chat"/></svg>' +
+      '<p class="tile-t">说</p>' +
+      '<i class="badge" aria-hidden="true"></i>',
+
+    device: () =>
+      '<div class="dv">' +
+        '<b class="tile-num" id="dvNum">—</b>' +
+        '<span class="tile-t">电量</span>' +
+      '</div>',
+
+    between: () =>
+      '<div class="bt">' +
+        '<div class="bt-cell"><p class="tile-num"><span id="btCoupon">0</span><i>张</i></p><p class="tile-t">卡券</p></div>' +
+        '<div class="bt-cell"><p class="tile-num" id="btMail">0</p><p class="tile-t">未拆信</p></div>' +
+        '<div class="bt-cell"><p class="tile-num" id="btWish">0</p><p class="tile-t">心愿</p></div>' +
+      '</div>',
+
+    music: () =>
+      '<div class="mu">' +
+        '<div class="mu-cover"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-music"/></svg></div>' +
+        '<div class="mu-meta">' +
+          '<p class="mu-title" id="muTitle">想听什么，放给我</p>' +
+          '<p class="mu-artist" id="muArtist"></p>' +
+        '</div>' +
+        '<button class="mu-play" id="muPlay" type="button" aria-label="播放">' +
+          '<svg class="ic-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19.5 12z"/></svg>' +
+          '<svg class="ic-pause" viewBox="0 0 24 24"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>' +
+        '</button>' +
+      '</div>' +
+      '<div class="mu-bar"><i></i></div>',
+
+    album: () =>
+      '<div class="al" id="alGrid"></div>',
+
+    week: () =>
+      '<div class="wk">' +
+        '<div class="wk-row" id="wkRow"></div>' +
+        '<p class="wk-sub" id="wkSub">—</p>' +
+      '</div>',
+
+    quote: () =>
+      '<p class="qt" id="qtText">—</p>',
   };
-
-  const GRID_GO = { music: 'music', next: 'countdown', album: 'album', mail: 'message', said: 'chat' };
-
-  function gridOrder() {
-    const saved = load(KEY.homeOrder, null);
-    const arr = Array.isArray(saved) ? saved.filter((id) => GRID_SIZE[id]) : [];
-    GRID_DEFAULT.forEach((id) => { if (arr.indexOf(id) < 0) arr.push(id); });
-    return arr;
-  }
-
-  function emptyText(k, fb) {
-    const e = (S.settings && S.settings.emptyText) || {};
-    return e[k] || fb;
-  }
 
   function renderGrid() {
     const box = $('grid');
     if (!box) return;
     box.innerHTML = '';
-    gridOrder().forEach((id) => {
-      const el = document.createElement('div');
-      el.className = 'card ' + GRID_SIZE[id] + ' c-' + id;
-      el.dataset.card = id;
-      el.innerHTML = GRID_HTML[id]();
-      const go = GRID_GO[id];
-      if (go) el.addEventListener('click', () => openPage(go));
-      box.appendChild(el);
+    GRID_GROUPS.forEach((ids) => {
+      const g = document.createElement('div');
+      g.className = 'grp-box';
+      ids.forEach((id) => {
+        const el = document.createElement('div');
+        el.className = 'card ' + GRID_SIZE[id] + ' c-' + id;
+        el.dataset.card = id;
+        el.dataset.app = id;   // data-app 让未读红点那套选择器也能找到主屏的卡
+        el.innerHTML = GRID_HTML[id]();
+        const go = GRID_GO[id];
+        if (go) {
+          el.classList.add('tap');
+          el.addEventListener('click', () => openPage(go));
+        }
+        g.appendChild(el);
+      });
+      box.appendChild(g);
     });
-    bindGridDrag(box);
+    // 音乐播放键：只切视觉状态（这首歌还没有真的播放器）
+    const play = $('muPlay');
+    if (play) play.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = play.closest('.card');
+      const on = card.classList.toggle('playing');
+      play.setAttribute('aria-label', on ? '暂停' : '播放');
+    });
+    renderWeek();
+    renderQuote();
     updateGrid();
   }
 
   function updateGrid() {
-    const L = S.life || {};
-    setTxt('gAva', partnerInitial());
-    setTxt('gName', partnerName());
-    setTxt('gHome', (S.settings && S.settings.statusLine) || '在家');
-    setTxt('gStatus', P.statusLine(S.persona, Date.now()));
+    // 双人天数卡
+    setHTML('daysAvaP', partnerAvaInner(''));
+    setHTML('daysAvaM', myAvaInner(''));
+    setTxt('daysNum', String(daysSince()));
+    setTxt('daysSince', 'since ' + (S.memory.startDate || todayStr()).replace(/-/g, '.'));
 
-    const song = (L.music || [])[0];
-    setTxt('gSong', song ? song.title + ' · ' + song.artist : '想听什么，放给我');
+    // 状态卡：今天挑过的心情词，没挑就看他现在的
+    setHTML('stAva', partnerAvaInner(''));
+    setTxt('stWord', (S.moodLog || {})[todayStr()] || P.moodWord(S.persona));
+    setTxt('stSub', P.moodSub(S.persona));
 
-    // 接下来：最近的一个倒数日
-    const cds = (L.countdowns || []).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    let hit = null;
-    for (let i = 0; i < cds.length; i++) {
-      const d = Math.ceil((new Date(cds[i].date + 'T00:00:00').getTime() - Date.now()) / 86400000);
-      if (d >= 0) { hit = { c: cds[i], d: d }; break; }
-    }
-    setTxt('gNextDays', hit ? String(hit.d) : '—');
-    setTxt('gNextName', hit ? hit.c.title : '先攒一个日子，一起数');
+    // 设备格：浏览器给的真实电量，采不到就 —
+    const d = S.life.device || {};
+    setTxt('dvNum', d.battery === undefined ? '—' : String(Math.round(d.battery * 100)));
 
-    const pn = (L.photos || []).length;
-    const mn = (L.mails || []).length;
-    setTxt('gAlbumN', String(pn));
-    setTxt('gAlbumT', pn ? '张照片' : '去放第一张');
-    setTxt('gMailN', String(mn));
-    setTxt('gMailT', mn ? '条留言' : '写一句给他');
+    // 之间卡：没用掉的卡券 / 留言 / 心愿（心愿页还没做，先占 0）
+    setTxt('btCoupon', String((S.life.coupons || []).filter((c) => !c.usedAt).length));
+    setTxt('btMail', String((S.life.mails || []).length));
+    setTxt('btWish', '0');
 
-    setTxt('gBpm', String(56 + Math.round((S.persona.mood || 0) / 3)));
-    setTxt('gBat', String(Math.round(S.persona.energy || 0)));
-    setTxt('gSaid', (L.said && L.said.text) || emptyText('chat', '还没说话，说一句就开张'));
+    // 音乐条
+    const song = (S.life.music || [])[0];
+    setTxt('muTitle', song ? song.title : '想听什么，放给我');
+    setTxt('muArtist', song ? (song.artist || '') : '');
+
+    // 相册卡 / 一周卡 / 一句话卡
+    renderAlbumCard();
+    renderWeek();
+    renderQuote();
   }
 
-  /* 长按换位置：默认顺序已经排好，想换就换，换了记下来 */
-  function bindGridDrag(box) {
-    let timer = 0, from = null, down = false;
-
-    const cardAt = (x, y) => {
-      const els = box.querySelectorAll('.card');
-      for (let i = 0; i < els.length; i++) {
-        const r = els[i].getBoundingClientRect();
-        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return els[i];
-      }
-      return null;
-    };
-
-    box.addEventListener('pointerdown', (e) => {
-      const card = e.target.closest ? e.target.closest('.card') : null;
-      if (!card) return;
-      down = true;
-      from = card;
-      timer = setTimeout(() => {
-        if (!down || !from) return;
-        from.classList.add('dragging');
-        box.classList.add('dragging');
-      }, 480);
+  /* 相册卡：2x2 缩略图，没图就一句「放第一张吧」 */
+  function renderAlbumCard() {
+    const box = $('alGrid');
+    if (!box) return;
+    const photos = (S.life.photos || []).filter((p) => p.img).slice(0, 4);
+    const sig = photos.map((p) => p.id).join(',');
+    if (box.dataset.sig === sig) return;   // 60 秒 tick 会反复来，没变就不重画
+    box.dataset.sig = sig;
+    box.innerHTML = '';
+    if (!photos.length) {
+      const p = document.createElement('p');
+      p.className = 'al-empty';
+      p.textContent = '放第一张吧';
+      box.appendChild(p);
+      return;
+    }
+    photos.forEach((ph) => {
+      const i = document.createElement('i');
+      i.style.backgroundImage = 'url("' + ph.img + '")';
+      box.appendChild(i);
     });
+  }
 
-    box.addEventListener('pointermove', (e) => {
-      if (!down || !from || !from.classList.contains('dragging')) return;
-      const over = cardAt(e.clientX, e.clientY);
-      if (!over || over === from) return;
-      const cards = Array.prototype.slice.call(box.querySelectorAll('.card'));
-      const a = cards.indexOf(from), b = cards.indexOf(over);
-      if (a < 0 || b < 0) return;
-      box.insertBefore(from, a < b ? over.nextSibling : over);
+  /* 一周卡：七个 24px 方块，四档深浅，聊得多越深 */
+  function renderWeek() {
+    const row = $('wkRow');
+    if (!row) return;
+    const byDay = {};
+    S.chat.forEach((m) => {
+      const k = new Date(m.ts).toDateString();
+      byDay[k] = (byDay[k] || 0) + 1;
     });
+    const today = new Date();
+    row.innerHTML = '';
+    let count = 0;
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today.getTime() - i * 86400000);
+      const n = byDay[d.toDateString()] || 0;
+      if (n > 0) count++;
+      const cell = document.createElement('i');
+      cell.className = 'wk-d l' + (n >= 6 ? 3 : n >= 3 ? 2 : n >= 1 ? 1 : 0) + (i === 0 ? ' today' : '');
+      row.appendChild(cell);
+    }
+    setTxt('wkSub', count ? '这周说了 ' + count + ' 天' : '这周还空着');
+  }
 
-    const end = () => {
-      clearTimeout(timer);
-      if (from) from.classList.remove('dragging');
-      box.classList.remove('dragging');
-      down = false; from = null;
-      const order = Array.prototype.slice.call(box.querySelectorAll('.card')).map((c) => c.dataset.card);
-      save(KEY.homeOrder, order);
-    };
-    box.addEventListener('pointerup', end);
-    box.addEventListener('pointercancel', end);
+  /* 一句话卡：每天一句，按本地日期从数组里取 */
+  function renderQuote() {
+    const el = $('qtText');
+    if (!el) return;
+    const day = Math.floor((Date.now() + new Date().getTimezoneOffset() * 60000) / 86400000);
+    el.textContent = QUOTES[day % QUOTES.length];
   }
 
   /** 第二页：没放进首页的组件 */
@@ -1952,14 +1957,11 @@
     setTxt('setUserLabel', S.memory.userName || '我');
     setTxt('setMoodLine', '在一起第 ' + daysSince() + ' 天');
 
-    renderCalendar();
+    // 日历/纪念日/倒数卡/统计/设备卡都已不在主屏（只留在全部应用里），
+    // 这里只刷还在主屏的一周卡和一句话卡；talk-list 是状态页的，照旧刷
     renderWeek();
-    renderMonthStats();
-    renderAnniv();
     renderQuote();
     renderTalk();
-    renderCountdownCard();
-    renderDeviceCard();
   }
 
   /* ================= 课程表 ================= */
@@ -2150,6 +2152,7 @@
           // 会形成微任务无限递归，把主线程饿死（设备页整个冻住）
           if (currentPage === 'device') { renderDeviceRows(); setTxt('deviceLine', deviceLine()); }
           renderDeviceCard();
+          if (typeof updateGrid === 'function') updateGrid();   // 主屏设备格的电量
         }).catch(() => {});
       }
     } catch (_) {}

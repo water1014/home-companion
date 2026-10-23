@@ -84,59 +84,11 @@
         <span class="sb-right"><i class="sb-dot"></i><span id="sbState">他在家</span></span>
       </div>
 
-      <!-- 首屏：四栏栅格，从上到下固定五块 -->
+      <!-- 首屏：四栏栅格，杂志式拼贴，九块顺序和尺寸都固定（js/app.js GRID_GROUPS） -->
       <div class="grid" id="grid" aria-label="首屏"></div>
-
-      <!-- 再往下滚：我们的（日历 / 纪念日 / 这一周 / 统计） -->
-      <section class="cal-card glass" id="calCard">
-        <header class="cal-head">
-          <h2 id="calTitle">2026 · 十月</h2>
-          <span class="cal-mark">♥</span>
-        </header>
-        <div class="cal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span class="wk">六</span><span class="wk">日</span></div>
-        <div class="cal-grid" id="calGrid"></div>
-      </section>
-
-      <section class="glass anniv-card" id="annivCard">
-        <div>
-          <p class="anniv-label">下一个纪念日</p>
-          <p class="anniv-name" id="annivName">第 1 个纪念日</p>
-        </div>
-        <div class="anniv-num"><b id="annivDays">0</b><span>天</span></div>
-      </section>
-
-      <section class="glass anniv-card" id="cdCard" hidden>
-        <div>
-          <p class="anniv-label">在数的日子</p>
-          <p class="anniv-name" id="cdCardName">—</p>
-        </div>
-        <div class="anniv-num"><b id="cdCardDays">0</b><span id="cdCardSub">天后</span></div>
-      </section>
-
-      <section class="glass dev-card" id="devCard" hidden>
-        <div>
-          <p class="anniv-label">他看到的你</p>
-          <p class="dev-line" id="devCardSub">—</p>
-        </div>
-        <div class="anniv-num"><b id="devCardVal">—</b><span>电量</span></div>
-      </section>
-
-      <section class="glass week-card">
-        <header class="card-head"><h3>这一周</h3><span class="week-sub" id="weekSub"></span></header>
-        <div class="week-row" id="weekRow"></div>
-      </section>
-
-      <section class="glass stat-card">
-        <div class="stat"><b id="statDays">0</b><span>天聊过</span></div>
-        <div class="stat"><b id="statMsgs">0</b><span>条消息</span></div>
-        <div class="stat"><b id="statFacts">0</b><span>件事记着</span></div>
-      </section>
     </section>
 
   </div>
-
-  <div class="page-dots-hint" id="editHint" hidden>长按卡片可换位置</div>
-  <button class="edit-done" id="editDone" type="button" hidden>完成</button>
 
   <nav class="dock glass" id="dock" aria-label="常驻"></nav>
 </main>
