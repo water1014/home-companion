@@ -5165,3 +5165,27 @@ html .bento .card, html .card{
   -webkit-backdrop-filter: blur(30px) saturate(1.6) !important;
   backdrop-filter: blur(30px) saturate(1.6) !important;
 }
+
+/* V7 · 今日编辑卡（真实日期，点开进日历） */
+html .c-today{ padding: 16px 20px !important; }
+html .c-today{ cursor: pointer; }
+html .c-today .td{
+  height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;
+}
+html .c-today .td-eyebrow{
+  margin: 0; font-size: 10px; letter-spacing: .34em; text-indent: .34em;
+  color: var(--accent); opacity: .85;
+}
+html .c-today .td-day{
+  margin: 0; font-family: var(--font-serif);
+  font-size: clamp(46px, 14vw, 64px) !important; line-height: 1 !important;
+  font-weight: 300; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+html .c-today .td-meta{
+  margin: 2px 0 0; font-size: 12px; letter-spacing: .16em; color: var(--text-2);
+}
+html .c-today .td-hint{
+  margin: 6px 0 0; font-size: 11px; letter-spacing: .04em; color: var(--text-3);
+}
+html .c-today:active{ transform: scale(.995); }

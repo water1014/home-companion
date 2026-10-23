@@ -1254,6 +1254,7 @@
      4x2 全宽卡 / 2x2 半宽卡（1x1 只留给应用矩阵）。
      顺序即桌面从上到下的顺序（device/album/week 默认收起，见 dtHidden） */
   const DT_CARDS = {
+    today:   { page: 0, size: 'g-4x2', name: '今日', go: 'calendar' },
     days:    { page: 0, size: 'g-4x2', name: '在一起多少天', go: 'now', seg: 'status' },
     status:  { page: 0, size: 'g-2x2', name: '他的状态', go: 'now', seg: 'status' },
     chat:    { page: 0, size: 'g-2x2', name: '和他聊聊', go: 'chat' },
@@ -1265,7 +1266,7 @@
     quote:   { page: 0, size: 'g-4x2', name: '一句话', go: null },
   };
   /* 美化页开关的列举顺序 = 桌面从上到下 */
-  const DT_ORDER = ['days', 'status', 'chat', 'between', 'music', 'device', 'album', 'week', 'quote'];
+  const DT_ORDER = ['today', 'days', 'status', 'chat', 'between', 'music', 'device', 'album', 'week', 'quote'];
 
   /* 收起了哪些卡片：存 S.settings.widgets.hidden。
      老配置里是旧组件 id（pair/clock/quad…），这里只认 DT_CARDS 里有的。
@@ -1423,6 +1424,14 @@
         '<p class="wk-sub" id="wkSub">—</p>' +
       '</div>',
 
+    today: () =>
+      '<div class="td">' +
+        '<p class="td-eyebrow">今日</p>' +
+        '<p class="td-day" id="tdDay">—</p>' +
+        '<p class="td-meta" id="tdMeta">—</p>' +
+        '<p class="td-hint">点开看这天</p>' +
+      '</div>',
+
     quote: () =>
       '<p class="qt" id="qtText">—</p>',
   };
@@ -1433,6 +1442,7 @@
     setHTML('daysAvaM', myAvaInner(''));
     setTxt('daysNum', String(daysSince()));
     setTxt('daysSince', 'since ' + (S.memory.startDate || todayStr()).replace(/-/g, '.'));
+    renderToday();
 
     // 状态卡：今天挑过的心情词，没挑就看他现在的
     setHTML('stAva', partnerAvaInner(''));
@@ -1511,6 +1521,16 @@
     if (!el) return;
     const day = Math.floor((Date.now() + new Date().getTimezoneOffset() * 60000) / 86400000);
     el.textContent = QUOTES[day % QUOTES.length];
+  }
+
+  /* 今日卡：真实日期 + 星期（不依赖照片/记录；点开进日历） */
+  function renderToday() {
+    if (!$('tdDay')) return;
+    const now = new Date();
+    const M = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+    const W = ['周日','周一','周二','周三','周四','周五','周六'];
+    setTxt('tdDay', String(now.getDate()));
+    setTxt('tdMeta', M[now.getMonth()] + ' · ' + W[now.getDay()]);
   }
 
   /** 首页里的一行应用：直接吃首页名单里的一chunk（4 个） */
