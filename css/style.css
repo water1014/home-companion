@@ -8501,3 +8501,303 @@ html .chat-page .stream { padding: 16px 22px 8px !important; }
   letter-spacing: -0.01em !important;
   white-space: nowrap !important;
 }
+
+/* ============================================================
+   v59 · NOW（现在：状态/一天/设备）：按 MOON 标准统一
+   —— 壁纸透出 + 毛玻璃卡 + 大号衬线数字 + 悬浮胶囊感
+   ============================================================ */
+
+/* ---------- 1. 背景：去灰底，透出壁纸 + 压暗/压亮遮罩 ---------- */
+#now {
+  background: transparent !important;
+  isolation: isolate;
+}
+#now::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -2;
+  pointer-events: none;
+  background:
+    var(--wall-img, url("../icons/wall.jpg")) center / cover no-repeat,
+    linear-gradient(168deg, #2b2438 0%, #191428 55%, #241d33 100%);
+}
+#now::after {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+      rgba(9, 7, 16, 0.78) 0%,
+      rgba(9, 7, 16, 0.60) 48%,
+      rgba(9, 7, 16, 0.76) 100%);
+}
+html[data-theme="light"] #now::after {
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.86) 0%,
+      rgba(255, 255, 255, 0.70) 48%,
+      rgba(255, 255, 255, 0.84) 100%);
+}
+
+/* ---------- 2. 分段条：与 FLOWER/MIRROR 同一套留白与字距 ---------- */
+html #now .seg-bar {
+  gap: 22px !important;
+  padding: 12px 24px 0 !important;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+html #now .seg-bar::-webkit-scrollbar { display: none; }
+html #now .seg-btn {
+  flex: 0 0 auto;
+  font-size: 11.5px !important;
+  letter-spacing: .08em !important;
+  padding-bottom: 10px !important;
+}
+html #now .page-scroll {
+  padding: 8px 24px 120px !important;
+}
+
+/* ---------- 3. 卡片：毛玻璃 + 两层阴影 + 悬停上浮 ---------- */
+html #now .glass {
+  background: rgba(255, 255, 255, 0.10) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    0 10px 30px rgba(0, 0, 0, 0.18) !important;
+  transition: transform 320ms var(--ease), box-shadow 320ms var(--ease);
+}
+html[data-theme="light"] #now .glass {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow:
+    0 2px 8px rgba(28, 28, 40, 0.06),
+    0 10px 30px rgba(28, 28, 40, 0.10) !important;
+}
+html #now .glass:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 18px 44px rgba(0, 0, 0, 0.26) !important;
+}
+
+/* ---------- 4. 卡内文字在暗壁纸上提亮 ---------- */
+html #now .glass { color: #fff; }
+html[data-theme="light"] #now .glass { color: var(--text); }
+html #now .mood-word { color: #fff !important; }
+html #now .mood-sub,
+html #now .meter-top span,
+html #now .hint,
+html #now .talk-list li,
+html #now .memories li { color: rgba(255, 255, 255, 0.74) !important; }
+html[data-theme="light"] #now .mood-word { color: var(--text) !important; }
+html[data-theme="light"] #now .mood-sub,
+html[data-theme="light"] #now .meter-top span,
+html[data-theme="light"] #now .hint,
+html[data-theme="light"] #now .talk-list li,
+html[data-theme="light"] #now .memories li { color: var(--k-ink3) !important; }
+html #now .card-head h3 { color: #fff !important; }
+html[data-theme="light"] #now .card-head h3 { color: var(--text) !important; }
+
+/* ---------- 5. 状态卡：心情词用大号衬线，像 MOON 的标题 ---------- */
+html #now .mood-main { padding: 26px 22px 24px !important; }
+html #now .mood-word {
+  font-family: var(--k-display) !important;
+  font-size: clamp(34px, 9.5vw, 46px) !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.10em !important;
+  margin: 16px 0 8px !important;
+}
+html #now .mood-sub { font-size: 13px !important; letter-spacing: .04em; }
+html #now .pair-ava.big {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28) !important;
+}
+/* 心情选项：胶囊 */
+html #now .mood-picker button {
+  background: rgba(255, 255, 255, 0.10) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+  transition: transform 260ms var(--ease), background 260ms var(--ease);
+}
+html #now .mood-picker button:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+html #now .mood-picker button.on {
+  background: linear-gradient(145deg, #f7cdd8, #e9a0b4) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+html[data-theme="light"] #now .mood-picker button {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border-color: rgba(0, 0, 0, .06) !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="light"] #now .mood-picker button.on {
+  background: linear-gradient(145deg, #f7cdd8, #e9a0b4) !important;
+  color: #fff !important;
+}
+
+/* ---------- 6. 量表卡：数值用大号衬线（与 MOON 天数同一语言） ---------- */
+html #now .meter-card {
+  padding: 20px 22px 22px !important;
+  gap: 20px !important;
+}
+html #now .meter-top {
+  align-items: baseline !important;
+  margin-bottom: 9px !important;
+}
+html #now .meter-top span:first-child {
+  font-size: 10px !important;
+  letter-spacing: 0.2em !important;
+  text-transform: uppercase;
+}
+html #now .meter-val {
+  font-family: var(--k-display) !important;
+  font-size: 26px !important;
+  font-weight: 300 !important;
+  color: #fff !important;
+  line-height: 1;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.28);
+}
+html[data-theme="light"] #now .meter-val { color: var(--text) !important; }
+html #now .bar {
+  height: 3px !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+html[data-theme="light"] #now .bar { background: rgba(28, 28, 40, 0.12) !important; }
+
+/* ---------- 7. 底部收口：给悬浮底栏留位 ---------- */
+html #now .page-scroll { padding-bottom: 112px !important; }
+
+/* ============================================================
+   v60 · MORE / SETTINGS（更多 / 我的）：也铺上同一张壁纸
+   —— 与 MOON / WATER / FLOWER / MIRROR / NOW 共用一套材质
+   ============================================================ */
+
+#more, #settings {
+  background: transparent !important;
+  isolation: isolate;
+}
+#more::before, #settings::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -2;
+  pointer-events: none;
+  background:
+    var(--wall-img, url("../icons/wall.jpg")) center / cover no-repeat,
+    linear-gradient(168deg, #2b2438 0%, #191428 55%, #241d33 100%);
+}
+#more::after, #settings::after {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+      rgba(9, 7, 16, 0.80) 0%,
+      rgba(9, 7, 16, 0.66) 46%,
+      rgba(9, 7, 16, 0.80) 100%);
+}
+html[data-theme="light"] #more::after,
+html[data-theme="light"] #settings::after {
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.88) 0%,
+      rgba(255, 255, 255, 0.74) 46%,
+      rgba(255, 255, 255, 0.86) 100%);
+}
+
+/* 卡片：毛玻璃 */
+html .set-page .list-card,
+html .more-page .list-card,
+html .set-page .profile-card,
+html .more-page .acct-card {
+  background: rgba(255, 255, 255, 0.10) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    0 10px 30px rgba(0, 0, 0, 0.18) !important;
+  transition: transform 320ms var(--ease), box-shadow 320ms var(--ease);
+}
+html[data-theme="light"] .set-page .list-card,
+html[data-theme="light"] .more-page .list-card,
+html[data-theme="light"] .set-page .profile-card,
+html[data-theme="light"] .more-page .acct-card {
+  background: rgba(255, 255, 255, 0.58) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
+  box-shadow:
+    0 2px 8px rgba(28, 28, 40, 0.06),
+    0 10px 30px rgba(28, 28, 40, 0.10) !important;
+}
+html .set-page .list-card:hover,
+html .more-page .list-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 18px 44px rgba(0, 0, 0, 0.26) !important;
+}
+
+/* 暗色下文字提亮（原 --text 在近黑底上是灰的，铺壁幕后必须提） */
+html[data-theme="dark"] .set-page,
+html[data-theme="dark"] .more-page {
+  color: #fff;
+}
+html[data-theme="dark"] .set-page .row-name,
+html[data-theme="dark"] .more-page .row-name,
+html[data-theme="dark"] .set-page .row-side,
+html[data-theme="dark"] .more-page .row-side {
+  color: #fff !important;
+}
+html[data-theme="dark"] .set-page .row-name small,
+html[data-theme="dark"] .more-page .row-name small,
+html[data-theme="dark"] .set-page .warn,
+html[data-theme="dark"] .more-page .hint {
+  color: rgba(255, 255, 255, 0.66) !important;
+}
+html[data-theme="dark"] .set-page .list-head,
+html[data-theme="dark"] .more-page .list-head {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+html[data-theme="dark"] .set-page .row,
+html[data-theme="dark"] .more-page .row {
+  border-bottom-color: rgba(255, 255, 255, 0.10) !important;
+}
+html[data-theme="dark"] .set-page .row input[type="text"],
+html[data-theme="dark"] .set-page .row input[type="url"],
+html[data-theme="dark"] .set-page .row input[type="password"],
+html[data-theme="dark"] .set-page .row input[type="date"] {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+/* 个人资料卡 */
+html[data-theme="dark"] .set-page .profile-name,
+html[data-theme="dark"] .set-page .profile-sub,
+html[data-theme="dark"] .set-page .profile-note {
+  color: #fff !important;
+}
+html[data-theme="dark"] .set-page .profile-sub,
+html[data-theme="dark"] .set-page .profile-note b {
+  color: rgba(255, 255, 255, 0.68) !important;
+}
+/* 行图标底座改成半透白，贴合玻璃层 */
+html[data-theme="dark"] .set-page .row-ic,
+html[data-theme="dark"] .more-page .row-ic,
+html[data-theme="dark"] .set-page .row:nth-child(odd) .row-ic,
+html[data-theme="dark"] .more-page .row:nth-child(odd) .row-ic {
+  background: rgba(255, 255, 255, 0.14) !important;
+  stroke: #fff !important;
+  color: #fff !important;
+}
+
+/* ---------- v60.1：浅色下设置/更多页图标底座改浅色（别再是黑方块） ---------- */
+html[data-theme="light"] .set-page .row-ic,
+html[data-theme="light"] .more-page .row-ic,
+html[data-theme="light"] .set-page .row:nth-child(odd) .row-ic,
+html[data-theme="light"] .more-page .row:nth-child(odd) .row-ic {
+  background: rgba(255, 255, 255, 0.62) !important;
+  stroke: var(--ink-2) !important;
+  color: var(--ink-2) !important;
+  border: 1px solid rgba(0, 0, 0, .05) !important;
+}
+html[data-theme="light"] .set-page .row.danger .row-ic {
+  background: rgba(194, 96, 111, .12) !important;
+  stroke: #c2606f !important;
+  color: #c2606f !important;
+}
