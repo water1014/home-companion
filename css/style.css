@@ -7946,3 +7946,17 @@ html .rec-search-input:focus-visible{
   outline: none !important;
 }
 html[data-theme="light"] .rec-search-input::placeholder{ color: var(--k-ink3) !important; }
+
+/* ---- MOON 的 NOW · 此刻 卡：可点进「状态 / 一天 / 设备」（now 容器页）。
+        只在文件末尾新增，不动上面任何既有规则 ---- */
+.mn-now.tap-now { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mn-now.tap-now:active { opacity: 0.82; }
+.mn-now.tap-now .mn-label::after {
+  content: '\2192';
+  margin-left: 7px;
+  font-size: 11px;
+  opacity: 0.4;
+  letter-spacing: 0;
+  transition: opacity 0.18s var(--ease);
+}
+.mn-now.tap-now:hover .mn-label::after { opacity: 0.75; }

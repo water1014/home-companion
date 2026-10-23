@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v44';
+  window.__TIDE_MARK = 'LOCAL-v52';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -1853,6 +1853,14 @@
         const b = e.target.closest('[data-moon-go]');
         if (b) openPage(b.dataset.moonGo);
       });
+    }
+    /* NOW · 此刻 → 完整的「状态 / 一天 / 设备」（now 容器页）。
+       四个 Tab 里没有 now 的格子，主屏也不再渲染应用矩阵和桌面大卡，
+       这里是它唯一的入口：点卡片进去，右滑或点底栏「月」回来 */
+    const nowCard = $('moonNow');
+    if (nowCard) {
+      nowCard.classList.add('tap-now');
+      nowCard.addEventListener('click', () => openPage('now', 'status'));
     }
     const play = $('mnMuPlay');
     const bar = $('moonMusic');
