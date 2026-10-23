@@ -7256,3 +7256,198 @@ html .home-page{ padding-bottom: 118px !important; }
 html .mn-wave path{ opacity: .75; }
 /* 底栏已经有 WATER 了，右下角那颗常驻胶囊在 MOON 是多余的 */
 html #findMe{ display: none !important; }
+
+/* ============================================================
+   V19 · 第二步：WATER 消息动效 / FLOWER 细线下划线 Tab / MIRROR 微交互
+   ============================================================ */
+
+/* ---------- 1. WATER：消息像水泡浮出水面 ---------- */
+@keyframes waterIn{
+  from{ opacity: 0; transform: scale(.95); }
+  to{ opacity: 1; transform: scale(1); }
+}
+html .msg.first-pop{
+  animation: waterIn .5s cubic-bezier(.22, .61, .36, 1) both !important;
+  transform-origin: 0 100%;
+}
+html .msg.me.first-pop{ transform-origin: 100% 100%; }
+
+/* 动作描写作为前缀先浮现，正文随后跟上 */
+@keyframes actIn{
+  from{ opacity: 0; transform: translateY(4px); }
+  to{ opacity: .62; transform: translateY(0); }
+}
+html .msg .bubble em{
+  animation: actIn .5s cubic-bezier(.22, .61, .36, 1) both;
+}
+
+/* ---------- 2. 思考面板：手风琴（max-height）+ 光标闪烁 ---------- */
+html .think-body{
+  display: block !important;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0 !important;
+  border-top-color: transparent !important;
+  transition: max-height 420ms cubic-bezier(.22, .61, .36, 1),
+              opacity 300ms ease,
+              padding-top 300ms ease,
+              border-color 300ms ease;
+}
+html .think-card.closed .think-body{ display: block !important; max-height: 0 !important; opacity: 0 !important; }
+html .think-card.open .think-body{
+  display: block !important;
+  max-height: 340px !important;
+  opacity: 1 !important;
+  padding-top: 10px !important;
+  border-top-color: var(--k-line-soft) !important;
+}
+@keyframes kBlink{ 50%{ opacity: 0; } }
+html .think-card.open .think-body::after{
+  content: '';
+  display: inline-block;
+  width: 1px; height: .95em;
+  margin-left: 3px;
+  vertical-align: -2px;
+  background: currentColor;
+  animation: kBlink 1.05s steps(1, end) infinite;
+}
+/* 标题前的圆点：折叠时呼吸，展开时常亮 */
+@keyframes kPulse{ 0%,100%{ opacity: .35; } 50%{ opacity: .9; } }
+html .think-card.closed .think-head::before{ animation: kPulse 2.6s ease-in-out infinite; }
+
+/* ---------- 3. FLOWER：细线 Tab，选中一条下划线滑出来 ---------- */
+html .seg-bar{
+  justify-content: flex-start !important;
+  gap: 30px !important;
+  padding: 14px 24px 0 !important;
+  border-bottom: 1px solid var(--k-line) !important;
+}
+html .seg-btn{
+  position: relative;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 4px 0 11px !important;
+  font-size: 12px !important;
+  font-weight: 300 !important;
+  letter-spacing: .1em !important;
+  color: var(--k-ink3) !important;
+  transition: color 240ms ease;
+}
+html .seg-btn.on{ color: var(--text) !important; }
+html .seg-btn::after{
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 340ms cubic-bezier(.22, .61, .36, 1);
+}
+html .seg-btn.on::after{ transform: scaleX(1); }
+
+/* ---------- 4. MIRROR：设置行箭头右移 / 拍立得被「捏起」 ---------- */
+html .set-page .list-card button.row::after,
+html .more-page .list-card button.row::after{
+  transition: transform 220ms cubic-bezier(.22, .61, .36, 1), opacity 220ms ease;
+}
+html .set-page .list-card button.row:active::after,
+html .more-page .list-card button.row:active::after{ transform: translateX(4px); }
+
+html .pl-item{
+  transition: transform 280ms cubic-bezier(.22, .61, .36, 1), box-shadow 280ms ease;
+}
+html .pl-item:hover{
+  transform: rotate(0deg) scale(1.05) !important;
+  box-shadow: 0 16px 34px -18px rgba(0, 0, 0, .55) !important;
+}
+html[data-theme="light"] .pl-item:hover{
+  box-shadow: 0 16px 30px -18px rgba(26, 38, 58, .38) !important;
+}
+
+/* ---------- 5. 页面切换：轻微上滑淡入，不要生硬闪 ---------- */
+@keyframes pageIn{
+  from{ opacity: 0; transform: translateY(10px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+html .screen.page.open{ animation: pageIn 320ms cubic-bezier(.22, .61, .36, 1) both; }
+
+@media (prefers-reduced-motion: reduce){
+  html .msg.first-pop,
+  html .msg .bubble em,
+  html .think-card.open .think-body::after,
+  html .think-card.closed .think-head::before,
+  html .screen.page.open{ animation: none !important; }
+  html .think-body, html .seg-btn::after, html .pl-item,
+  html .set-page .list-card button.row::after{ transition: none !important; }
+}
+
+/* ---------- V19.1 FLOWER 收口：Tab 白块 / 列表改细线 / 两侧 24px ---------- */
+html .seg-btn.on,
+html .seg-bar .seg-btn.on{
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+html .page-scroll{
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  padding-top: 10px !important;
+}
+/* 记忆/相册列表：一行一条细线，不要玻璃块 */
+html .memories{ gap: 0 !important; }
+html .memories li{
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--k-line) !important;
+  border-radius: 0 !important;
+  padding: 14px 0 !important;
+  color: var(--text) !important;
+  font-weight: 300 !important;
+}
+html .memories li::before{ opacity: .45; }
+html .memories li button{ opacity: .5; }
+/* 搜索框：一条底线 */
+html .rec-search-input{
+  border: 0 !important;
+  border-bottom: 1px solid var(--k-line) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding-left: 0 !important;
+}
+/* 记录页大数字与说明 */
+html .mem-count b{ font-family: var(--k-display) !important; font-weight: 300 !important; letter-spacing: -.02em !important; }
+
+/* ---------- V19.2 WATER 收口：系统提示与发送键都回到细线 ---------- */
+html .sys-note,
+html .sys-note.mem-pill,
+html .miss-you{
+  background: transparent !important;
+  border: 1px solid var(--k-line-soft) !important;
+  box-shadow: none !important;
+  border-radius: 12px !important;
+}
+html .sys-note{ font-size: 10.5px !important; letter-spacing: .1em; color: var(--k-ink3) !important; }
+html .mem-pill .mn-t b{ font-weight: 400 !important; letter-spacing: .12em; }
+html .miss-you .my-body b{ font-weight: 400 !important; letter-spacing: .12em; }
+html .miss-you .my-body span{ color: var(--k-ink3) !important; }
+/* 发送键：细线圆 + 细箭头 */
+html .composer .send,
+html .composer button[type="submit"]{
+  background: transparent !important;
+  color: var(--text) !important;
+  border: 1px solid var(--k-line) !important;
+  box-shadow: none !important;
+}
+html .composer .send:disabled{ opacity: .35; }
+/* 快捷语：细线胶囊 */
+html .quick .chip{
+  background: transparent !important;
+  border: 1px solid var(--k-line-soft) !important;
+  color: var(--k-ink2) !important;
+  border-radius: 999px !important;
+}
+/* 聊天正文两侧 24px */
+html .chat-page .stream{ padding: 16px 24px 8px !important; }
+html #chat .composer-wrap{ padding-left: 24px !important; padding-right: 24px !important; }
