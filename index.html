@@ -185,11 +185,11 @@
         <p class="cp-head-t">他</p>
         <div class="cp-ava-row">
           <div class="cp-ava-unit">
-            <div class="cp-ava" id="chatPartnerAvaPrev"><span>宋</span></div>
+            <div class="cp-ava" id="chatAvaPartnerPrev"><span>宋</span></div>
             <span class="cp-ava-label">他的头像</span>
             <div class="cp-ava-acts">
-              <button class="cp-link" id="chatPartnerAvaUp" type="button">换图</button>
-              <button class="cp-link dim" id="chatPartnerAvaClr" type="button" hidden>用首字</button>
+              <button class="cp-link" id="chatAvaPartnerUp" type="button">换图</button>
+              <button class="cp-link dim" id="chatAvaPartnerClr" type="button" hidden>用首字</button>
             </div>
           </div>
           <div class="cp-ava-unit">
@@ -201,11 +201,11 @@
             </div>
           </div>
         </div>
-        <input type="file" id="chatPartnerAvaFile" accept="image/*" hidden />
+        <input type="file" id="chatAvaPartnerFile" accept="image/*" hidden />
         <input type="file" id="chatMyAvaFile" accept="image/*" hidden />
         <label class="cp-field">
           <span class="cp-field-name">聊天里对他的称呼</span>
-          <input type="text" id="chatPartnerAlias" placeholder="用本名「宋祁」" maxlength="12" />
+          <input type="text" id="chatAliasPartner" placeholder="用本名「宋祁」" maxlength="12" />
         </label>
         <p class="cp-hint">只在聊天界面生效，不改动他在别处的名字。</p>
       </section>
@@ -285,15 +285,15 @@
 </section>
 
 <!-- ============ 心情（他的状态） ============ -->
-<section class="screen page mood-page" id="mood" aria-label="他的状态">
+<section class="screen page mood-page" id="mood" aria-label="状态">
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">他的状态</p>
+    <p class="head-title">状态</p>
     <span class="head-spacer"></span>
   </header>
 
   <div class="page-scroll">
-    <section class="glass mood-hero">
+    <section class="glass mood-main">
       <div class="pair-ava big partner"><span id="moodAvaPartner">满</span></div>
       <p class="mood-word" id="moodWord">平静</p>
       <p class="mood-sub" id="moodSub">像一杯放凉了的茶</p>
@@ -338,7 +338,7 @@
 </section>
 
 <!-- ============ 设置（我的） ============ -->
-<section class="screen page set-page" id="settings" aria-label="设置">
+<section class="screen page set-page" id="settings" aria-label="我的">
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
     <p class="head-title">我的</p>
@@ -434,15 +434,15 @@
 </section>
 
 <!-- ============ 记忆库 ============ -->
-<section class="screen page memory-page" id="memory" aria-label="记忆库">
+<section class="screen page memory-page" id="memory" aria-label="记忆">
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">记忆库</p>
+    <p class="head-title">记忆</p>
     <span class="head-spacer"></span>
   </header>
 
   <div class="page-scroll">
-    <section class="glass mem-hero">
+    <section class="glass mem-main">
       <p class="mem-count"><b id="memCount">0</b><span>条记忆</span></p>
       <p class="mem-sub">跟着他一起，跨对话保留。</p>
     </section>
@@ -464,10 +464,10 @@
 </section>
 
 <!-- ============ 课程表 ============ -->
-<section class="screen page" id="courses" aria-label="课程表">
+<section class="screen page" id="courses" aria-label="课程">
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">课程表</p>
+    <p class="head-title">课程</p>
     <button class="head-act" id="btnAddCourse" type="button">加一节</button>
   </header>
   <div class="page-scroll">
@@ -491,10 +491,10 @@
 </section>
 
 <!-- ============ 倒数日 ============ -->
-<section class="screen page" id="countdown" aria-label="倒数日">
+<section class="screen page" id="countdown" aria-label="倒数">
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">倒数日</p>
+    <p class="head-title">倒数</p>
     <button class="head-act" id="btnAddCd" type="button">加一个</button>
   </header>
   <div class="page-scroll">
@@ -535,10 +535,10 @@
 </section>
 
 <!-- ============ 他的一天 ============ -->
-<section class="screen page" id="partnerday" aria-label="他的一天">
+<section class="screen page" id="partnerday" aria-label="一天">
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">他的一天</p>
+    <p class="head-title">一天</p>
     <span class="head-spacer"></span>
   </header>
   <div class="page-scroll">
@@ -554,10 +554,10 @@
 </section>
 
 <!-- ============ 查手机 ============ -->
-<section class="screen page" id="device" aria-label="查手机">
+<section class="screen page" id="device" aria-label="设备">
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-    <p class="head-title">查手机</p>
+    <p class="head-title">设备</p>
     <span class="head-spacer"></span>
   </header>
   <div class="page-scroll">

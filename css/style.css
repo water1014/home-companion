@@ -136,7 +136,7 @@ button { font-family: inherit; }
 }
 
 /* 记忆库 */
-.mem-hero { padding: 24px 22px; text-align: center; }
+.mem-main { padding: 24px 22px; text-align: center; }
 .mem-count { margin: 0; font-size: 13px; color: var(--ink-2); letter-spacing: 0.05em; }
 .mem-count b {
   font-size: 42px;
@@ -1144,7 +1144,7 @@ button { font-family: inherit; }
 
 /* ---------- 心情页 ---------- */
 
-.mood-hero {
+.mood-main {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1442,9 +1442,9 @@ button.row { cursor: pointer; }
   .app-grid-all .tile-ic svg { width: 19px; height: 19px; }
   .app-grid-all .tile-name { font-size: 9px; }
   .stat-card { display: none; }
-  .hero-card { padding: 24px 22px 20px; }
-  .hero-ava { width: 66px; height: 66px; font-size: 19px; }
-  .hero-ring { width: 112px; height: 112px; margin-left: -56px; top: 18px; }
+  .main-card { padding: 24px 22px 20px; }
+  .main-ava { width: 66px; height: 66px; font-size: 19px; }
+  .main-ring { width: 112px; height: 112px; margin-left: -56px; top: 18px; }
   .clock-card { padding: 14px 20px 12px; }
   .big-clock { font-size: 50px; }
   .days-card { padding: 13px 18px; }
@@ -1563,7 +1563,7 @@ button.row { cursor: pointer; }
 }
 
 /* 人 */
-.hero-card {
+.main-card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1572,7 +1572,7 @@ button.row { cursor: pointer; }
   padding: 30px 24px 24px;
   overflow: hidden;
 }
-.hero-ring {
+.main-ring {
   position: absolute;
   top: 22px;
   left: 50%;
@@ -1581,21 +1581,21 @@ button.row { cursor: pointer; }
   margin-left: -64px;
   border-radius: 50%;
   border: 1px solid rgba(232, 140, 162, 0.25);
-  animation: heroPulse 5.2s ease-in-out infinite;
+  animation: mainPulse 5.2s ease-in-out infinite;
   pointer-events: none;
 }
-.hero-ring::after {
+.main-ring::after {
   content: "";
   position: absolute;
   inset: 16px;
   border-radius: 50%;
   border: 1px solid rgba(143, 166, 196, 0.18);
 }
-@keyframes heroPulse {
+@keyframes mainPulse {
   0%, 100% { transform: scale(0.94); opacity: 0.45; }
   50%      { transform: scale(1.07); opacity: 0.95; }
 }
-.hero-ava {
+.main-ava {
   position: relative;
   z-index: 1;
   width: 74px;
@@ -1609,26 +1609,26 @@ button.row { cursor: pointer; }
   color: #b36b80;
   box-shadow: 0 10px 26px rgba(224, 127, 151, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
-.hero-name {
+.main-name {
   margin: 14px 0 0;
   font-size: 19px;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--ink);
 }
-.hero-status {
+.main-status {
   margin: 6px 0 0;
   font-size: 12.5px;
   color: var(--ink-2);
   letter-spacing: 0.02em;
 }
-.hero-meta {
+.main-meta {
   margin: 15px 0 0;
   font-size: 11px;
   color: var(--ink-3);
   letter-spacing: 0.04em;
 }
-.hero-meta b {
+.main-meta b {
   color: var(--pink-deep);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -1841,9 +1841,9 @@ button.row { cursor: pointer; }
   .app-grid-all { gap: 6px 2px; }
   .app-grid-all .tile-ic { width: 41px; height: 41px; border-radius: 13px; }
   .app-grid-all .tile-name { font-size: 8.5px; }
-  .hero-card { padding: 18px 20px 16px; }
-  .hero-ava { width: 60px; height: 60px; font-size: 18px; }
-  .hero-ring { width: 102px; height: 102px; margin-left: -51px; top: 14px; }
+  .main-card { padding: 18px 20px 16px; }
+  .main-ava { width: 60px; height: 60px; font-size: 18px; }
+  .main-ring { width: 102px; height: 102px; margin-left: -51px; top: 14px; }
   .today-card { padding: 12px 20px; }
   .quote-card { padding: 12px 16px 10px; }
 }
@@ -1923,7 +1923,7 @@ button.row { cursor: pointer; }
   overflow: hidden;
 }
 .big-head { display: flex; align-items: center; gap: 12px; }
-.hero-ava {
+.main-ava {
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -1937,7 +1937,7 @@ button.row { cursor: pointer; }
   flex: 0 0 50px;
 }
 .big-who { min-width: 0; }
-.hero-name {
+.main-name {
   margin: 0;
   font-size: 17px;
   font-weight: 600;
@@ -1945,7 +1945,7 @@ button.row { cursor: pointer; }
   color: var(--ink);
   line-height: 1.2;
 }
-.hero-status {
+.main-status {
   margin: 3px 0 0;
   font-size: 10px;
   letter-spacing: 0.02em;
@@ -2106,8 +2106,8 @@ button.row { cursor: pointer; }
 @media (max-height: 780px) {
   .home-page { gap: 8px; padding-left: 14px; padding-right: 14px; }
   .big-card { min-height: 224px; padding: 16px; }
-  .hero-ava { width: 44px; height: 44px; flex-basis: 44px; font-size: 15px; }
-  .hero-name { font-size: 15.5px; }
+  .main-ava { width: 44px; height: 44px; flex-basis: 44px; font-size: 15px; }
+  .main-name { font-size: 15.5px; }
   .big-quote { font-size: 13px; -webkit-line-clamp: 2; }
   .music-bar { min-height: 52px; padding: 10px 14px; }
   .app-grid-all { gap: 9px 2px; }
@@ -2518,7 +2518,7 @@ button.row { cursor: pointer; }
 }
 /* 宋祁的头像：偏冷的紫灰 */
 .pa.partner { background: linear-gradient(150deg, #e9e5f4, #cec7e1); color: #655c80; }
-.hero-ava { background: linear-gradient(150deg, #eae6f5, #cfc8e2); color: #655c80; }
+.main-ava { background: linear-gradient(150deg, #eae6f5, #cfc8e2); color: #655c80; }
 
 /* 锁屏也透出壁纸 */
 .lock {
@@ -2564,8 +2564,8 @@ button.row { cursor: pointer; }
 /* 文字层级收一档 */
 .clock-time { color: #1f232b; }
 .days-num { color: #1f232b; }
-.hero-name, .mtitle, .diary-kicker { color: #2a2e36; }
-.hero-status, .clock-date, .diary-text, .mb-sub { color: #8b909a; }
+.main-name, .mtitle, .diary-kicker { color: #2a2e36; }
+.main-status, .clock-date, .diary-text, .mb-sub { color: #8b909a; }
 
 /* 锁屏：干净底色 */
 .lock {
@@ -2641,7 +2641,7 @@ body.widget-editing .sb-right { opacity: 0; }
 /* 头像与封面也回到极淡 */
 .pa.me { background: #edf1f7 !important; color: #64748b !important; }
 .pa.partner { background: #f1eef7 !important; color: #6b6280 !important; }
-.hero-ava { background: #f1eef7 !important; color: #6b6280 !important; }
+.main-ava { background: #f1eef7 !important; color: #6b6280 !important; }
 .mcover {
   background: #eceef3 !important;
   border-color: rgba(17, 20, 28, 0.06) !important;
@@ -4038,14 +4038,14 @@ body[data-wall="photo"] .bg {
 .album-cell.st-plain .photo-frame::before { display: none; }
 
 /* 桌面：在一起的第 N 天 */
-.together-line {
+.since-line {
   margin: 2px 2px 12px;
   font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
-.together-line:empty { display: none; }
+.since-line:empty { display: none; }
 
 /* 他（他）的心率小彩蛋：贴着最后一个泡的左下 */
 .msg .bpm {

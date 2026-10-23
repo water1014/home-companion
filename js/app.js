@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v39';
+  window.__TIDE_MARK = 'LOCAL-v40';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -41,7 +41,7 @@
     { id: 'partnerday', name: '一天', icon: 'i-sunrise', cat: 'now', page: 'partnerday' },
     { id: 'device',   name: '设备', icon: 'i-device',  cat: 'now', page: 'device' },
     { id: 'health',   name: '健康', icon: 'i-health',  cat: 'now', desc: '睡眠、喝水、久坐。数字旁边会跟一句人话，比如「今天只走了 800 步，坐太久了」。' },
-    { id: 'weather',  name: '天气', icon: 'i-sun',     cat: 'now', desc: '今天的温度、有没有雨。不接 API 就先手动记，接了就自动。' },
+    { id: 'forecast',  name: '天气', icon: 'i-sun',     cat: 'now', desc: '今天的温度、有没有雨。不接 API 就先手动记，接了就自动。' },
     { id: 'voice',    name: '声音', icon: 'i-wave',    cat: 'now', desc: '让他读出来，或者发一条语音。先在本地合成，不联网也能响。' },
     { id: 'music',    name: '音乐', icon: 'i-music',   cat: 'now', desc: '想做成「一起听」：同一个进度条，两边同时听到同一秒。\n真同步需要服务端，纯前端只能做到手动对齐。' },
 
@@ -433,7 +433,7 @@
       ? '<img alt="" src="' + S.chatUI.myAvatar + '">'
       : '<span class="' + cls + '">' + myInitial() + '</span>';
 
-  function daysTogether() {
+  function daysSince() {
     const start = new Date((S.memory.startDate || todayStr()) + 'T00:00:00');
     return Math.max(0, Math.floor((Date.now() - start.getTime()) / 86400000)) + 1;
   }
@@ -879,7 +879,7 @@
     const days = Math.round((next - today) / 86400000);
 
     const card = $('annivCard');
-    if (card) card.hidden = daysTogether() <= 1;   // 第一天只说一次
+    if (card) card.hidden = daysSince() <= 1;   // 第一天只说一次
 
     setTxt('annivDays', days);
     nameEl.textContent = days === 0
@@ -994,7 +994,7 @@
       html: () =>
         '<div class="w-days">' +
           '<p class="days-num" id="daysNum">1</p>' +
-          '<p class="days-label">DAYS TOGETHER</p>' +
+          '<p class="days-label">DAYS SINCE</p>' +
           '<svg class="pulse-line" viewBox="0 0 120 16"><path d="M0 8h34l5-5 6 10 5-8 4 3h56"/></svg>' +
         '</div>',
     },
@@ -1005,7 +1005,7 @@
         '<div class="w-clock">' +
           '<p class="clock-time" id="clockTime">--:--</p>' +
           '<p class="clock-date" id="clockDate">—</p>' +
-          '<p class="clock-sub" id="clockSub">right here</p>' +
+          '<p class="clock-sub" id="clockSub">right now</p>' +
         '</div>',
     },
 
@@ -1384,7 +1384,7 @@
 
   function updateWidgets() {
     const now = new Date();
-    const days = daysTogether();
+    const days = daysSince();
 
     // 一起听歌单（种子/以后接的数据）：有歌就报第一首
     const songs = S.life.music || [];
@@ -1940,6 +1940,7 @@
     const me = S.memory.userName ? S.memory.userName.slice(0, 1) : '我';
 
     updateWidgets();
+    updateGrid();   // 改名/改起始日马上刷主屏，不等 60 秒的时钟 tick
 
     setHTML('chatAvaPartner', partnerAvaInner(''));   // 聊天头部头像（用图或首字）
     setTxt('moodAvaPartner', partnerInitial());
@@ -1949,7 +1950,7 @@
     setTxt('setAvaMe', me);
     setTxt('setNotePartner', partnerName());
     setTxt('setUserLabel', S.memory.userName || '我');
-    setTxt('setMoodLine', '在一起第 ' + daysTogether() + ' 天');
+    setTxt('setMoodLine', '在一起第 ' + daysSince() + ' 天');
 
     renderCalendar();
     renderWeek();
@@ -2145,7 +2146,9 @@
           d.charging = b.charging;
           d.ts = Date.now();
           save(KEY.life, S.life);
-          if (currentPage === 'device') renderDevice();
+          // 只重渲染行，不能再调 collectDevice——否则 getBattery→renderDevice→collectDevice
+          // 会形成微任务无限递归，把主线程饿死（设备页整个冻住）
+          if (currentPage === 'device') { renderDeviceRows(); setTxt('deviceLine', deviceLine()); }
           renderDeviceCard();
         }).catch(() => {});
       }
@@ -2153,27 +2156,30 @@
     save(KEY.life, S.life);
   }
 
-  function renderDevice() {
+  function renderDeviceRows() {
     const box = $('deviceList');
+    if (!box) return;
+    const d = S.life.device || {};
+    const rows = [
+      ['电量', d.battery === undefined ? '这台设备不给看' : Math.round(d.battery * 100) + '%' + (d.charging ? '（在充）' : '')],
+      ['网络', d.online === false ? '断着' : '连着'],
+      ['今天亮屏', d.screenMin ? d.screenMin + ' 分钟' : '还没统计'],
+      ['屏幕', window.innerWidth + ' × ' + window.innerHeight],
+      ['现在', new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })],
+      ['系统', navigator.platform || '不知道'],
+    ];
+    box.innerHTML = '';
+    rows.forEach((r) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = '<span class="row-ic">' + esc(r[0]) + '</span><span class="row-name">' + esc(r[1]) + '</span>';
+      box.appendChild(row);
+    });
+  }
+
+  function renderDevice() {
     collectDevice();
-    if (box) {
-      const d = S.life.device || {};
-      const rows = [
-        ['电量', d.battery === undefined ? '这台设备不给看' : Math.round(d.battery * 100) + '%' + (d.charging ? '（在充）' : '')],
-        ['网络', d.online === false ? '断着' : '连着'],
-        ['今天亮屏', d.screenMin ? d.screenMin + ' 分钟' : '还没统计'],
-        ['屏幕', window.innerWidth + ' × ' + window.innerHeight],
-        ['现在', new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })],
-        ['系统', navigator.platform || '不知道'],
-      ];
-      box.innerHTML = '';
-      rows.forEach((r) => {
-        const row = document.createElement('div');
-        row.className = 'row';
-        row.innerHTML = '<span class="row-ic">' + esc(r[0]) + '</span><span class="row-name">' + esc(r[1]) + '</span>';
-        box.appendChild(row);
-      });
-    }
+    renderDeviceRows();
     setTxt('deviceLine', deviceLine());
   }
 
@@ -2197,14 +2203,14 @@
   }
 
   /** 人卡下面那行小字：今天说了几句、记住几件事 */
-  function updateHeroMeta() {
+  function updateMainMeta() {
     const today = new Date().toDateString();
     const n = S.chat.filter(
       (m) => !isMine(m) && m.text && new Date(m.ts).toDateString() === today
     ).length;
     const f = (S.memory.facts || []).length;
-    const el = $('heroMsgs');
-    const meta = el ? el.closest('.hero-meta') : null;
+    const el = $('mainMsgs');
+    const meta = el ? el.closest('.main-meta') : null;
 
     if (meta && n === 0 && f === 0) {
       meta.textContent = '刚搬进来';
@@ -2729,7 +2735,7 @@
       const node = appendMessage({ role: 'partner', text: body, action: action || '', ts: Date.now() }, true);
       node.body = '';
       typeOut(node, body, 28);
-      updateHeroMeta();
+      updateMainMeta();
       renderTalk();
       renderQuote();
       if (currentPage !== 'chat') addBadge('chat');
@@ -2859,7 +2865,7 @@
         row.className = 'row widget-row';
         row.innerHTML =
           '<span class="row-name">' + (WIDGET_CN[id] || id) + '</span>' +
-          '<select class="row-side" data-where="' + id + '">' +
+          '<select class="row-side" data-scope="' + id + '">' +
             '<option value="1"' + (cfg.p1.indexOf(id) >= 0 ? ' selected' : '') + '>首页</option>' +
             '<option value="2"' + (cfg.p1.indexOf(id) < 0 ? ' selected' : '') + '>第二页</option>' +
             '<option value="0"' + (!on ? ' selected' : '') + '>不显示</option>' +
@@ -4013,7 +4019,7 @@
     }
 
     renderMood();
-    updateHeroMeta();
+    updateMainMeta();
     tickClocks();
   }
 
@@ -4353,12 +4359,12 @@
     return '晚上好。\n今天过得怎么样？';
   }
 
-  function renderTogether() {
-    const el = $('togetherLine');
+  function renderSinceLine() {
+    const el = $('sinceLine');
     if (!el) return;
     const start = S.memory.startDate;
     el.textContent = partnerName() + ' & ' + (S.memory.userName || '我') +
-      ' · 在一起的第 ' + daysTogether() + ' 天' + (start ? ' · since ' + start.slice(5).replace('-', '.') : '');
+      ' · 在一起的第 ' + daysSince() + ' 天' + (start ? ' · since ' + start.slice(5).replace('-', '.') : '');
   }
 
   /* ================= 聊天界面设置右栏 ================= */
@@ -4417,12 +4423,12 @@
         b.classList.toggle('on', b.dataset.v === u[key]);
       });
     });
-    const alias = $('chatPartnerAlias');
+    const alias = $('chatAliasPartner');
     if (alias) alias.value = u.partnerAlias;
-    const hp = $('chatPartnerAvaPrev'), mp = $('chatMyAvaPrev');
+    const hp = $('chatAvaPartnerPrev'), mp = $('chatMyAvaPrev');
     if (hp) hp.innerHTML = partnerAvaInner('m-txt');
     if (mp) mp.innerHTML = myAvaInner('m-txt');
-    const hc = $('chatPartnerAvaClr'); if (hc) hc.hidden = !u.partnerAvatar;
+    const hc = $('chatAvaPartnerClr'); if (hc) hc.hidden = !u.partnerAvatar;
     const mc = $('chatMyAvaClr'); if (mc) mc.hidden = !u.myAvatar;
   }
 
@@ -4502,7 +4508,7 @@
     bindSeg('fs', false);
     bindSeg('bg', false);
 
-    const alias = $('chatPartnerAlias');
+    const alias = $('chatAliasPartner');
     if (alias) alias.addEventListener('input', () => {
       S.chatUI.partnerAlias = alias.value;
       saveChatUI();
@@ -4511,11 +4517,11 @@
     });
 
     // 头像：换图 / 用首字
-    const upH = $('chatPartnerAvaUp'), clrH = $('chatPartnerAvaClr');
+    const upH = $('chatAvaPartnerUp'), clrH = $('chatAvaPartnerClr');
     const upM = $('chatMyAvaUp'), clrM = $('chatMyAvaClr');
-    if (upH) upH.addEventListener('click', () => { const f = $('chatPartnerAvaFile'); if (f) f.click(); });
+    if (upH) upH.addEventListener('click', () => { const f = $('chatAvaPartnerFile'); if (f) f.click(); });
     if (upM) upM.addEventListener('click', () => { const f = $('chatMyAvaFile'); if (f) f.click(); });
-    bindAva('chatPartnerAvaFile', (data) => {
+    bindAva('chatAvaPartnerFile', (data) => {
       S.chatUI.partnerAvatar = data; saveChatUI();
       setHTML('chatAvaPartner', partnerAvaInner('')); renderHistory(); syncChatPanel();
     });
@@ -4707,10 +4713,10 @@
       });
     }
 
-    const heroCard = $('heroCard');
-    if (heroCard) {
-      heroCard.addEventListener('click', () => openPage('mood'));
-      heroCard.style.cursor = 'pointer';
+    const mainCard = $('mainCard');
+    if (mainCard) {
+      mainCard.addEventListener('click', () => openPage('mood'));
+      mainCard.style.cursor = 'pointer';
     }
 
     document.querySelectorAll('.mini-tile[data-app]').forEach((b) => {
