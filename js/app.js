@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v42b';
+  window.__TIDE_MARK = 'LOCAL-v42c';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -181,7 +181,6 @@
     memory: 'hc.v1.memory',
     settings: 'hc.v1.settings',
     mood: 'hc.v1.mood',
-    layout: 'hc.v1.layout',
     apps: 'hc.v1.apps',
     dock: 'hc.v1.dock',
     pages: 'hc.v1.appPages', // 三页各自的应用名单（自由摆放）
@@ -357,7 +356,9 @@
 
 
     if (v < SCHEMA) v = SCHEMA;
-    S.meta = { schema: v };
+    /* 保留 meta 里的其它标记（比如 STEP B 一次性归位的 stepB）：
+       以前这里是整体覆盖，会把下次启动还要用的标记冲掉 */
+    S.meta = Object.assign({}, S.meta, { schema: v });
   }
   migrate();
 
@@ -720,7 +721,7 @@
   /* 应用不再按固定数量切页：三页各有各的名单（hc.v1.appPages），
      拖到哪页就归哪页，每页放几个由你摆（各有放得下的上限）。
      APPS 仍是全量目录（顺序 = 三页名单拼起来），给四格/其他地方按 id 找应用用。 */
-  const PAGE_CAP = [0, 8, 24];   // 首页的上限跟着「组件行数」走，见 page1Cap()
+  const PAGE_CAP = [0, 8, 40];   // 首页的上限跟着「组件行数」走，见 page1Cap()
 
   function page1Cap() {
     const cfg = homeCfg();
@@ -743,9 +744,10 @@
       ids.forEach((id) => { if (!seen[id]) out[2].push(findApp(id)); });
     }
     if (!out) {
-      // 老数据迁移：按以前的切法（首页 rows*4 个、第二页 4 个、剩下的第三页）
-      const start = appSliceStart();
-      out = [APPS.slice(0, start), APPS.slice(start, start + 4), APPS.slice(start + 4)];
+      // 老数据迁移：按容量切（首页 page1Cap 个、第二页 8 个、剩下的第三页），
+      // 和美化页的上限对得上，不会出现第二页空荡荡
+      const cap1 = page1Cap();
+      out = [APPS.slice(0, cap1), APPS.slice(cap1, cap1 + PAGE_CAP[1]), APPS.slice(cap1 + PAGE_CAP[1])];
     }
     return out;
   }
@@ -756,45 +758,55 @@
     save(KEY.apps, APPS.map((a) => a.id));
   }
 
-  /* 组件行数/首页开关变了 → 各页名单重新平衡（超出的依次往后挪） */
+  /* 组件行数/首页开关变了 → 各页名单重新平衡（超出的依次往后挪）。
+     兜底守卫：万一应用总数比三页容量加起来还多（以后加应用就可能），
+     以「前面的页尽量装满」收场，绝不死循环把浏览器挂住。 */
   function clampPages() {
-    while (appPages[0].length > page1Cap()) appPages[1].unshift(appPages[0].pop());
-    while (appPages[1].length > PAGE_CAP[1]) appPages[2].unshift(appPages[1].pop());
-    while (appPages[2].length > PAGE_CAP[2]) appPages[1].push(appPages[2].pop());
+    let guard = 0;
+    while (appPages[0].length > page1Cap() && guard++ < 400) appPages[1].unshift(appPages[0].pop());
+    guard = 0;
+    while (appPages[1].length > PAGE_CAP[1] && appPages[2].length < PAGE_CAP[2] && guard++ < 400) {
+      appPages[2].unshift(appPages[1].pop());
+    }
+    guard = 0;
+    while (appPages[2].length > PAGE_CAP[2] && appPages[1].length < PAGE_CAP[1] && guard++ < 400) {
+      appPages[1].push(appPages[2].pop());
+    }
     pagesSave();
   }
 
   // appPages 在 appSliceStart 定义之后初始化（依赖 HOME_DEFAULT/homeCfg），见那儿
+  /* STEP B 三页渲染：
+     P1 = #bento（renderBento：卡片 + 应用行混排）
+     P2 = #dtCards2（status/device/album/week 四张 2x2）+ #appGrid（appPages[1]）
+     P3 = #appGrid2（appPages[2]）+ #dtCards3（quote）
+     哪页空着就收起来，圆点跟着少一个 */
   function renderApps() {
-    const grid = $('appGrid');
-    const grid2 = $('appGrid2');
-    const all = $('appGridAll');
-    const dock = $('dock');
-    if (grid) { grid.innerHTML = ''; appPages[1].forEach((a) => grid.appendChild(makeTile(a))); }
-    if (grid2) { grid2.innerHTML = ''; appPages[2].forEach((a) => grid2.appendChild(makeTile(a))); }
-    // 第三页没东西就别留一屏空白
-    const page3 = grid2 ? grid2.closest('.home-page') : null;
-    if (page3) page3.hidden = grid2.children.length === 0;
-    if (all) {
-      all.innerHTML = '';
-      APP_CATS.forEach((c) => {
-        const list = APPS.filter((a) => (a.cat || 'me') === c.k);
-        if (!list.length) return;
-        const sec = document.createElement('section');
-        sec.className = 'app-cat';
-        const h = document.createElement('h4');
-        h.className = 'app-cat-title';
-        h.textContent = c.name;
-        const g = document.createElement('nav');
-        g.className = 'app-grid app-grid-all';
-        g.setAttribute('aria-label', c.name);
-        list.forEach((a) => g.appendChild(makeTile(a)));
-        sec.appendChild(h);
-        sec.appendChild(g);
-        all.appendChild(sec);
-      });
+    const g1 = $('appGrid');
+    const g2 = $('appGrid2');
+    const c2 = $('dtCards2');
+    const c3 = $('dtCards3');
+    const hidden = dtHidden();
+    if (g1) { g1.innerHTML = ''; appPages[1].forEach((a) => g1.appendChild(makeTile(a))); }
+    if (g2) { g2.innerHTML = ''; appPages[2].forEach((a) => g2.appendChild(makeTile(a))); }
+    if (c2) {
+      c2.innerHTML = '';
+      DT_ORDER.filter((id) => DT_CARDS[id].page === 1 && hidden.indexOf(id) < 0)
+        .forEach((id) => c2.appendChild(makeDtCard(id)));
     }
-    if (dock) renderDock();
+    if (c3) {
+      c3.innerHTML = '';
+      DT_ORDER.filter((id) => DT_CARDS[id].page === 2 && hidden.indexOf(id) < 0)
+        .forEach((id) => c3.appendChild(makeDtCard(id)));
+    }
+    // 整页都没内容就收起来，别留一屏空白（display:none 由 CSS 的 [hidden] 规则保证）
+    const p2 = g1 ? g1.closest('.home-page') : null;
+    if (p2) p2.hidden = g1.children.length === 0 && (!c2 || c2.children.length === 0);
+    const p3 = g2 ? g2.closest('.home-page') : null;
+    if (p3) p3.hidden = g2.children.length === 0 && (!c3 || c3.children.length === 0);
+    syncPagerPages();
+    updateGrid();   // 卡片是刚重建的 DOM，内容（状态/电量/相册/一句话…）马上刷，别等 60s tick
+    renderDock();
   }
 
   /* v42 新 dock：五格固定，中间 Home 圆形凸起；不再跟着 DOCK 排列变 */
@@ -1072,6 +1084,17 @@
     });
   }
 
+  /* 空页收起来（display:none 会把它从滚动宽度里拿掉），圆点重数；
+     正停在被收掉那页就平滑退回最后一页 */
+  function syncPagerPages() {
+    if (!pager) return;
+    renderDots();
+    const w = pager.clientWidth || 1;
+    const shown = Array.prototype.filter.call(pager.children, (p) => !p.hidden).length;
+    const max = Math.max(0, shown - 1) * w;
+    if (pager.scrollLeft > max + 2) pager.scrollTo({ left: max, behavior: 'smooth' });
+  }
+
   if (pager) {
     let raf = 0;
     pager.addEventListener('scroll', () => {
@@ -1147,96 +1170,34 @@
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
   /* ============================================================
-     桌面组件 —— 想加新组件：往 WIDGETS 里加一条，再放进 layout
-     col / row 是占几格（总四栏）
+     v42 · STEP B · 桌面卡片（原 WIDGETS 组件系统并入这套，只留一份定义）
+     page = 落在哪一页（0/1/2）；size = 四栏栅格占位；go = 点整卡进哪个页
+     卡片内容用下面的 GRID_HTML；能不能收由美化页的开关决定
      ============================================================ */
-  const WIDGETS = {
-    pair: {
-      col: 4, row: 1,
-      html: () =>
-        '<div class="w-pair">' +
-          '<div class="pair-avas">' +
-            '<div class="pa me"><span id="paMe">我</span></div>' +
-            '<svg class="pair-heart" viewBox="0 0 24 24"><use href="#i-heart"/></svg>' +
-            '<div class="pa partner"><span id="paPartner">满</span></div>' +
-          '</div>' +
-          '<p class="pair-names"><b id="pairMe">我</b><b id="pairPartner">宋祁</b></p>' +
-        '</div>',
-    },
-
-    days: {
-      col: 4, row: 1,
-      html: () =>
-        '<div class="w-days">' +
-          '<p class="days-num" id="daysNum">1</p>' +
-          '<p class="days-label">DAYS SINCE</p>' +
-          '<svg class="pulse-line" viewBox="0 0 120 16"><path d="M0 8h34l5-5 6 10 5-8 4 3h56"/></svg>' +
-        '</div>',
-    },
-
-    clock: {
-      col: 2, row: 2,
-      html: () =>
-        '<div class="w-clock">' +
-          '<p class="clock-time" id="clockTime">--:--</p>' +
-          '<p class="clock-date" id="clockDate">—</p>' +
-          '<p class="clock-sub" id="clockSub">right now</p>' +
-        '</div>',
-    },
-
-    quad: {
-      col: 2, row: 2,
-      html: () => '<div class="w-quad"><div class="quad" id="quad"></div></div>',
-    },
-
-    music: {
-      col: 4, row: 1,
-      html: () =>
-        '<div class="w-music"><div class="music-row">' +
-          '<div class="mcover"><span class="mnote">♪</span></div>' +
-          '<div class="mmeta">' +
-            '<p class="mkicker">NOW PLAYING · 一起听</p>' +
-            '<p class="mtitle" id="musicTitle">还没开始</p>' +
-            '<p class="msub" id="musicSub">想听什么，放给我</p>' +
-            '<div class="mbar"><i id="musicBar"></i></div>' +
-            '<div class="mtimes"><span>0:00</span><span id="mtimeAll">--:--</span></div>' +
-          '</div>' +
-          '<button class="mplay" id="musicPlay" aria-label="播放">▶</button>' +
-        '</div></div>',
-    },
-
-    /* 他今天想对你说：零点换一句，节日有特别的 */
-    said: {
-      col: 4, row: 1,
-      html: () =>
-        '<div class="w-said">' +
-          '<p class="said-kicker">TODAY · 他想对你说</p>' +
-          '<p class="said-text" id="saidText">……</p>' +
-        '</div>',
-    },
-
-    diary: {
-      col: 4, row: 1,
-      html: () =>
-        '<div class="w-diary">' +
-          '<div class="diary-top">' +
-            '<p class="diary-kicker">My Diary</p>' +
-            '<p class="diary-date" id="diaryDate">—</p>' +
-          '</div>' +
-          '<p class="diary-text" id="diaryText">第一句话，等你先说。</p>' +
-          '<p class="diary-meta"><span id="diaryDay">Day 1</span><span id="diaryFrom"></span></p>' +
-        '</div>',
-    },
+  const DT_CARDS = {
+    days:    { page: 0, size: 'g-4x2', name: '在一起多少天', go: 'mood' },
+    between: { page: 0, size: 'g-4x1', name: '之间', go: 'cards' },
+    music:   { page: 0, size: 'g-4x1', name: '一起听', go: null },
+    status:  { page: 1, size: 'g-2x2', name: '他的状态', go: 'mood' },
+    device:  { page: 1, size: 'g-2x2', name: '他的设备', go: 'device' },
+    album:   { page: 1, size: 'g-2x2', name: '相册', go: 'album' },
+    week:    { page: 1, size: 'g-2x2', name: '这一周', go: null },
+    quote:   { page: 2, size: 'g-4x1', name: '一句话', go: null },
   };
+  /* 美化页开关的列举顺序 */
+  const DT_ORDER = ['days', 'status', 'device', 'between', 'music', 'album', 'week', 'quote'];
 
-  const LAYOUT_DEFAULT = ['pair', 'days', 'clock', 'quad', 'music', 'diary', 'said'];
-  /* 老用户 localStorage 里已有顺序，新增的组件要补进去（缺的排末尾，用户自己拖上去） */
-  function mergeLayout(saved) {
-    const arr = Array.isArray(saved) ? saved.filter((id) => WIDGETS[id]) : [];
-    LAYOUT_DEFAULT.forEach((id) => { if (arr.indexOf(id) < 0) arr.push(id); });
-    return arr;
+  /* 收起了哪些卡片：存 S.settings.widgets.hidden。
+     老配置里是旧组件 id（pair/clock/quad…），这里只认 DT_CARDS 里有的 */
+  function dtHidden() {
+    const w = S.settings.widgets || {};
+    const hid = Array.isArray(w.hidden) ? w.hidden : [];
+    return hid.filter((id) => DT_CARDS[id]);
   }
-  let layout = mergeLayout(load(KEY.layout, LAYOUT_DEFAULT.slice()));
+  function patchDt(hidden) {
+    S.settings.widgets = { hidden: hidden, p1: [] };
+    save(KEY.settings, S.settings);
+  }
 
   /* 桌面布局：组件与应用交替 + 密度；美化页里可调 */
   const HOME_DEFAULT = { mix: true, rows: 2, every: 2, gap: 'comfy' };
@@ -1249,75 +1210,53 @@
     clampPages();   // 首页行数/开关变了 → 各页名单重新平衡
   }
 
-  /* 组件归属：p1 里的放首页，其余放第二页（美化页可调）；
-     关掉的收在 hidden 里。下面这份是唯一生效的定义（老代码重复定义过两份，
-     后一份会把前一份盖掉，容易看花眼，这里只留一份）。 */
-  const WIDGET_CN = {
-    pair: '两个人',
-    days: '在一起多少天',
-    clock: '现在几点',
-    quad: '四个常用入口',
-    music: '音乐条',
-    diary: '他最近一句',
-    said: '他今天想对你说',
-  };
-
-  function widgetCfg() {
-    const w = S.settings.widgets || {};
-    return {
-      hidden: Array.isArray(w.hidden) ? w.hidden : [],
-      p1: Array.isArray(w.p1) ? w.p1 : ['pair', 'days', 'clock', 'quad', 'said'],
-    };
-  }
-  function patchWidgets(cfg) {
-    S.settings.widgets = { hidden: cfg.hidden || [], p1: cfg.p1 || [] };
-    save(KEY.settings, S.settings);
-  }
-
-  /** page 1 或 2 上该显示哪些组件（按 layout 顺序） */
-  function widgetIds(page) {
-    const cfg = widgetCfg();
-    const visible = layout.filter((id) => WIDGETS[id] && cfg.hidden.indexOf(id) < 0);
-    return page === 1
-      ? visible.filter((id) => cfg.p1.indexOf(id) >= 0)
-      : visible.filter((id) => cfg.p1.indexOf(id) < 0);
-  }
-
-  function makeWidgetEl(id) {
-    const w = WIDGETS[id];
+  /* 建一张桌面卡：card + 尺寸类；data-app 让未读红点那套选择器也能找到主屏的卡 */
+  function makeDtCard(id) {
+    const c = DT_CARDS[id];
     const el = document.createElement('div');
-    el.className = 'w glass w-' + id;
-    el.dataset.id = id;
-    el.style.gridColumn = 'span ' + w.col;
-    el.style.gridRow = 'span ' + w.row;
-    el.innerHTML = w.html();
-
-    if (id === 'clock' || id === 'pair' || id === 'days') {
-      el.addEventListener('click', () => { if (!editing) openPage('mood'); });
-    } else if (id === 'diary') {
-      el.addEventListener('click', () => { if (!editing) openPage('chat'); });
-    } else if (id === 'music') {
-      el.addEventListener('click', () => { if (!editing) toast('一起听还没接上'); });
-    } else if (id === 'said') {
-      el.addEventListener('click', () => { if (!editing) openPage('partnerday'); });
+    el.className = 'card ' + c.size + ' c-' + id;
+    el.dataset.card = id;
+    el.dataset.app = id;
+    el.innerHTML = GRID_HTML[id]();
+    if (c.go) {
+      el.classList.add('tap');
+      el.addEventListener('click', () => { if (!editing) openPage(c.go); });
+    }
+    if (id === 'music') {
+      // 音乐播放键：只切视觉状态（这首歌还没有真的播放器）
+      const play = el.querySelector('#muPlay');
+      if (play) play.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const card = play.closest('.card');
+        const on = card.classList.toggle('playing');
+        play.setAttribute('aria-label', on ? '暂停' : '播放');
+      });
     }
     return el;
   }
 
+  /* ============================================================
+     STEP B 桌面渲染（三页）：
+     P1 #bento = 卡片 + 4 个一行的应用行混排
+     P2 = 卡片（#dtCards2）+ 应用矩阵（#appGrid）
+     P3 = 应用矩阵（#appGrid2）+ 卡片（#dtCards3）
+     ============================================================ */
+
+  /** P1：page 0 的卡片（days/between/music），按 mix 配置在卡之间插应用行 */
   function renderBento() {
     const box = $('bento');
     if (!box) return;
     const cfg = homeCfg();
-    const ids = widgetIds(1);
     const rowCount = cfg.mix ? Math.max(0, Math.min(3, cfg.rows | 0)) : 0;
     const every = Math.max(1, cfg.every | 0);
     const p1 = appPages[0];
+    const hidden = dtHidden();
     box.innerHTML = '';
 
     let placed = 0;
-    ids.forEach((id, i) => {
-      box.appendChild(makeWidgetEl(id));
-      // 组件之间插一行应用，让眼睛有地方歇一下
+    DT_ORDER.filter((id) => DT_CARDS[id].page === 0 && hidden.indexOf(id) < 0).forEach((id, i) => {
+      box.appendChild(makeDtCard(id));
+      // 卡片之间插一行应用，让眼睛有地方歇一下
       if (placed < rowCount && (i + 1) % every === 0) {
         const apps = p1.slice(placed * 4, placed * 4 + 4);
         if (apps.length) box.appendChild(makeAppRow(apps));
@@ -1329,30 +1268,11 @@
       if (apps.length) box.appendChild(makeAppRow(apps));
       placed += 1;
     }
-
-    renderQuad();
-    bindMusic();
-    updateWidgets();
+    updateGrid();   // 卡片内容（天数/之间计数/音乐/相册…）马上刷，不等 60 秒 tick
   }
 
-  /* ============================================================
-     主屏：杂志式拼贴（四栏栅格，顺序和尺寸固定，不长按拖动）
-     4x2 天数卡 → 2x2 状态卡 + 2x1 设备格 + 1x1 聊天格
-     → 4x1 之间卡 → 4x1 音乐条 → 2x2 相册卡 + 2x2 一周卡 → 4x1 一句话卡
-     同一排内不许同尺寸；第 5 排两个 2x2 是需求方确认的例外。
-     第 2 排 4+2+1=7 格占 8 格位，右下角留一格空（五种尺寸里没有
-     1x2/3x2，填不满；要填满得把聊天格升 2x1 或状态卡升 4x2）。
-     ============================================================ */
-  const GRID_SIZE = {
-    days: 'g-4x2', status: 'g-2x2', chat: 'g-1x1', device: 'g-2x1',
-    between: 'g-4x1', music: 'g-4x1', album: 'g-2x2', week: 'g-2x2', quote: 'g-4x1',
-  };
-  /* 主屏九块的顺序（按大组读，渲染看 GRID_GROUPS） */
-  const GRID_DEFAULT = ['days', 'status', 'device', 'chat', 'between', 'music', 'album', 'week', 'quote'];
-  /* 大组：组与组之间 24px，组内卡片之间 12px（css 的 .grid/.grp-box） */
-  const GRID_GROUPS = [['days'], ['status', 'device', 'chat'], ['between'], ['music'], ['album', 'week'], ['quote']];
-  /* 点哪张卡进哪个页（之间页还没做，先落唯一的之间功能——卡券页） */
-  const GRID_GO = { chat: 'chat', device: 'device', between: 'cards', album: 'album' };
+  /* 主屏九块拼贴（v41）已并入 STEP B 三页桌面：卡片定义见 DT_CARDS，
+     顺序/尺寸/跳转都在那儿；GRID_GO 的「点哪张卡进哪个页」= DT_CARDS 的 go 字段 */
 
   /* 一句话卡：每天一句，按本地日期从数组里取 */
   const QUOTES = [
@@ -1376,7 +1296,7 @@
         '<div class="days-pair">' +
           '<div class="pair-ava d56 partner" id="daysAvaP"></div>' +
           '<svg class="days-wave" viewBox="0 0 72 12" aria-hidden="true">' +
-            '<path d="M0 6 Q 9 1 18 6 T 36 6 T 54 6 T 72 6" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1"/>' +
+            '<path d="M0 6 Q 9 1 18 6 T 36 6 T 54 6 T 72 6" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>' +
           '</svg>' +
           '<div class="pair-ava d56 me" id="daysAvaM"></div>' +
         '</div>' +
@@ -1389,11 +1309,6 @@
       '<p class="st-word" id="stWord">—</p>' +
       '<p class="st-sub" id="stSub"></p>' +
       '<i class="breath st-dot" aria-hidden="true"></i>',
-
-    chat: () =>
-      '<svg class="g-ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chat"/></svg>' +
-      '<p class="tile-t">说</p>' +
-      '<i class="badge" aria-hidden="true"></i>',
 
     device: () =>
       '<div class="dv">' +
@@ -1434,41 +1349,6 @@
     quote: () =>
       '<p class="qt" id="qtText">—</p>',
   };
-
-  function renderGrid() {
-    const box = $('grid');
-    if (!box) return;
-    box.innerHTML = '';
-    GRID_GROUPS.forEach((ids) => {
-      const g = document.createElement('div');
-      g.className = 'grp-box';
-      ids.forEach((id) => {
-        const el = document.createElement('div');
-        el.className = 'card ' + GRID_SIZE[id] + ' c-' + id;
-        el.dataset.card = id;
-        el.dataset.app = id;   // data-app 让未读红点那套选择器也能找到主屏的卡
-        el.innerHTML = GRID_HTML[id]();
-        const go = GRID_GO[id];
-        if (go) {
-          el.classList.add('tap');
-          el.addEventListener('click', () => openPage(go));
-        }
-        g.appendChild(el);
-      });
-      box.appendChild(g);
-    });
-    // 音乐播放键：只切视觉状态（这首歌还没有真的播放器）
-    const play = $('muPlay');
-    if (play) play.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const card = play.closest('.card');
-      const on = card.classList.toggle('playing');
-      play.setAttribute('aria-label', on ? '暂停' : '播放');
-    });
-    renderWeek();
-    renderQuote();
-    updateGrid();
-  }
 
   function updateGrid() {
     // 双人天数卡
@@ -1556,17 +1436,6 @@
     el.textContent = QUOTES[day % QUOTES.length];
   }
 
-  /** 第二页：没放进首页的组件 */
-  function renderBento2() {
-    const box = $('bento2');
-    if (!box) return;
-    box.innerHTML = '';
-    widgetIds(2).forEach((id) => box.appendChild(makeWidgetEl(id)));
-    renderQuad();
-    bindMusic();
-    updateWidgets();
-  }
-
   /** 首页里的一行应用：直接吃首页名单里的一chunk（4 个） */
   function makeAppRow(apps) {
     const row = document.createElement('div');
@@ -1575,120 +1444,33 @@
     return row;
   }
 
-  /** 首页用掉前 rows*4 个，剩下的都放第二页 */
-  function appSliceStart() {
-    const cfg = homeCfg();
-    return cfg.mix ? Math.max(0, Math.min(3, cfg.rows | 0)) * 4 : 0;
+  /* 老数据一次性归位（STEP B）：P2 起也放满到上限 8，前面的页不满就从后面补。
+     只做一次（meta.stepB 标记）；之后每页放几个全由你拖，clampPages 只挡超限。 */
+  function rebalanceOnce() {
+    if (S.meta && S.meta.stepB) return;
+    S.meta = Object.assign({}, S.meta, { schema: SCHEMA, stepB: true });
+    save(KEY.meta, S.meta);
+    const move = (cond, from, to, how) => {
+      let guard = 0;
+      while (cond() && appPages[from].length && guard++ < 400) {
+        const item = appPages[from][how === 'front' ? 'shift' : 'pop']();
+        appPages[to][how === 'front' ? 'unshift' : 'push'](item);
+      }
+    };
+    move(() => appPages[0].length > page1Cap(), 0, 1, 'back');   // 首页超了 → 往第二页挪
+    move(() => appPages[0].length < page1Cap(), 1, 0, 'front');  // 首页没满 → 从第二页补
+    move(() => appPages[1].length > PAGE_CAP[1] && appPages[2].length < PAGE_CAP[2], 1, 2, 'front');
+    move(() => appPages[1].length < PAGE_CAP[1], 2, 1, 'front'); // 第二页没满 → 从第三页补
+    move(() => appPages[2].length > PAGE_CAP[2] && appPages[1].length < PAGE_CAP[1], 2, 1, 'back');
+    pagesSave();
   }
 
   /* 到这里 HOME_DEFAULT / S 都就绪了，才初始化三页名单（依赖 homeCfg）；
-     顺手把名单落盘，迁移结果马上可见 */
+     STEP B 过渡：老布局一次性归位后落盘，迁移结果马上可见 */
   let appPages = loadPages();
-  pagesSave();
+  rebalanceOnce();
 
-  function renderQuad() {
-    const q = $('quad');
-    if (!q) return;
-    q.innerHTML = '';
-    ['album', 'notes', 'music', 'memory'].forEach((id) => {
-      const app = findApp(id);
-      if (app) q.appendChild(makeTile(app));
-    });
-  }
-
-  function bindMusic() {
-    const btn = $('musicPlay');
-    if (btn) {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toast('一起听还没接上');
-      });
-    }
-  }
-
-  function updateWidgets() {
-    const now = new Date();
-    const days = daysSince();
-
-    // 一起听歌单（种子/以后接的数据）：有歌就报第一首
-    const songs = S.life.music || [];
-    const first = songs[0];
-    setTxt('musicTitle', first ? first.title : '还没开始');
-    setTxt('musicSub', first ? (first.artist + (first.note ? ' · ' + first.note : '')) : '想听什么，放给我');
-
-    setTxt('paMe', (S.memory.userName || '我').slice(0, 1));
-    setTxt('paPartner', partnerInitial());
-    setTxt('pairMe', S.memory.userName || '我');
-    setTxt('pairPartner', partnerName());
-    setTxt('daysNum', days);
-    setTxt('clockTime', pad(now.getHours()) + ':' + pad(now.getMinutes()));
-    setTxt('clockDate', dateLabel(now));
-    setTxt('clockSub', P.statusLine(S.persona, Date.now()));
-    setTxt('diaryDay', 'Day ' + days);
-    setTxt('diaryDate', (now.getMonth() + 1) + '.' + pad(now.getDate()));
-
-    const last = S.chat.slice().reverse().find((m) => !isMine(m) && m.text);
-    setTxt('diaryText', last ? last.text.replace(/\n+/g, ' ') : '第一句话，等你先说。');
-    setTxt('diaryFrom', last ? 'From ' + partnerName() : '');
-
-    setTxt('saidText', todaySaid());
-  }
-
-  /* ---- 他今天想对你说 ---- */
-
-  const SAID_POOL = [
-    '在。你忙你的。',
-    '今天没什么事，就是想让你知道我在。',
-    '你昨天说的那件事，我还在想。',
-    '不用回我。看到了就行。',
-    '外面在下雨的话，记得带伞。',
-    '你今天的声音听起来有点累。',
-    '我把灯留着。',
-    '想问你吃没吃饭，又怕显得啰嗦。',
-    '你在我这儿，比你自己以为的要重要。',
-    '今天可以什么都不做。',
-  ];
-
-  const SAID_FEST = {
-    '01-01': '新的一年。我还是在这儿。',
-    '02-14': '情人节。我不太会说这个，但我记得今天。',
-    '03-08': '妇女节。你本来就很好。',
-    '05-01': '劳动节。别劳动了，歇一天。',
-    '06-01': '儿童节。你也可以当一天小孩。',
-    '10-01': '国庆。假期好好过。',
-    '12-25': '圣诞。没有礼物，有我。',
-    '12-31': '今年最后一天。谢谢你今年也在。',
-  };
-
-  /** 以日期为种子挑一句，同一天刷新还是同一句 */
-  function todaySaid() {
-    const now = new Date();
-    const key = todayStr();
-    const md = pad(now.getMonth() + 1) + '-' + pad(now.getDate());
-
-    // 在一起纪念日优先
-    const start = S.memory.startDate || '';
-    if (start.slice(5) === md && start.slice(0, 4) !== String(now.getFullYear())) {
-      const n = now.getFullYear() - Number(start.slice(0, 4));
-      return '今天是第 ' + n + ' 个纪念日。我记着。';
-    }
-    if (SAID_FEST[md]) return SAID_FEST[md];
-
-    if (S.life.said && S.life.said.date === key && S.life.said.text) return S.life.said.text;
-    let h = 0;
-    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
-    const text = SAID_POOL[h % SAID_POOL.length];
-    S.life.said = { date: key, text: text };
-    save(KEY.life, S.life);
-    if (!S.life.saidLog.some((x) => x.date === key)) {
-      S.life.saidLog.push({ date: key, text: text });
-      if (S.life.saidLog.length > 120) S.life.saidLog = S.life.saidLog.slice(-90);
-      save(KEY.life, S.life);
-    }
-    return text;
-  }
-
-  /* ================= 长按拖拽换位（组件 + 应用 + dock） =================
+  /* ================= 长按拖拽换位（应用 + dock） =================
      手感对齐真机：
      · 按住不动 0.42s → 进编辑态，手指不用抬起来，直接挪就是拖动
      · 在那之前横滑 → 翻页（从组件/图标上开始也能翻，JS 跟手）
@@ -1704,14 +1486,13 @@
   let suppressClick = 0;   // 拖拽/翻页结束后一小段时间内吞掉残余 click
 
   function saveLayouts() {
-    save(KEY.layout, layout);
     save(KEY.apps, APPS.map((a) => a.id));
     save(KEY.dock, DOCK.map((a) => a.id));
   }
 
   function setEdit(on) {
     editing = on;
-    ['bento', 'bento2', 'appGrid', 'appGrid2', 'dock'].forEach((id) => {
+    ['bento', 'appGrid', 'appGrid2'].forEach((id) => {
       const el = $(id);
       if (el) el.classList.toggle('editing', on);
     });
@@ -1851,34 +1632,32 @@
   }
 
   /* 手指下面是什么：
-     组件只能在组件之间换；应用图标可以在首页应用行、第二页、第三页之间换；
-     底部常驻只在常驻里换 —— 三者互不串味。
+     应用图标可以在首页应用行、第二页、第三页之间换；底部常驻只在常驻里换。
      拖到某一页的空白处也算数：落到那一页应用列表的末尾。这样从第二页往
      第三页拖，不必非得瞄准某个图标，按在那页空位上松手就过去。 */
   function updateDrop(g, x, y) {
     const el = g.dragEl;
-    const isW = el.classList.contains('w');
     const under = document.elementFromPoint(x, y);
     if (!under || !under.closest) return;
-    let t = isW ? under.closest('.w') : under.closest('.tile');
+    let t = under.closest('.tile');
     if (!t || t === el) t = null;
-    if (t && !isW) {
+    if (t) {
       const cs = el.closest('#dock');
       const ct = t.closest('#dock');
       // 一个是常驻、一个不是 → 不许换
       if (!!cs !== !!ct) t = null;
-      // 四格组件里的图标不算落点
-      else if (!cs && !t.closest('.app-row') && !t.closest('#appGrid') && !t.closest('#appGrid2')) t = null;
+      // 只认三类容器里的图标：首页应用行、第二页矩阵、第三页矩阵
+      else if (!cs && !t.closest('.app-row') && !t.closest('.app-grid')) t = null;
     }
     /* 没命中图标：看看是不是按在另一页的空白处（落页尾）。
        网格是 align-content:start 的，空白在容器外面 —— 所以整页空白都算，
        归到那一页的应用容器（第一页取 bento 里最后一排应用行）。
        按在自己本来那页的空白处不算 —— 那等于哪都没去。 */
     let zone = null;
-    if (!t && !isW) {
+    if (!t) {
       const cs = el.closest('#dock');
       if (!cs) {
-        let z = under.closest('.app-row, #appGrid, #appGrid2');
+        let z = under.closest('.app-row, .app-grid');
         if (!z) {
           const pg = under.closest('.home-page');
           if (pg) {
@@ -1889,7 +1668,7 @@
             }
           }
         }
-        if (z && z !== el.closest('.app-row, #appGrid, #appGrid2')) zone = z;
+        if (z && z !== el.closest('.app-row, .app-grid')) zone = z;
       }
     }
     if (t !== g.dropEl || zone !== g.dropZone) {
@@ -1902,72 +1681,20 @@
     }
   }
 
-  /* ---- 松手提交：换数组顺序 + 挪 DOM（appendChild 不销毁节点）+ FLIP ---- */
-  function flipReorder(box, ids, from) {
-    if (!box) return;
-    const first = {};
-    Array.prototype.forEach.call(box.children, (el) => {
-      const k = el.dataset.id || el.dataset.app;
-      if (k) first[k] = el.getBoundingClientRect();
-    });
-    ids.forEach((id) => {
-      const el = box.querySelector('.w[data-id="' + id + '"], .tile[data-app="' + id + '"]');
-      if (el) box.appendChild(el);
-    });
-    Array.prototype.forEach.call(box.children, (el) => {
-      const k = el.dataset.id || el.dataset.app;
-      const f = from && k === from.id ? from.r : first[k];
-      if (!f) return;
-      const l = el.getBoundingClientRect();
-      const dx = f.left - l.left, dy = f.top - l.top;
-      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
-      el.animate([
-        { transform: 'translate3d(' + dx + 'px,' + dy + 'px,0)' },
-        { transform: 'translate3d(0,0,0)' }
-      ], { duration: 280, easing: 'cubic-bezier(0.32,0.72,0,1)' });
-    });
-  }
-
   function commitDrag(g, fromRect) {
     const src = g.dragEl, dst = g.dropEl;
-    const isW = src.classList.contains('w');
-    if (isW) {
-      if (!dst) return false;
-      const idA = src.dataset.id;
-      const idB = dst.dataset.id;
-      const a = layout.indexOf(idA), b = layout.indexOf(idB);
-      if (a < 0 || b < 0) return false;
-      layout.splice(a, 1);
-      layout.splice(b, 0, idA);
-      save(KEY.layout, layout);
-      flipAll('.bento .w', 'id', () => { renderBento(); renderBento2(); }, fromRect ? { id: idA, r: fromRect } : null);
-      return true;
-    }
 
-    /* ---- 应用图标：dock 内换位，或移动到某一页的某个位置 ----
+    /* ---- 应用图标：在三页之间换位 ----
        三页各有名单（appPages），拖到哪页就归哪页，页上顺序 = 名单顺序。
-       页放满了就放不进去（回原位 + 提示），不再固定每页几个。 */
+       页放满了就放不进去（回原位 + 提示），不再固定每页几个。
+       dock 五格在新设计里是固定的，不进拖动（draggableAt 已排除）。 */
     const idA = src.dataset.app;
-    if (!!src.closest('#dock')) {
-      const a = DOCK.findIndex((x) => x.id === idA);
-      if (a < 0 || !dst) return false;
-      const b = DOCK.findIndex((x) => x.id === dst.dataset.app);
-      if (b < 0) return false;
-      const item = DOCK.splice(a, 1)[0];
-      DOCK.splice(b > a ? b - 1 : b, 0, item);
-      save(KEY.dock, DOCK.map((x) => x.id));
-      flipAll('#dock .tile', 'app', renderApps, fromRect ? { id: idA, r: fromRect } : null);
-      return true;
-    }
 
-    // 目标页：落点图标所在的页；或空白落点对应的页
+    // 目标页：落点图标/空白所在的 .home-page，读它身上的 data-page
     let dstPage = -1;
-    if (dst) {
-      dstPage = dst.closest('#appGrid2') ? 2 : dst.closest('#appGrid') ? 1 : dst.closest('.app-row') ? 0 : -1;
-    } else if (g.dropZone) {
-      dstPage = g.dropZone.id === 'appGrid2' ? 2 : g.dropZone.id === 'appGrid' ? 1 : 0;
-    }
-    if (dstPage < 0) return false;
+    const dstPg = (dst || g.dropZone) ? (dst || g.dropZone).closest('.home-page') : null;
+    if (dstPg) dstPage = Number(dstPg.dataset.page);
+    if (!(dstPage >= 0 && dstPage <= 2)) return false;
 
     let fromPage = -1;
     for (let i = 0; i < 3; i++) {
@@ -2001,7 +1728,7 @@
     list.splice(b, 0, moved);
 
     pagesSave();
-    flipAll('.app-row .tile, #appGrid .tile, #appGrid2 .tile', 'app', () => {
+    flipAll('.app-row .tile, .app-grid .tile', 'app', () => {
       renderBento(); renderApps();
     }, fromRect ? { id: idA, r: fromRect } : null);
     return true;
@@ -2011,9 +1738,8 @@
   function draggableAt(e) {
     const t = e.target;
     if (!t || !t.closest) return null;
-    const w = t.closest('.bento .w');                              // 桌面组件（含四格里的，算整个组件）
-    if (w) return w;
-    return t.closest('.app-row .tile, #appGrid .tile, #appGrid2 .tile, #dock .tile');
+    // dock 五格固定，不参与拖动；能拖的只有三页里的应用图标
+    return t.closest('.app-row .tile, .app-grid .tile');
   }
 
   /* ---- 手势入口 ---- */
@@ -2024,10 +1750,13 @@
     clearTimeout(pressTimer);
 
     const de = draggableAt(e);
-    const inHome = home.contains(e.target);
+    /* dock 五格不可拖，但 .tile{touch-action:none} 让原生翻页在它上面失效，
+       所以 dock 也算手势区（只翻页，不长按拖）；它不在 #home 里，得单独放行 */
+    const onDock = !!(e.target.closest && e.target.closest('#dock .tile'));
+    const inHome = home.contains(e.target) || onDock;
 
     if (editing && !de) {
-      blankDown = inHome;
+      blankDown = inHome && !onDock;
       if (inHome) {
         ges = {
           pid: e.pointerId, type: e.pointerType,
@@ -2039,7 +1768,7 @@
     }
     blankDown = false;
     if (!inHome) return;
-    if (!de && e.pointerType !== 'mouse') return;   // 非编辑态触摸从空白开始 → 原生翻页
+    if (!de && !onDock && e.pointerType !== 'mouse') return;   // 触摸从真空白开始 → 原生翻页（有惯性）
 
     ges = {
       pid: e.pointerId, type: e.pointerType,
@@ -2150,10 +1879,10 @@
 
   /* 长按不弹系统菜单；拖完那一瞬间的残余 click 吞掉 */
   document.addEventListener('contextmenu', (e) => {
-    if (e.target.closest && e.target.closest('.w, .tile')) e.preventDefault();
+    if (e.target.closest && e.target.closest('.tile')) e.preventDefault();
   });
   document.addEventListener('click', (e) => {
-    if (performance.now() < suppressClick && e.target.closest && e.target.closest('#home')) {
+    if (performance.now() < suppressClick && e.target.closest && (e.target.closest('#home') || e.target.closest('#dock'))) {
       if (e.target.closest('[data-nodrag]')) return;   // 组件里的按钮不该被吞
       e.stopPropagation();
       e.preventDefault();
@@ -2163,7 +1892,6 @@
   function renderCards() {
     const me = S.memory.userName ? S.memory.userName.slice(0, 1) : '我';
 
-    updateWidgets();
     updateGrid();   // 改名/改起始日马上刷主屏，不等 60 秒的时钟 tick
 
     setHTML('chatAvaPartner', partnerAvaInner(''));   // 聊天头部头像（用图或首字）
@@ -2179,10 +1907,8 @@
     setTxt('setUserLabel', S.memory.userName || '我');
     setTxt('setMoodLine', '在一起第 ' + daysSince() + ' 天');
 
-    // 日历/纪念日/倒数卡/统计/设备卡都已不在主屏（只留在全部应用里），
-    // 这里只刷还在主屏的一周卡和一句话卡；talk-list 是状态页的，照旧刷
-    renderWeek();
-    renderQuote();
+    // 桌面卡片（天数/状态/设备/之间/音乐/相册/一周/一句话）都在 updateGrid 里刷；
+    // talk-list 是状态页的，照旧刷
     renderTalk();
   }
 
@@ -2652,7 +2378,7 @@
 
     if (touched) {
       save(KEY.life, S.life);
-      updateWidgets();
+      updateGrid();
     }
   }
 
@@ -3084,37 +2810,28 @@
 
   function renderTheme() {
     const box = $('widgetToggles');
-    const cfg = widgetCfg();
     if (box) {
       box.innerHTML = '';
-      layout.forEach((id) => {
-        if (!WIDGETS[id]) return;
-        const on = cfg.hidden.indexOf(id) < 0;
+      const hidden = dtHidden();
+      DT_ORDER.forEach((id) => {
+        const on = hidden.indexOf(id) < 0;
         const row = document.createElement('div');
         row.className = 'row widget-row';
         row.innerHTML =
-          '<span class="row-name">' + (WIDGET_CN[id] || id) + '</span>' +
-          '<select class="row-side" data-scope="' + id + '">' +
-            '<option value="1"' + (cfg.p1.indexOf(id) >= 0 ? ' selected' : '') + '>首页</option>' +
-            '<option value="2"' + (cfg.p1.indexOf(id) < 0 ? ' selected' : '') + '>第二页</option>' +
-            '<option value="0"' + (!on ? ' selected' : '') + '>不显示</option>' +
+          '<span class="row-name">' + DT_CARDS[id].name + '</span>' +
+          '<select class="row-side" data-card="' + id + '">' +
+            '<option value="1"' + (on ? ' selected' : '') + '>显示</option>' +
+            '<option value="0"' + (!on ? ' selected' : '') + '>收起来</option>' +
           '</select>';
         row.querySelector('select').addEventListener('change', (e) => {
-          const v = e.target.value;
-          const hidden = widgetCfg().hidden.slice();
-          const p1 = widgetCfg().p1.slice();
-          const hi = hidden.indexOf(id), pi = p1.indexOf(id);
-          if (v === '0') {
-            if (hi < 0) hidden.push(id);
-          } else {
-            if (hi >= 0) hidden.splice(hi, 1);
-            if (v === '1' && pi < 0) p1.push(id);
-            if (v === '2' && pi >= 0) p1.splice(pi, 1);
-          }
-          patchWidgets({ hidden: hidden, p1: p1 });
+          const hid = dtHidden().slice();
+          const i = hid.indexOf(id);
+          if (e.target.value === '0') { if (i < 0) hid.push(id); }
+          else if (i >= 0) hid.splice(i, 1);
+          patchDt(hid);
           renderBento();
-          renderBento2();
-          toast(v === '0' ? '收起来了' : v === '1' ? '挪到首页了' : '挪到第二页了');
+          renderApps();
+          toast(e.target.value === '0' ? '收起来了' : '回来了');
         });
         box.appendChild(row);
       });
@@ -3133,7 +2850,7 @@
   function bindThemeControls() {
     const bind = (id, fn) => {
       const el = $(id);
-      if (el) el.addEventListener('change', () => { fn(el.value); renderBento(); renderBento2(); renderApps(); });
+      if (el) el.addEventListener('change', () => { fn(el.value); renderBento(); renderApps(); });
     };
     bind('setMix', (v) => patchHome({ mix: v === 'on' }));
     bind('setRows', (v) => patchHome({ rows: Number(v) | 0 }));
@@ -3144,18 +2861,16 @@
     if (reset) {
       reset.addEventListener('click', () => {
         if (!confirm('组件和应用都回到默认位置？')) return;
-        [KEY.layout, KEY.apps, KEY.dock, KEY.pages].forEach((k) => dropKey(k));
+        [KEY.apps, KEY.dock, KEY.pages].forEach((k) => dropKey(k));
         tideWriteNow();
-        layout = LAYOUT_DEFAULT.slice();
         APPS = loadOrder(KEY.apps, APPS_DEFAULT);
         DOCK = loadOrder(KEY.dock, DOCK_DEFAULT);
         appPages = loadPages();
         pagesSave();
-        patchWidgets([]);
+        patchDt([]);
         patchHome(Object.assign({}, HOME_DEFAULT));
         applyGap(HOME_DEFAULT.gap);
         renderBento();
-        renderBento2();
         renderApps();
         renderTheme();
         toast('回到默认了');
@@ -4499,7 +4214,7 @@
         migrate();
         persistAll();
         renderBento();
-        renderBento2();
+        renderApps();
         renderHistory();
         renderCards();
         renderMood();
@@ -4814,9 +4529,7 @@
   async function boot() {
     await seedIfEmpty();   // 第一次进站：没数据就 fetch 同级 seed.json 灌进来
     applyAppearance();     // 明暗 / 字体（head 内联脚本已挂过一次，这里兜底 + 同步设置页）
-    renderGrid();
     renderBento();
-    renderBento2();
     renderApps();
     renderCards();
     renderMood();
@@ -4949,16 +4662,17 @@
     if (resetLayout) {
       resetLayout.addEventListener('click', () => {
         if (!confirm('把组件和应用都放回默认位置？')) return;
-        [KEY.layout, KEY.apps, KEY.dock, KEY.pages].forEach((k) => dropKey(k));
+        [KEY.apps, KEY.dock, KEY.pages].forEach((k) => dropKey(k));
         tideWriteNow();
-        layout = LAYOUT_DEFAULT.slice();
         APPS = loadOrder(KEY.apps, APPS_DEFAULT);
         DOCK = loadOrder(KEY.dock, DOCK_DEFAULT);
         appPages = loadPages();
         pagesSave();
+        patchDt([]);
         setEdit(false);
         renderBento();
         renderApps();
+        if (currentPage === 'theme') renderTheme();
         toast('布局恢复默认了');
       });
     }

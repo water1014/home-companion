@@ -4220,3 +4220,145 @@ html .dock .tile svg {
   border-top: 1px solid var(--line);
 }
 .drawer-foot .drawer-row { color: var(--text-2); }
+
+/* ============================================================
+   v42 · STEP B · 桌面：应用矩阵 + 卡片混排 + 分页圆点 + 长按编辑
+   —— 三页横滑吸附：P1 卡片+应用行混排 / P2 卡片+应用矩阵 / P3 应用矩阵+一句话
+      旧「糖果贴纸」图标在这一层统一拔掉，矩阵和 dock 一个审美：
+      平底(var(--card)) + 细描边(var(--line)) + 线性单色图标(currentColor)
+   ============================================================ */
+
+/* ---- 1. 分页：横滑吸附；每页自己竖滚（编辑态锁横滚，靠拖拽翻页） ---- */
+html .home-pager {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+}
+html .home-page {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-align: start;
+  scrollbar-width: none;
+  padding-top: 10px;
+}
+html .home-page::-webkit-scrollbar { display: none; }
+
+/* ---- 2. 混排容器：四栏栅格，88px 行高（卡和应用行都住这） ---- */
+html .bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 88px;
+  gap: 12px;
+  align-content: start;
+  width: 100%;
+}
+/* P2/P3 的卡片容器：同样四栏，卡片之间 12 缝 */
+html .dt-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 88px;
+  gap: 12px;
+  width: 100%;
+}
+
+/* ---- 3. 应用矩阵：四列（旧 .app-grid 是三列，这里改成 STEP B 规格的四列） ---- */
+html .app-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px 6px;
+  padding: 10px 2px 4px;
+  width: 100%;
+}
+
+/* ---- 4. 矩阵/应用行图标：拔贴纸，平底线性单色 ----
+   旧 2599 行 .tile-ic 有 linear-gradient(--c1/--c2) !important，
+   旧 2934 行 #bento/#appGrid/#appGrid2 .tile-ic svg 有深色描边 !important，
+   都用同/高特异性 + !important 在后层压住 */
+html .app-grid .tile-ic,
+html .app-row .tile-ic {
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 17px !important;
+  box-shadow: none !important;
+  color: var(--text-2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  backdrop-filter: blur(20px) saturate(1.1);
+}
+html .app-row .tile-ic { border-radius: 15px !important; }
+#bento .tile-ic svg,
+#appGrid .tile-ic svg,
+#appGrid2 .tile-ic svg {
+  stroke: currentColor !important;
+  stroke-width: 1.6 !important;
+  filter: none !important;
+}
+html .app-grid .tile-name { font-size: 10.5px; }
+
+/* ---- 5. 桌面卡片文字/图标跟随主题 ----
+   v41 拼贴卡内部全是硬编码白（.card color:#fff、tile-t/days-since 等
+   rgba(255,255,255,.x)），v42 只换了卡片底，浅色下白底白字。这里补齐 */
+.card { color: var(--text); text-shadow: none !important; }
+.card .row { color: var(--text); }
+.days-since, .st-sub, .tile-t, .tile-num i, .mu-artist, .al-empty, .wk-sub { color: var(--text-2); }
+.g-ic, .mu-cover svg { stroke: var(--text-2); }
+.mu-play svg { fill: var(--text-2); }
+.days-wave path { stroke: currentColor; }
+.mu-play { background: var(--line); }
+.mu-play:active { background: var(--text-3); }
+.mu-bar { background: var(--line); }
+.mu-bar i { background: var(--accent); }
+.bt-cell + .bt-cell { border-color: var(--line); }
+.al i { background-color: var(--line); }
+.wk-d { background: var(--line); }
+.wk-d.l1 { background: var(--text-3); }
+.wk-d.l2 { background: var(--text-2); }
+.wk-d.l3 { background: var(--text); }
+.wk-d.today { outline-color: var(--accent); }
+
+/* ---- 6. 分页圆点：底部居中小点，当前页是 accent 小横条 ---- */
+.pager-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(76px + var(--safe-b) + 8px);
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  z-index: 5;
+  pointer-events: none;
+}
+.pager-dots button {
+  pointer-events: auto;
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--text-3);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: width 0.18s var(--ease), opacity 0.18s var(--ease);
+}
+.pager-dots button.on { width: 16px; opacity: 1; background: var(--accent); }
+
+/* ---- 7. 编辑态：完成/提示改主题色（位置沿用旧规则：顶部，z-40） ---- */
+#editHint {
+  background: var(--card);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+}
+#editDone { background: var(--accent); color: #fff; }
+#editDone:active { transform: scale(0.96); }
+
+/* ---- 8. 编辑态描边：P1 应用行也圈上（旧规则只圈 .bento .w / .app-grid / dock） ---- */
+.bento.editing .tile,
+.app-grid.editing .tile {
+  animation: none;
+  box-shadow: 0 0 0 1.5px rgba(120, 125, 140, 0.35);
+}
+
+/* ---- 9. 空页收起来：作者样式（section.home-page{display:flex}）会盖掉 UA 的
+      [hidden]{display:none}，显式补一条，特异性 + !important 双保险 ---- */
+html .home-page[hidden] { display: none !important; }

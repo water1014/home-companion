@@ -159,16 +159,29 @@
 <main class="screen home" id="home" aria-label="主屏">
   <div class="home-dim" aria-hidden="true"></div>
 
+  <!-- 桌面：三页横滑吸附（STEP B）
+       P1 卡片+应用行混排（bento） / P2 卡片+应用矩阵 / P3 应用矩阵+一句话
+       圆点在底部，长按图标进编辑（拖动换页/换位），数据页 = 设置页 -->
   <div class="home-pager" id="homePager">
 
-    <!-- 只有一屏，上下滚动 -->
-    <section class="home-page active" aria-label="桌面">
+    <section class="home-page active" data-page="0" aria-label="桌面第一页">
+      <div class="bento gap-comfy" id="bento" aria-label="卡片与应用"></div>
+    </section>
 
-      <!-- 首屏：四栏栅格，杂志式拼贴，九块顺序和尺寸都固定（js/app.js GRID_GROUPS） -->
-      <div class="grid" id="grid" aria-label="首屏"></div>
+    <section class="home-page" data-page="1" aria-label="桌面第二页">
+      <div class="dt-cards" id="dtCards2" aria-label="卡片"></div>
+      <div class="app-grid" id="appGrid" aria-label="应用"></div>
+    </section>
+
+    <section class="home-page" data-page="2" aria-label="桌面第三页">
+      <div class="app-grid" id="appGrid2" aria-label="应用"></div>
+      <div class="dt-cards" id="dtCards3" aria-label="卡片"></div>
     </section>
 
   </div>
+
+  <!-- 分页圆点：JS renderDots 生成，点圆点跳页 -->
+  <div class="pager-dots" id="pagerDots" aria-hidden="true"></div>
 </main>
 
 <!-- ============ 聊天 ============ -->
@@ -444,7 +457,7 @@
       <button class="row" id="btnExport"><svg class="row-ic"><use href="#i-note"/></svg><span class="row-name">导出记录</span><span class="row-side">JSON</span></button>
       <button class="row" id="btnImport"><svg class="row-ic"><use href="#i-photo"/></svg><span class="row-name">导入记录</span><span class="row-side"></span></button>
       <button class="row" id="btnEditLayout">
-        <svg class="row-ic"><use href="#i-star"/></svg><span class="row-name">编辑桌面</span><span class="row-side">长按组件或图标，拖动换位置</span>
+        <svg class="row-ic"><use href="#i-star"/></svg><span class="row-name">编辑桌面</span><span class="row-side">长按图标，拖动换页换位</span>
       </button>
       <button class="row" id="btnResetLayout">
         <svg class="row-ic"><use href="#i-note"/></svg><span class="row-name">重置布局</span><span class="row-side">组件和应用回默认位置</span>
@@ -601,7 +614,7 @@
 <!-- ============ 美化 ============ -->
 <section class="screen page" id="theme" aria-label="美化">
   <div class="page-scroll">
-    <p class="hint">桌面太满就关掉几个组件。顺序在桌面长按拖动。</p>
+    <p class="hint">桌面太满就关掉几个卡片。应用的顺序在桌面长按拖动，卡片位置固定。</p>
 
     <section class="glass list-card">
       <p class="list-head">壁纸</p>
@@ -631,8 +644,8 @@
       <div class="form-row">
         <label>交替</label>
         <select id="setMix">
-          <option value="on">组件之间插应用</option>
-          <option value="off">组件和应用分开</option>
+          <option value="on">卡片之间插应用</option>
+          <option value="off">卡片和应用分开</option>
         </select>
       </div>
       <div class="form-row">
@@ -647,9 +660,9 @@
       <div class="form-row">
         <label>隔几个</label>
         <select id="setEvery">
-          <option value="1">每 1 个组件</option>
-          <option value="2">每 2 个组件</option>
-          <option value="3">每 3 个组件</option>
+          <option value="1">每 1 个卡片</option>
+          <option value="2">每 2 个卡片</option>
+          <option value="3">每 3 个卡片</option>
         </select>
       </div>
       <div class="form-row">
@@ -711,6 +724,11 @@
   </div><!-- /screen-zone -->
 
   <nav class="dock" id="dock" aria-label="常驻"></nav>
+
+  <!-- 编辑态：顶部提示 + 完成（长按桌面图标进；设置页「编辑桌面」也能进）。
+       phone 直属 + z-40：翻到哪页都在，盖得住桌面但盖不住汉堡抽屉 -->
+  <p class="edit-hint" id="editHint" hidden></p>
+  <button class="edit-done" id="editDone" type="button" hidden>完成</button>
 </div><!-- /phone -->
 
 <input type="file" id="importFile" accept="application/json" hidden />
