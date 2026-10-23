@@ -1396,9 +1396,12 @@
 
     between: () =>
       '<div class="bt">' +
-        '<div class="bt-cell"><p class="tile-num"><span id="btCoupon">0</span><i>张</i></p><p class="tile-t">卡券</p></div>' +
-        '<div class="bt-cell"><p class="tile-num" id="btMail">0</p><p class="tile-t">未拆信</p></div>' +
-        '<div class="bt-cell"><p class="tile-num" id="btWish">0</p><p class="tile-t">心愿</p></div>' +
+        '<p class="bt-head"><svg class="bt-ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mail"/></svg>之间</p>' +
+        '<div class="bt-cells">' +
+          '<div class="bt-cell"><p class="tile-num"><span id="btCoupon">0</span><i>张</i></p><p class="tile-t">卡券</p></div>' +
+          '<div class="bt-cell"><p class="tile-num" id="btMail">0</p><p class="tile-t">未拆信</p></div>' +
+          '<div class="bt-cell"><p class="tile-num" id="btWish">0</p><p class="tile-t">心愿</p></div>' +
+        '</div>' +
       '</div>',
 
     music: () =>

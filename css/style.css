@@ -5189,3 +5189,17 @@ html .c-today .td-hint{
   margin: 6px 0 0; font-size: 11px; letter-spacing: .04em; color: var(--text-3);
 }
 html .c-today:active{ transform: scale(.995); }
+
+/* V8 · 之间卡 → 信卡观感（信封头 + 三格数据，不改数据/跳转） */
+html .c-between .bt{ flex-direction: column; align-items: stretch; justify-content: center; gap: 10px; }
+html .c-between .bt-head{
+  display: flex; align-items: center; gap: 7px; margin: 0;
+  font-size: 11px; letter-spacing: .2em; color: var(--text-2);
+}
+html .c-between .bt-ic{ width: 15px; height: 15px; fill: none; stroke: var(--accent); stroke-width: 1.6; }
+html .c-between .bt-cells{ flex: 1; display: flex; align-items: center; }
+html .c-between .bt-cell .tile-num{ font-size: 30px !important; line-height: 1.05; }
+
+/* V8 · dock 选中态加强：实心银圆 + 深色图标（参考图 active 圆形） */
+html .dock .tile.on .tile-ic{ background: var(--accent) !important; color: var(--accent-ink) !important; }
+html .dock .tile.on .tile-name{ color: var(--accent) !important; }
