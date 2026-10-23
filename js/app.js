@@ -1073,6 +1073,7 @@
   /* v42 日历页（第 1 步先能用：翻月 / 今天描边 / 说过话的日子点；
      标记 / 图例 / 某天发生了什么，第 5 步做） */
   let calPageYM = null;   // 当前翻到哪个月，null = 回到本月
+  let calSelKey = '';     // 选中的那一天：'y-m-d'（m 从 0 起，跟日历内部一致）
 
   function renderCalendarPage() {
     const grid = $('calPageGrid');
@@ -1108,22 +1109,110 @@
       grid.appendChild(el);
     }
     for (let d = 1; d <= total; d++) {
-      const cell = document.createElement('span');
+      const key = y + '-' + m + '-' + d;
+      const cell = document.createElement('button');
+      cell.type = 'button';
       cell.className = 'cg-d' +
-        (y === now.getFullYear() && m === now.getMonth() && d === now.getDate() ? ' today' : '');
+        (y === now.getFullYear() && m === now.getMonth() && d === now.getDate() ? ' today' : '') +
+        (calSelKey === key ? ' sel' : '');
+      cell.dataset.d = String(d);
       const num = document.createElement('em');
       num.textContent = d;
       cell.appendChild(num);
-      const n = talked[y + '-' + m + '-' + d] || 0;
+      const n = talked[key] || 0;
       if (n) {
         const dot = document.createElement('i');
         dot.className = 'fp l' + (n >= 20 ? 3 : n >= 6 ? 2 : 1);
         cell.classList.add('has-fp');
-        cell.setAttribute('title', d + ' 日 · 聊了 ' + n + ' 句');
+        cell.setAttribute('aria-label', d + ' 日，聊了 ' + n + ' 句');
         cell.appendChild(dot);
+      } else {
+        cell.setAttribute('aria-label', d + ' 日');
       }
+      cell.addEventListener('click', () => {
+        calSelKey = key;
+        renderCalendarPage();
+        renderCalDay(y, m, d);
+      });
       grid.appendChild(cell);
     }
+
+    // 没选过就默认落到「今天」，一进来就有东西看
+    if (!calSelKey) {
+      calSelKey = now.getFullYear() + '-' + now.getMonth() + '-' + now.getDate();
+      renderCalDay(now.getFullYear(), now.getMonth(), now.getDate());
+      const t = grid.querySelector('.cg-d.today');
+      if (t) t.classList.add('sel');
+    }
+  }
+
+  /* 点某一天 → 这天发生了什么。数据全部来自本地真实记录：
+     聊了几句 / 他那天做过的事 / 那天的课 / 那天的倒数 / 那天留下的照片 */
+  function renderCalDay(y, m, d) {
+    const box = $('calDayCard');
+    if (!box) return;
+    const dayStart = new Date(y, m, d).getTime();
+    const dayEnd = dayStart + 86400000;
+    const inDay = (ts) => ts >= dayStart && ts < dayEnd;
+    const W = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const wd = new Date(y, m, d).getDay();
+
+    const msgs = (S.chat || []).filter((x) => inDay(x.ts || 0));
+    const logs = (S.life.dayLog || []).filter((x) => inDay(x.ts || 0));
+    const courses = (S.life.courses || []).filter((c) => Number(c.day) === wd);
+    const cds = (S.life.countdowns || []).filter((c) => {
+      if (!c.date) return false;
+      return new Date(c.date + 'T00:00:00').getTime() === dayStart;
+    });
+    const photos = (S.life.photos || []).filter((p) => inDay(p.ts || 0));
+
+    box.innerHTML = '';
+    const card = document.createElement('section');
+    card.className = 'glass list-card cal-day';
+
+    const head = document.createElement('p');
+    head.className = 'list-head';
+    head.textContent = (m + 1) + ' 月 ' + d + ' 日 · ' + W[wd];
+    card.appendChild(head);
+
+    const line = (ic, title, sub) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = '<svg class="row-ic"><use href="#' + ic + '"/></svg>' +
+        '<span class="row-name">' + title + (sub ? '<small>' + sub + '</small>' : '') + '</span>';
+      return row;
+    };
+
+    if (msgs.length) {
+      const me = msgs.filter((x) => x.role === 'me').length;
+      const preview = msgs.slice(-2)
+        .map((x) => (x.role === 'me' ? '你：' : '他：') + String(x.text || '').slice(0, 22))
+        .join(' / ');
+      card.appendChild(line('i-chat', '聊了 ' + msgs.length + ' 句', '你 ' + me + ' · 他 ' + (msgs.length - me) + '　' + preview));
+    }
+    if (logs.length) {
+      card.appendChild(line('i-sunrise', '他那天 ' + logs.length + ' 件事',
+        logs.slice(-2).map((x) => x.text).join(' / ')));
+    }
+    courses.forEach((c) => {
+      const time = [c.start, c.end].filter(Boolean).join('–');
+      card.appendChild(line('i-course', c.name || '课', time + (c.room ? ' · ' + c.room : '')));
+    });
+    cds.forEach((c) => {
+      card.appendChild(line('i-hourglass', c.title || '倒数', '这天到点' + (c.note ? ' · ' + c.note : '')));
+    });
+    if (photos.length) {
+      card.appendChild(line('i-album', '留下 ' + photos.length + ' 张照片',
+        photos.map((p) => p.cap).filter(Boolean).slice(0, 2).join(' / ')));
+    }
+
+    if (!card.querySelectorAll('.row').length) {
+      const empty = document.createElement('p');
+      empty.className = 'cal-empty';
+      empty.textContent = '这天没有留下什么。';
+      card.appendChild(empty);
+    }
+    box.appendChild(card);
   }
 
   function shiftCalPage(delta) {
@@ -1133,6 +1222,10 @@
     }
     const d = new Date(calPageYM.y, calPageYM.m + delta, 1);
     calPageYM = { y: d.getFullYear(), m: d.getMonth() };
+    // 翻月后选中态失效：月变了，日号不再对应同一天
+    calSelKey = '';
+    const box = $('calDayCard');
+    if (box) box.innerHTML = '';
     renderCalendarPage();
   }
 
@@ -1528,8 +1621,24 @@
     renderQuote();
   }
 
+  /* 主色微调：跟着他的情绪走一点点。
+     不碰 --accent（冷银 / 近黑是你定的，动了就不是这套界面）——
+     只把「氛围光 + 情绪条」的色温在冷银 ↔ 淡暖之间挪：
+     心情高 → 暖一点、亮一点；心情低 → 冷一点、沉一点。 */
+  function applyMoodTint() {
+    const p = S.persona || {};
+    const m = Math.max(0, Math.min(100, p.mood === undefined ? 58 : p.mood));
+    const t = m / 100;
+    const mix = (a, b) => Math.round(a + (b - a) * t);
+    // 冷 (206,214,228) → 暖 (232,212,196)
+    const rgb = mix(206, 232) + ',' + mix(214, 212) + ',' + mix(228, 196);
+    document.documentElement.style.setProperty('--mood-rgb', rgb);
+    document.documentElement.style.setProperty('--mood-t', t.toFixed(2));
+  }
+
   /* 情绪面板：精力 / 心情 两条极细进度条（真实 persona 数值）+ 一句他的话 */
   function renderMoodCard() {
+    applyMoodTint();          // 卡片可能被隐藏，色温仍要跟着情绪走
     const bar = $('moEnergy');
     if (!bar) return;
     const p = S.persona || {};
@@ -1543,6 +1652,7 @@
     const eb = $('moEnergy'), mb = $('moMood');
     if (eb) eb.style.width = e + '%';
     if (mb) mb.style.width = m + '%';
+    applyMoodTint();
   }
 
   /* 拍立得相册墙：白边 + 微倾 + 质感阴影，横向滑动；没照片就给一张空白相纸 */
@@ -2587,12 +2697,20 @@
     }
   }
 
+  /* 把动作与神态从正文里剥出来，单独一行斜体显示。
+     支持三种写法：*他走过来*、全角（他看了一眼窗外）、半角 (他叹了口气)；
+     半角括号只在内容是纯中文时才当动作，避免把 (2026.10) 这种补充信息也抽走。 */
   function splitAction(text) {
     const acts = [];
-    const clean = text.replace(/\*([^*\n]{1,80})\*/g, (_, a) => {
+    let clean = String(text == null ? '' : text);
+    clean = clean.replace(/\*([^*\n]{1,80})\*/g, (_, a) => { acts.push(a.trim()); return ''; });
+    clean = clean.replace(/（([^（）\n]{2,60})）/g, (_, a) => { acts.push(a.trim()); return ''; });
+    clean = clean.replace(/\(([^()\n]{2,60})\)/g, (m, a) => {
+      if (!/^[\u4e00-\u9fa5，。、；：…—～·\s]{2,60}$/.test(a)) return m;
       acts.push(a.trim());
       return '';
-    }).replace(/\n{3,}/g, '\n\n').trim();
+    });
+    clean = clean.replace(/\n{3,}/g, '\n\n').trim();
     return { text: clean, action: acts.join(' · ') };
   }
 
@@ -3431,6 +3549,28 @@
     return el;
   }
 
+  /* 「记忆已收录」系统小气泡：把刚记下的那句话摊开给你看 ——
+     📥 记忆已收录 · 重要度 5 · 情感：喜欢草莓 */
+  const MEM_META = {
+    like:  { k: '情感', w: 5 },
+    name:  { k: '称呼', w: 4 },
+    note:  { k: '叮嘱', w: 3 },
+    place: { k: '地点', w: 3 },
+  };
+  function memBubble(mem) {
+    const meta = MEM_META[mem.type] || { k: '记下', w: 3 };
+    const body = String(mem.text || '').replace(/^你(喜欢|爱|讨厌|不喜欢|怕)/, '$1');
+    const el = document.createElement('div');
+    el.className = 'sys-note mem-pill';
+    el.innerHTML =
+      '<span class="mn-ic" aria-hidden="true">📥</span>' +
+      '<span class="mn-t">' +
+        '<b>记忆已收录</b>' +
+        '<span class="mn-meta">重要度 ' + meta.w + ' · ' + meta.k + '：' + body + '</span>' +
+      '</span>';
+    return el;
+  }
+
   function send(text) {
     const t = (text || '').trim();
     if (!t || busy) return;
@@ -3442,7 +3582,15 @@
     if (gapMin >= 30) stream.appendChild(gapNote(gapMin));
 
     clearKind('continuation');            // 你回话了，续话闹钟取消
-    appendMessage({ role: 'me', text: t, action: '', ts: Date.now(), gap: gapMin >= 30 ? gapMin : 0 }, true);
+    // 你写的 *动作* /（动作）也按同一套渲染：正文归正文，动作单独一行斜体
+    const mine = splitAction(t);
+    appendMessage({
+      role: 'me',
+      text: mine.text || (mine.action ? '' : t),
+      action: mine.action,
+      ts: Date.now(),
+      gap: gapMin >= 30 ? gapMin : 0,
+    }, true);
 
     const mem = P.extractMemory(t);
     if (mem) {
@@ -3450,6 +3598,10 @@
       if (!facts.includes(mem.text) && facts.length < 40) {
         S.memory.facts.push(mem.text);
         save(KEY.memory, S.memory);
+        // 记下了就在对话里回你一个玻璃小气泡，让你看见他记住了什么
+        stream.appendChild(memBubble(mem));
+        scrollDown();
+        renderHomeMemories();
       }
     }
 
@@ -4792,12 +4944,22 @@
       }
     }
 
+    function moodRGB() {
+      // 和 applyMoodTint() 同一套算法：冷银 ↔ 淡暖，跟他的心情走
+      const p = S.persona || {};
+      const m = Math.max(0, Math.min(100, p.mood === undefined ? 58 : p.mood));
+      const t = m / 100;
+      const mix = (a, b) => Math.round(a + (b - a) * t);
+      return mix(206, 232) + ',' + mix(214, 212) + ',' + mix(228, 196);
+    }
+
     function draw(ts) {
       raf = requestAnimationFrame(draw);
       if (document.hidden) return;
       if (ts - last < 33) return;          // ≈30fps，够用且省电
       last = ts;
       ctx.clearRect(0, 0, W, H);
+      const mrgb = moodRGB();
       if (mode === 'light') {
         parts.forEach((p) => {
           p.x += p.vx; p.y += p.vy;
@@ -4806,8 +4968,8 @@
           if (p.y < -p.r) p.y = H + p.r;
           if (p.y > H + p.r) p.y = -p.r;
           const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
-          g.addColorStop(0, 'rgba(255,251,240,' + p.a + ')');
-          g.addColorStop(1, 'rgba(255,251,240,0)');
+          g.addColorStop(0, 'rgba(255,252,246,' + p.a + ')');
+          g.addColorStop(1, 'rgba(255,252,246,0)');
           ctx.fillStyle = g;
           ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill();
         });
@@ -4816,13 +4978,13 @@
       parts.forEach((p) => {
         if (p.star) {
           const tw = 0.55 + 0.45 * Math.sin(ts / 900 + p.ph);
-          ctx.fillStyle = 'rgba(200,203,210,' + (p.a * tw).toFixed(3) + ')';
+          ctx.fillStyle = 'rgba(' + mrgb + ',' + (p.a * tw).toFixed(3) + ')';
           ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill();
           return;
         }
         p.y += p.v; p.x -= p.v * 0.18;
         if (p.y > H + p.len) { p.y = -p.len; p.x = Math.random() * W; }
-        ctx.strokeStyle = 'rgba(200,203,210,' + p.a.toFixed(3) + ')';
+        ctx.strokeStyle = 'rgba(' + mrgb + ',' + p.a.toFixed(3) + ')';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
@@ -4864,6 +5026,7 @@
   async function boot() {
     await seedIfEmpty();   // 第一次进站：没数据就 fetch 同级 seed.json 灌进来
     applyAppearance();     // 明暗 / 字体（head 内联脚本已挂过一次，这里兜底 + 同步设置页）
+    applyMoodTint();       // 主色色温先跟情绪对齐，再画界面
     renderBento();
     renderApps();
     renderAppRows();

@@ -697,7 +697,17 @@
       <button type="button" id="calNext" aria-label="下个月">&#8250;</button>
     </div>
     <div class="cal-grid" id="calPageGrid"></div>
-    <p class="hint">先能用：翻月、今天描边、说过话的日子点一个点。标记 / 图例 / 某一天发生了什么，第 5 步做。</p>
+
+    <!-- 足迹图例：聊得越多，块越深 -->
+    <div class="cal-legend" aria-label="足迹图例">
+      <span class="cl-item"><i class="cl-dot l1"></i>说了几句</span>
+      <span class="cl-item"><i class="cl-dot l2"></i>聊得不少</span>
+      <span class="cl-item"><i class="cl-dot l3"></i>聊了很多</span>
+      <span class="cl-item"><i class="cl-ring"></i>今天</span>
+    </div>
+
+    <!-- 点某一天 → 那天发生了什么 -->
+    <div id="calDayCard"></div>
   </div>
 </section>
 

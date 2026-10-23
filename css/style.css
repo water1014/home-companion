@@ -6239,3 +6239,105 @@ html .set-page #setApps .list-head{
 }
 /* 更多页：第一个分组不要顶部多余留白 */
 html .more-page .page-scroll > .list-card:first-child{ margin-top: 0 !important; }
+
+/* ============================================================
+   V15 · 遗留项收口：记忆气泡 / 括号动作 / 足迹图例与当日回溯 / 情绪色温
+   ============================================================ */
+
+/* ---------- 1. 聊天「记忆已收录」玻璃小气泡 ---------- */
+html .sys-note.mem-pill{
+  display: flex; align-items: center; gap: 9px;
+  width: max-content; max-width: 88%;
+  margin: 10px auto 8px;
+  padding: 9px 14px 9px 11px;
+  border-radius: 14px !important;
+  text-align: left;
+  line-height: 1.4 !important;
+}
+html .mem-pill .mn-ic{ font-size: 15px; line-height: 1; }
+html .mem-pill .mn-t{ display: flex; flex-direction: column; gap: 1px; }
+html .mem-pill .mn-t b{
+  font-size: 11.5px; font-weight: 600; letter-spacing: .04em;
+  color: var(--text) !important;
+}
+html .mem-pill .mn-meta{
+  font-size: 11px; color: var(--text-2) !important;
+  letter-spacing: .01em;
+}
+
+/* ---------- 2. 动作 / 神态：括号写法也进那一行斜体 ---------- */
+html .msg .bubble em{
+  font-style: italic !important;
+  color: var(--text-3) !important;
+}
+
+/* ---------- 3. 足迹图例 ---------- */
+html .cal-legend{
+  display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+  margin: 14px 2px 4px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  background: rgba(255, 255, 255, .035);
+}
+html[data-theme="light"] .cal-legend{
+  border-color: rgba(22, 22, 26, .07);
+  background: rgba(255, 255, 255, .5);
+}
+html .cl-item{
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px; letter-spacing: .04em;
+  color: var(--text-3) !important;
+}
+html .cl-dot{
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent) !important;
+}
+html .cl-dot.l1{ opacity: .5; }
+html .cl-dot.l2{ opacity: .8; }
+html .cl-dot.l3{ box-shadow: 0 0 8px rgba(200, 203, 210, .55); }
+html .cl-ring{
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 1.4px solid var(--accent);
+}
+
+/* ---------- 4. 日历格改成按钮 + 选中态 ---------- */
+html .cal-grid .cg-d{
+  appearance: none; -webkit-appearance: none;
+  border: 0; background: transparent;
+  font: inherit; color: inherit;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 200ms ease, transform 160ms ease;
+}
+html .cal-grid .cg-d:active{ transform: scale(.94); }
+html .cal-grid .cg-d.sel{
+  box-shadow: inset 0 0 0 1.4px var(--accent) !important;
+  background: rgba(200, 203, 210, .10) !important;
+}
+html[data-theme="light"] .cal-grid .cg-d.sel{
+  background: rgba(58, 58, 68, .08) !important;
+}
+html .cal-grid .cg-d.today.sel{ box-shadow: inset 0 0 0 1.4px var(--accent) !important; }
+
+/* 当天详情卡 */
+html .cal-day{ margin-top: 10px; }
+html .cal-day .row{ cursor: default; }
+html .cal-day .row-name small{
+  display: block; margin-top: 2px;
+  font-size: 11px; color: var(--text-3) !important;
+  line-height: 1.5;
+  white-space: normal;
+}
+html .cal-empty{
+  margin: 4px 0 14px;
+  padding-left: 42px;
+  font-size: 12px;
+  color: var(--text-3) !important;
+}
+
+/* ---------- 5. 情绪色温：只动氛围，不动 --accent ---------- */
+html .mo-bar i{
+  background: linear-gradient(90deg, rgb(var(--mood-rgb, 200, 203, 210)), rgba(255, 255, 255, .9)) !important;
+}
