@@ -599,6 +599,7 @@
     if (id === 'countdown') renderCountdownPage();
     if (id === 'cards') renderCoupons();
     if (id === 'theme') renderTheme();
+    if (id === 'more') { renderMoreApps(); syncMoreAcct(); }
     if (id === 'calendar') renderCalendarPage();
   }
 
@@ -889,6 +890,46 @@
   /* v2 单页渲染：
      #bento = 卡片（renderBento）；#appGrid = 全部应用（应用矩阵单独成区，见 .app-matrix）
      不再有第二、第三页，分页圆点已删 */
+  /* 「更多」页 = 应用抽屉：按 APP_CATS 五组列出全部 APPS。
+     已经做好的可点进页面；还没做的显示「待做」，点一下给出它打算做什么。 */
+  function renderMoreApps() {
+    const box = $('moreApps');
+    if (!box) return;
+    box.innerHTML = '';
+    APP_CATS.forEach((cat) => {
+      const list = APPS.filter((a) => a.cat === cat.k);
+      if (!list.length) return;
+      const card = document.createElement('section');
+      card.className = 'glass list-card';
+      const head = document.createElement('p');
+      head.className = 'list-head';
+      head.textContent = cat.name;
+      card.appendChild(head);
+      list.forEach((a) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'row nav' + (a.page ? '' : ' is-todo');
+        b.innerHTML =
+          '<svg class="row-ic"><use href="#' + a.icon + '"/></svg>' +
+          '<span class="row-name">' + a.name + '</span>' +
+          (a.page ? '' : '<span class="row-side">待做</span>');
+        b.addEventListener('click', () => {
+          if (a.page) openPage(a.page, a.seg);
+          else toast(a.desc ? String(a.desc).split('\n')[0] : '这个还没做，先记着。');
+        });
+        card.appendChild(b);
+      });
+      box.appendChild(card);
+    });
+  }
+
+  /* 更多页账号行：头像 + 你的名字 */
+  function syncMoreAcct() {
+    const ava = $('moreAva');
+    if (ava) ava.innerHTML = myAvaInner('');
+    setTxt('moreName', S.memory.userName || '我');
+  }
+
   function renderApps() {
     const grid = $('appGrid');
     if (grid) {
@@ -4831,6 +4872,8 @@
     applyAppearance();     // 明暗 / 字体（head 内联脚本已挂过一次，这里兜底 + 同步设置页）
     renderBento();
     renderApps();
+    renderMoreApps();
+    syncMoreAcct();
     renderCards();
     renderMood();
     renderChips();

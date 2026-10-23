@@ -5928,3 +5928,299 @@ html[data-theme="light"] .cg-d:has(.fp.l3){
 /* ---------- V13.5 首页底部：给浮动「我来找你」留出一条通道 ----------
    底栏 62 + 让位 10 = 72，胶囊本身 38 高、底距 80，所以最后一张卡要退到 124 才不会压在胶囊下面。 */
 html .home-page{ padding-bottom: 124px !important; }
+
+/* ============================================================
+   V14 · 设置行系统（iOS 设置参考）
+   —— 账号行 + 分组卡 + 图标底座 + 右值/箭头；
+      更多页 = 应用抽屉，设置页 = 参数列表，两者共用这套行语言。
+   ============================================================ */
+
+/* 卡片：白/暗玻璃，圆角 18，组间 10 */
+html .set-page .list-card,
+html .more-page .list-card,
+html .set-page .profile-card,
+html .more-page .acct-card{
+  border-radius: 18px !important;
+  padding: 0 16px !important;
+}
+html .set-page .list-card + .list-card,
+html .more-page .list-card + .list-card,
+html .more-page #moreApps > .list-card + .list-card{
+  margin-top: 10px !important;
+}
+
+/* 行：高 52、内边距 0、发丝分隔、最后一行不留线 */
+html .set-page .row,
+html .more-page .row{
+  min-height: 52px !important;
+  gap: 12px !important;
+  padding: 6px 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .07) !important;
+  font-size: 15px !important;
+}
+html[data-theme="light"] .set-page .row,
+html[data-theme="light"] .more-page .row{
+  border-bottom-color: rgba(22, 22, 26, .07) !important;
+}
+html .set-page .row:last-child,
+html .more-page .row:last-child{ border-bottom: 0 !important; }
+
+/* 图标底座：统一深灰实底 + 白色线性图标（替掉原来粉蓝交替） */
+html .set-page .row-ic,
+html .more-page .row-ic,
+html .set-page .row:nth-child(odd) .row-ic,
+html .more-page .row:nth-child(odd) .row-ic{
+  flex: 0 0 30px !important;
+  width: 30px !important; height: 30px !important;
+  min-width: 30px !important;
+  border-radius: 9px !important;
+  padding: 7px !important;
+  background: rgba(58, 58, 68, .82) !important;
+  stroke: #fff !important;
+  stroke-width: 1.5 !important;
+  color: #fff !important;
+  box-sizing: border-box;
+}
+html[data-theme="dark"] .set-page .row-ic,
+html[data-theme="dark"] .more-page .row-ic,
+html[data-theme="dark"] .set-page .row:nth-child(odd) .row-ic,
+html[data-theme="dark"] .more-page .row:nth-child(odd) .row-ic{
+  background: rgba(255, 255, 255, .14) !important;
+  stroke: var(--text) !important;
+  color: var(--text) !important;
+}
+/* 危险行的图标保持红调 */
+html .set-page .row.danger .row-ic{
+  background: rgba(194, 96, 111, .18) !important;
+  stroke: #d9737f !important;
+  color: #d9737f !important;
+}
+/* 待做的应用：图标降一档，一眼能分辨 */
+html .more-page .row.is-todo .row-ic{ opacity: .55; }
+html .more-page .row.is-todo .row-name{ color: var(--text-2) !important; }
+
+html .set-page .row-name,
+html .more-page .row-name{
+  font-size: 15px !important;
+  font-weight: 450 !important;
+  letter-spacing: .005em;
+}
+html .set-page .row-name small,
+html .more-page .row-name small{
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px !important;
+  font-weight: 400;
+  color: var(--text-3) !important;
+}
+html .set-page .row-side,
+html .more-page .row-side{
+  font-size: 13px !important;
+  color: var(--text-3) !important;
+}
+
+/* 分组小标题：小一号、灰、贴在卡内左上 */
+html .set-page .list-head,
+html .more-page .list-head{
+  margin: 0 !important;
+  padding: 14px 0 4px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: .16em !important;
+  color: var(--text-3) !important;
+  opacity: .9;
+}
+
+/* 右箭头：细一点、更靠边 */
+html .set-page .list-card button.row::after,
+html .more-page .list-card button.row::after{
+  margin-left: 8px !important;
+  font-size: 18px !important;
+  opacity: .5 !important;
+}
+
+/* 可输入行：输入框靠右、无框 */
+html .set-page .row input[type="text"],
+html .set-page .row input[type="url"],
+html .set-page .row input[type="password"],
+html .set-page .row input[type="date"]{
+  margin-left: auto;
+  max-width: 52%;
+  text-align: right;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 6px 0 !important;
+  font-size: 14px !important;
+  color: var(--text-2) !important;
+}
+html .set-page .row.seg-row .seg{ margin-left: auto; }
+
+/* ---------- 账号行（更多页顶部） ---------- */
+html .more-page .acct-card{
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px !important;
+  margin-bottom: 10px;
+}
+html .acct-ava{
+  flex: 0 0 auto;
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .18);
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--text);
+}
+html .acct-ava img{ width: 100%; height: 100%; object-fit: cover; }
+html .acct-ava span{ font-size: inherit; }
+html[data-theme="light"] .acct-ava{
+  background: rgba(58, 58, 68, .08);
+  border-color: rgba(58, 58, 68, .10);
+}
+html .acct-mid{ flex: 1 1 auto; min-width: 0; }
+html .acct-name{
+  margin: 0; font-size: 18px !important; font-weight: 500;
+  font-family: var(--font-display) !important;
+  color: var(--text) !important;
+  letter-spacing: .01em;
+}
+html .acct-sub{
+  margin: 2px 0 0; font-size: 11.5px;
+  color: var(--text-3) !important;
+  letter-spacing: .02em;
+}
+html .acct-chev{
+  flex: 0 0 auto; width: 8px; height: 8px;
+  border-top: 1.6px solid var(--text-3);
+  border-right: 1.6px solid var(--text-3);
+  transform: rotate(45deg);
+  opacity: .6;
+}
+
+/* ---------- 设置页顶部：把个人卡压成同款账号行 ---------- */
+html .set-page .profile-card{
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px !important;
+  margin-bottom: 10px;
+  flex-wrap: nowrap !important;
+}
+html .set-page .profile-card .pair-ava.big{
+  width: 54px !important; height: 54px !important;
+  font-size: 20px !important;
+  flex: 0 0 54px;
+}
+html .set-page .profile-name{
+  font-family: var(--font-display) !important;
+  font-size: 18px !important; font-weight: 500 !important;
+  color: var(--text) !important;
+}
+html .set-page .profile-sub{
+  font-size: 11.5px !important;
+  color: var(--text-3) !important;
+  margin-top: 2px !important;
+  line-height: 1.5 !important;
+}
+html .set-page .profile-note{ display: none !important; }
+html .set-page .profile-card::after{
+  content: '';
+  flex: 0 0 auto; width: 8px; height: 8px;
+  border-top: 1.6px solid var(--text-3);
+  border-right: 1.6px solid var(--text-3);
+  transform: rotate(45deg);
+  opacity: .6;
+}
+
+/* 开关行：开关贴右 */
+html .set-page .row.switch-row .switch{ margin-left: auto; }
+html .set-page .row .mini-select,
+html .set-page .row .time-range{ margin-left: auto; }
+
+/* 说明文字：小一号、缩进对齐标题 */
+html .set-page .hint,
+html .set-page .warn{
+  margin: 6px 0 12px !important;
+  padding-left: 42px !important;
+  font-size: 11.5px !important;
+  line-height: 1.6 !important;
+  color: var(--text-3) !important;
+}
+
+/* 应用组结束到「系统」组之间也要有间距（它们是 div 与 section 的兄弟关系） */
+html .more-page #moreApps + .list-card{ margin-top: 10px !important; }
+html .more-page #moreApps:empty{ display: none; }
+
+/* ---------- V14.1 修根因：.page-scroll 是 flex column，卡片又是 overflow:hidden，
+   导致 flex-shrink 把卡片压扁（min-height:auto 在 overflow≠visible 时失效）。
+   让直接子元素一律不收缩，卡片才有自己的高度。 ---------- */
+html .page-scroll > *{ flex-shrink: 0 !important; }
+
+/* 这两个页面用 margin 控制组间距，关掉 flex gap 免得两套间距叠加 */
+html .set-page .page-scroll,
+html .more-page .page-scroll{ gap: 0 !important; }
+
+html .more-page .acct-card,
+html .set-page .profile-card{ margin: 0 0 10px !important; min-height: 82px; }
+html .more-page .acct-ava,
+html .set-page .profile-card .pair-ava.big{ align-self: center; }
+html .more-page .acct-mid,
+html .set-page .profile-mid{ display: flex; flex-direction: column; justify-content: center; }
+html .more-page .acct-name,
+html .set-page .profile-name{ line-height: 1.25 !important; }
+
+/* ---------- V14.2 收口：开关 / 提示 / 无图标行对齐 ---------- */
+/* 开关：关态轨道在浅色卡上要看得见（原来是白色 16%，等于隐形） */
+html .set-page .switch[aria-checked="false"]{
+  background: rgba(255, 255, 255, .18) !important;
+}
+html[data-theme="light"] .set-page .switch[aria-checked="false"]{
+  background: rgba(58, 58, 68, .17) !important;
+}
+html[data-theme="light"] .set-page .switch[aria-checked="true"]{
+  background: var(--accent) !important;
+}
+html .set-page .switch{
+  width: 46px !important; height: 27px !important;
+  border-radius: 999px !important;
+  flex: 0 0 auto;
+}
+html .set-page .switch i{
+  width: 23px !important; height: 23px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .22) !important;
+}
+
+/* 提示条：去掉粉底，回到中性灰（粉色只留给「我来找你」那一点） */
+html .set-page .warn,
+html .set-page .hint{
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* 没有图标底座的行（明暗/字体/频率/免打扰）：左边补出图标位，标题才对齐 */
+html .set-page .row:not(:has(.row-ic)):not(.sub),
+html .more-page .row:not(:has(.row-ic)):not(.sub){
+  padding-left: 42px !important;
+}
+
+/* 分组标题再亮一档，暗色下别糊掉 */
+html .set-page .list-head,
+html .more-page .list-head{
+  color: var(--text-2) !important;
+  opacity: .78 !important;
+}
+
+/* 暗色开关：关态压暗、开态银底深钮，两种状态才分得出来 */
+html[data-theme="dark"] .set-page .switch[aria-checked="false"]{
+  background: rgba(255, 255, 255, .10) !important;
+}
+html[data-theme="dark"] .set-page .switch[aria-checked="true"]{
+  background: var(--accent) !important;
+}
+html[data-theme="dark"] .set-page .switch[aria-checked="true"] i{
+  background: #14141a !important;
+}
+html[data-theme="light"] .set-page .switch[aria-checked="true"] i{
+  background: #ffffff !important;
+}
