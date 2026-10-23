@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v42';
+  window.__TIDE_MARK = 'LOCAL-v42a';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -837,6 +837,59 @@
     if (chatBtn) chatBtn.hidden = inChat;
     if (setBtn) setBtn.hidden = !inChat;
   }
+
+  /* ---- STEP A · 汉堡抽屉：主模块导航 ---- */
+  const drawer = $('drawer');
+  const drawerMask = $('drawerMask');
+
+  function openDrawer() {
+    if (!drawer || !drawerMask) return;
+    drawerMask.hidden = false;
+    drawer.classList.add('open');
+    requestAnimationFrame(() => drawerMask.classList.add('show'));
+    const ham = $('tbHamBtn');
+    if (ham) ham.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeDrawer() {
+    if (!drawer || !drawerMask) return;
+    drawer.classList.remove('open');
+    drawerMask.classList.remove('show');
+    const ham = $('tbHamBtn');
+    if (ham) ham.setAttribute('aria-expanded', 'false');
+    setTimeout(() => { if (!drawer.classList.contains('open')) drawerMask.hidden = true; }, 260);
+  }
+
+  /* 抽屉行 → 页面。home 是主屏（closePage 即可）；
+     data 先进设置页再滚到数据卡（导出/导入/清空在那儿） */
+  function drawerGo(key) {
+    closeDrawer();
+    if (key === 'home') { closePage(); return; }
+    if (key === 'data') {
+      openPage('settings');
+      setTimeout(() => {
+        const c = $('setDataCard');
+        if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 280);
+      return;
+    }
+    openPage(key);
+  }
+
+  const hamBtn = $('tbHamBtn');
+  if (hamBtn) {
+    hamBtn.addEventListener('click', () => {
+      if (drawer && drawer.classList.contains('open')) closeDrawer();
+      else openDrawer();
+    });
+  }
+  if (drawerMask) drawerMask.addEventListener('click', closeDrawer);
+  document.querySelectorAll('.drawer-row[data-drawer]').forEach((b) => {
+    b.addEventListener('click', () => drawerGo(b.dataset.drawer));
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawer && drawer.classList.contains('open')) closeDrawer();
+  });
 
   /** 通用：重建前后各量一次，让元素从旧位置滑到新位置（FLIP） */
   function flipAll(sel, keyAttr, rebuild, fromRect) {

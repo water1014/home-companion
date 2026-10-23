@@ -3822,21 +3822,8 @@ section.home-page .statusbar #sbState { color: rgba(255, 255, 255, 0.88); }
 section.home-page .statusbar .sb-dot { background: #6ec6ff; }
 /* 深底上白色光斑太抢，主屏里压掉 */
 section.home-page .bg-blob { opacity: 0.12; }
-/* 「我」页的全部应用 */
-.set-apps-card { padding: 16px; }
-.set-apps-card .app-grid-all { padding: 4px 0 0; }
-/* 全部应用：五组，组间距 24 */
-.app-cat + .app-cat { margin-top: 24px; }
-.app-cat-title {
-  margin: 0 0 8px;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  color: var(--ink-3);
-  font-weight: 500;
-}
-/* 五组的容器纵向排，组内才是网格 */
-#appGridAll { display: block; }
-#appGridAll .app-grid-all { margin-top: 0; }
+/* 「全部应用」整块已挪进汉堡抽屉（STEP A），原 set-apps-card / app-cat /
+   #appGridAll 规则随 HTML 一起删除 */
 
 /* ============================================================
    v42 · 主题骨架（第 1 步：双主题 + 字体 + 三区结构 + 顶栏 + 新 dock）
@@ -4117,3 +4104,109 @@ html .dock .tile svg {
 /* 深色下发闷的旧定色 */
 .clock-time { color: var(--text) !important; }
 .pair-names b { color: var(--text); }
+
+/* ============================================================
+   v42 · STEP A · 汉堡抽屉（主模块导航）
+   —— 顶栏左上 ≡ 点开：左侧滑出、宽 78%、毛玻璃；
+      主模块 现在/记/日/之间/我，底部固定 数据/设置。
+      视觉沿用现有 token（var(--card) + var(--line) + var(--text)），不引入新皮。
+   ============================================================ */
+
+/* 顶栏汉堡：和右侧图标同尺寸，只是位置在最左 */
+.topbar .tb-ham { margin-left: -6px; }
+
+/* 遮罩：点它关抽屉 */
+.drawer-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 38;
+  background: rgba(10, 8, 16, 0.32);
+  opacity: 0;
+  transition: opacity var(--dur) ease;
+}
+.drawer-mask.show { opacity: 1; }
+
+/* 抽屉本体：全屏高、左对齐、宽 78%，从左滑出 */
+.drawer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 39;
+  width: 78%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  backdrop-filter: blur(20px) saturate(1.1);
+  border-right: 1px solid var(--line);
+  transform: translate3d(-100%, 0, 0);
+  transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  padding: calc(18px + var(--safe-t)) 0 calc(14px + var(--safe-b));
+  visibility: hidden;
+}
+.drawer.open { transform: none; visibility: visible; }
+
+.drawer-brand {
+  margin: 0 0 14px;
+  padding: 0 22px;
+  font-size: 20px;
+  font-family: var(--font-serif);
+  color: var(--text);
+}
+.drawer-brand span {
+  margin-left: 8px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--text-3);
+}
+
+/* 主模块行：图标 22 + 名称 15 + 右箭头 */
+.drawer-main { flex: 1; overflow-y: auto; padding: 0 12px; }
+.drawer-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 13px 12px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.drawer-row:active { background: var(--line); }
+.drawer-ic {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--text-2);
+}
+.drawer-name { flex: 1; }
+.drawer-arrow {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: var(--text-3);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 底部固定两项：数据 / 设置，与主模块之间一条分隔线 */
+.drawer-foot {
+  padding: 10px 12px 0;
+  border-top: 1px solid var(--line);
+}
+.drawer-foot .drawer-row { color: var(--text-2); }
