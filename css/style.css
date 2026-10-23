@@ -4112,9 +4112,18 @@ html .dock .tile svg {
       视觉沿用现有 token（var(--card) + var(--line) + var(--text)），不引入新皮。
    ============================================================ */
 
-/* 顶栏汉堡：和右侧图标同尺寸，只是位置在最左。
-   抽屉开着时它要还能点（再点一下关）——提到遮罩(38)/抽屉(39) 之上 */
-.topbar .tb-ham { margin-left: -6px; position: relative; z-index: 41; }
+/* 顶栏汉堡：视觉上在顶栏最左（fixed 定位复刻原位）。
+   抽屉开着时它还要能点（再点一下关）——DOM 上它是 phone 直属元素，
+   z-index 42 直接在 phone 层叠上下文里排，盖过抽屉 39 / 遮罩 38 */
+#tbHamBtn {
+  position: fixed;
+  top: calc(var(--safe-t) + 7px);
+  left: 14px;
+  z-index: 42;
+  margin-left: 0;
+}
+/* 汉堡 fixed 不占文档流，头像补一间，位置和以前一致 */
+.topbar .tb-ava { margin-left: 38px; }
 
 /* 遮罩：点它关抽屉 */
 .drawer-mask {

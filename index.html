@@ -79,6 +79,11 @@
 </div>
 
 <div class="phone" id="phone">
+<!-- 汉堡：DOM 上不放顶栏里——topbar 是 flex item 且带 z-index，会建层叠上下文，
+     按钮关在里面整体只有 15，压不过抽屉 39；放 phone 直属才能盖在抽屉上 -->
+<button class="tb-btn tb-ham" id="tbHamBtn" type="button" aria-label="主模块" aria-expanded="false">
+  <svg viewBox="0 0 24 24"><use href="#i-menu"/></svg>
+</button>
 <!-- ============ 主模块抽屉（STEP A：顶栏汉堡 → 左侧抽屉） ============ -->
 <div class="drawer-mask" id="drawerMask" hidden></div>
 <aside class="drawer" id="drawer" aria-label="主模块">
@@ -139,9 +144,6 @@
 
 <!-- ============ 主屏 ============ -->
 <header class="topbar" id="topbar" aria-label="状态栏">
-    <button class="tb-btn tb-ham" id="tbHamBtn" type="button" aria-label="主模块" aria-expanded="false">
-      <svg viewBox="0 0 24 24"><use href="#i-menu"/></svg>
-    </button>
     <span class="pair-ava partner tb-ava" id="tbAva"></span>
     <i class="tb-line"></i>
     <span class="tb-status" id="tbStatus">在家</span>
