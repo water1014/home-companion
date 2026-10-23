@@ -7960,3 +7960,14 @@ html[data-theme="light"] .rec-search-input::placeholder{ color: var(--k-ink3) !i
   transition: opacity 0.18s var(--ease);
 }
 .mn-now.tap-now:hover .mn-label::after { opacity: 0.75; }
+
+/* ---- WATER：动作描写（斜体无框）作为前缀先浮现一拍，正文再逐字打出。
+        只在文件末尾新增，不动上面任何既有规则 ---- */
+.msg .bubble em.act { animation: wActIn 0.52s var(--ease) both; }
+@keyframes wActIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .msg .bubble em.act { animation: none; }
+}

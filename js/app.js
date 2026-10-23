@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v52';
+  window.__TIDE_MARK = 'LOCAL-v53';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -3000,6 +3000,7 @@
 
     if (m.action) {
       const em = document.createElement('em');
+      em.className = 'act';            // 斜体动作描写：作为前缀先浮现，正文再逐字打出
       em.textContent = m.action;
       bubble.appendChild(em);
     }
@@ -3124,18 +3125,26 @@
     if (typingEl) { typingEl.remove(); typingEl = null; }
   }
 
+  /* 打字机：逐字打出（不再一次跳多字）。
+     节奏：标点处多停一拍像换气，换行（拆泡）停更久；长句自动提速，
+     总时长不会拖沓。开头留一拍，让动作描写的斜体先浮现完再出字。 */
   function typeOut(node, fullText, speed, done) {
+    const text = String(fullText == null ? '' : fullText);
+    if (!text) { if (done) done(); return; }
+    // 目标：正文部分约 1.4 秒打完，但每字不低于 12ms，短句就用调用方给的速度
+    const base = Math.max(12, Math.min(speed || 26, Math.round(1400 / text.length)));
+    const PAUSE = '，。！？；：、…—';
     let i = 0;
-    const step = Math.max(1, Math.round(fullText.length / 90));
-    const timer = setInterval(() => {
-      i = Math.min(fullText.length, i + step);
-      node.body = fullText.slice(0, i);
+    const tick = () => {
+      i += 1;
+      node.body = text.slice(0, i);
       scrollDown();
-      if (i >= fullText.length) {
-        clearInterval(timer);
-        if (done) done();
-      }
-    }, speed);
+      if (i >= text.length) { if (done) done(); return; }
+      const ch = text.charAt(i - 1);
+      const extra = PAUSE.indexOf(ch) >= 0 ? base * 2.8 : (ch === '\n' ? base * 4.5 : 0);
+      setTimeout(tick, base + extra);
+    };
+    setTimeout(tick, 280);   // 动作描写先浮现一拍，正文随后逐字出
   }
 
   /** 他主动说一句（不经过用户输入） */
