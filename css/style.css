@@ -5235,3 +5235,22 @@ html .c-days{ min-height: 202px !important; }
 html .c-days .days{ gap: 1px !important; }
 html .c-days .days-num{ font-size: clamp(42px, 12vw, 56px) !important; }
 html .c-days .days-pair{ transform: scale(.8) !important; margin-bottom: 0 !important; }
+
+/* V10 · 状态卡 → 日记卡版式（此刻 / 大字心情 / 副标，参考图「窗边」） */
+html .c-status{
+  display: flex !important; flex-direction: column !important;
+  align-items: flex-start !important; justify-content: center !important;
+  text-align: left; gap: 5px;
+}
+html .c-status::before{
+  content: '此刻';
+  font-family: var(--font-sans); font-size: 10px; font-weight: 600;
+  letter-spacing: .3em; color: var(--text-3); margin-bottom: 1px;
+}
+html .c-status .st-ava{ width: 26px !important; height: 26px !important; margin-bottom: 1px; }
+html .c-status .st-word{
+  font-size: 30px !important; line-height: 1.15 !important;
+  font-family: var(--font-serif); font-weight: 300;
+}
+html .c-status .st-sub{ font-size: 11.5px !important; }
+html .c-status .st-dot{ right: 14px; bottom: 14px; }

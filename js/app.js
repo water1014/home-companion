@@ -1266,7 +1266,7 @@
     quote:   { page: 0, size: 'g-4x2', name: '一句话', go: null },
   };
   /* 美化页开关的列举顺序 = 桌面从上到下 */
-  const DT_ORDER = ['days', 'status', 'chat', 'between', 'music', 'device', 'album', 'week', 'quote'];
+  const DT_ORDER = ['days', 'quote', 'status', 'chat', 'between', 'music', 'device', 'album', 'week'];
 
   /* 收起了哪些卡片：存 S.settings.widgets.hidden。
      老配置里是旧组件 id（pair/clock/quad…），这里只认 DT_CARDS 里有的。
