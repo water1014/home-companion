@@ -4603,3 +4603,152 @@ html .app-matrix { margin-top: 24px !important; }
     border-color: var(--text-2) !important;
   }
 }
+
+/* ============================================================
+   REFERENCE LAYER · 参考图-informed 升级 v1
+   取材于 Cunedi / Umi's Home / Cotton 等陪伴类 app 的「结构与层级」，
+   只取规律、不复制观感：贴底通栏 tab 栏 / 分组列表标题 / DAY 主视觉 /
+   思考折叠块 / 气泡配色。整段可删，不动配色 / 数据 / 逻辑。
+   ============================================================ */
+
+/* 1) 贴底通栏 tab 栏（替代上版浮动圆角条）：图标 + 文字 + 选中胶囊 */
+html .dock{
+  left: 0 !important; right: 0 !important; bottom: 0 !important;
+  margin: 0 !important;
+  height: calc(62px + var(--safe-b)) !important;
+  min-height: 0 !important;
+  padding: 6px 8px var(--safe-b) !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--card) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
+  backdrop-filter: blur(20px) saturate(1.2) !important;
+  box-shadow: none !important;
+  align-items: center !important;
+  align-content: center !important;
+  gap: 2px !important;
+}
+html .dock .tile{
+  padding: 3px 0 2px !important;
+  gap: 2px !important;
+  justify-content: center;
+  border-radius: 12px;
+}
+html .dock .tile-ic{
+  width: 30px !important; height: 30px !important;
+  border-radius: 999px !important;
+  display: grid !important; place-items: center !important;
+  background: transparent !important; border: 0 !important;
+  transition: background .18s var(--ease), color .18s var(--ease);
+}
+html .dock .tile-ic svg{ width: 21px !important; height: 21px !important; }
+/* 中间 home 不再 56px 凸起，归一为普通 tab */
+html .dock .tile.t-home .tile-ic{
+  width: 30px !important; height: 30px !important;
+  border-radius: 999px !important;
+  background: transparent !important; border: 0 !important;
+  transform: none !important;
+}
+html .dock .tile.t-home svg{ width: 21px !important; height: 21px !important; }
+/* 恢复文字标签 */
+html .dock .tile .tile-name{
+  display: block !important;
+  font-size: 10px !important; line-height: 1.1 !important;
+  letter-spacing: .03em; color: var(--text-3) !important;
+}
+/* 选中：图标胶囊底 + 主色 */
+html .dock .tile.on .tile-ic{ background: var(--pink-soft) !important; color: var(--accent) !important; }
+html .dock .tile.on .tile-name{ color: var(--accent) !important; font-weight: 600; }
+/* 聊天页不显示 tab 栏（参考图：只剩输入框） */
+body:has(#chat.open) .dock{ display: none !important; }
+body:has(#chat.open) .composer-wrap{ padding-bottom: calc(14px + var(--safe-b)) !important; }
+
+/* 2) 分组列表小标题（设置页补上；主题页已使用 list-head） */
+html .list-head{
+  margin: 16px 0 2px !important;
+  padding: 0 2px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: .05em;
+  color: var(--text-2) !important;
+}
+/* 可点击行补右侧箭头（参考图 navigate 行） */
+html .list-card button.row::after{
+  content: '›';
+  flex: 0 0 auto;
+  margin-left: 6px;
+  font-size: 17px; line-height: 1;
+  color: var(--text-3); opacity: .65;
+}
+
+/* 3) 首页 DAY 主视觉（天数卡升级；真实卡片类为 .card.c-days） */
+html .c-days{ padding: 8px 12px !important; }
+html .c-days .days{
+  height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 2px; text-align: center;
+}
+html .c-days .days-pair{ margin: 0 0 2px !important; transform: scale(.8); }
+html .c-days .days-num{
+  margin: 0 !important;
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 11vw, 46px) !important;
+  font-weight: 300 !important;
+  line-height: 1 !important;
+  letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums;
+}
+html .c-days .days-num::before{
+  content: 'DAY';
+  display: block; margin-bottom: 3px;
+  font-family: var(--font-sans);
+  font-size: 9.5px; font-weight: 700;
+  letter-spacing: .38em; text-indent: .38em;
+  color: var(--text-3);
+}
+html .c-days .days-since{
+  margin: 3px 0 0 !important;
+  font-size: 11.5px !important;
+  letter-spacing: .04em;
+  color: var(--text-2) !important;
+}
+
+/* 4) 思考折叠块（参考图 THINKING 卡片） */
+html .think-card{
+  margin: 8px 0 10px;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  background: var(--card) !important;
+  overflow: hidden;
+}
+html .think-head{
+  width: 100%;
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px;
+  border: 0; background: transparent; cursor: pointer;
+  color: var(--text-2); font-size: 12.5px; text-align: left;
+}
+html .think-ic{ display: grid; place-items: center; color: var(--accent); }
+html .think-ic svg{ width: 15px; height: 15px; stroke: currentColor; fill: none; }
+html .think-label{ letter-spacing: .02em; }
+html .think-toggle{ margin-left: auto; font-style: normal; font-size: 11.5px; color: var(--text-3); }
+html .think-body{
+  margin: 0 !important;
+  padding: 10px 12px 11px !important;
+  font-size: 12.5px !important; line-height: 1.7 !important;
+  color: var(--text-2) !important;
+  border-top: 1px solid var(--line);
+}
+html .think-card.closed .think-body{ display: none !important; }
+
+/* 5) 气泡配色（用户=主色淡底，AI=亮玻璃） */
+html .msg.me .bubble{ background: var(--pink-soft) !important; color: var(--text) !important; }
+html .msg.partner .bubble{ background: var(--card) !important; border: 1px solid var(--line) !important; }
+/* 发送键：主色圆钮 */
+html .composer .send{
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-radius: 999px !important;
+}
