@@ -4110,122 +4110,6 @@ html .dock .tile svg {
 .pair-names b { color: var(--text); }
 
 /* ============================================================
-   v42 · STEP A · 汉堡抽屉（主模块导航）
-   —— 顶栏左上 ≡ 点开：左侧滑出、宽 78%、毛玻璃；
-      主模块 现在/记/日/之间/我，底部固定 数据/设置。
-      视觉沿用现有 token（var(--card) + var(--line) + var(--text)），不引入新皮。
-   ============================================================ */
-
-/* 顶栏汉堡：视觉上在顶栏最左（fixed 定位复刻原位）。
-   抽屉开着时它还要能点（再点一下关）——DOM 上它是 phone 直属元素，
-   z-index 42 直接在 phone 层叠上下文里排，盖过抽屉 39 / 遮罩 38 */
-#tbHamBtn {
-  position: fixed;
-  top: calc(var(--safe-t) + 7px);
-  left: 14px;
-  z-index: 42;
-  margin-left: 0;
-}
-/* 汉堡 fixed 不占文档流，头像补一间，位置和以前一致 */
-.topbar .tb-ava { margin-left: 38px; }
-
-/* 遮罩：点它关抽屉 */
-.drawer-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 38;
-  background: rgba(10, 8, 16, 0.32);
-  opacity: 0;
-  transition: opacity var(--dur) ease;
-}
-.drawer-mask.show { opacity: 1; }
-
-/* 抽屉本体：全屏高、左对齐、宽 78%，从左滑出 */
-.drawer {
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 39;
-  width: 78%;
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  background: var(--card);
-  -webkit-backdrop-filter: blur(20px) saturate(1.1);
-  backdrop-filter: blur(20px) saturate(1.1);
-  border-right: 1px solid var(--line);
-  transform: translate3d(-100%, 0, 0);
-  transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
-  padding: calc(18px + var(--safe-t)) 0 calc(14px + var(--safe-b));
-  visibility: hidden;
-}
-.drawer.open { transform: none; visibility: visible; }
-
-.drawer-brand {
-  margin: 0 0 14px;
-  padding: 0 22px;
-  font-size: 20px;
-  font-family: var(--font-serif);
-  color: var(--text);
-}
-.drawer-brand span {
-  margin-left: 8px;
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  color: var(--text-3);
-}
-
-/* 主模块行：图标 22 + 名称 15 + 右箭头 */
-.drawer-main { flex: 1; overflow-y: auto; padding: 0 12px; }
-.drawer-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 13px 12px;
-  border: 0;
-  border-radius: var(--r-md);
-  background: transparent;
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 15px;
-  text-align: left;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.drawer-row:active { background: var(--line); }
-.drawer-ic {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 auto;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  color: var(--text-2);
-}
-.drawer-name { flex: 1; }
-.drawer-arrow {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 auto;
-  fill: none;
-  stroke: var(--text-3);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* 底部固定两项：数据 / 设置，与主模块之间一条分隔线 */
-.drawer-foot {
-  padding: 10px 12px 0;
-  border-top: 1px solid var(--line);
-}
-.drawer-foot .drawer-row { color: var(--text-2); }
-
-/* ============================================================
    v42 · STEP B · 桌面：应用矩阵 + 卡片混排 + 分页圆点 + 长按编辑
    —— 三页横滑吸附：P1 卡片+应用行混排 / P2 卡片+应用矩阵 / P3 应用矩阵+一句话
       旧「糖果贴纸」图标在这一层统一拔掉，矩阵和 dock 一个审美：
@@ -4893,8 +4777,7 @@ html .think-card{ background: var(--panel-2) !important; border-color: var(--lin
 html .think-body{ color: var(--text-2) !important; border-top-color: var(--line) !important; }
 html .quick button, html .quick .q{ background: var(--panel-2) !important; color: var(--text-2) !important; border: 1px solid var(--line) !important; }
 
-/* ---- 7. 抽屉 / 编辑提示 ---- */
-html .drawer{ background: rgba(12,8,24,.92) !important; border-right-color: var(--panel-line) !important; }
+/* ---- 7. 编辑提示 ---- */
 html #editHint{ background: var(--panel) !important; border-color: var(--panel-line) !important; color: var(--text-2) !important; }
 html #editDone{ background: var(--accent) !important; color: #140a28 !important; }
 
@@ -5045,14 +4928,13 @@ html[data-theme="light"] .c-days .days-num{
   background: none !important; -webkit-text-fill-color: currentColor !important; color: var(--text) !important; filter: none !important;
 }
 
-/* 顶栏 / tab 栏：银边，dock 六格 */
+/* 顶栏 / tab 栏：银边，dock 五格 */
 html .topbar{ background: rgba(10,10,14,.84) !important; border-bottom: 1px solid var(--line) !important; }
-html .dock{ background: rgba(12,12,17,.88) !important; border-top: 1px solid var(--line) !important; grid-template-columns: repeat(6,1fr) !important; }
+html .dock{ background: rgba(12,12,17,.88) !important; border-top: 1px solid var(--line) !important; grid-template-columns: repeat(5,1fr) !important; }
 html[data-theme="light"] .topbar{ background: rgba(237,238,240,.92) !important; }
 html[data-theme="light"] .dock{ background: rgba(255,255,255,.88) !important; }
 
-/* 去掉侧栏（抽屉 + 汉堡） */
-html .drawer, html .drawer-mask, html #tbHamBtn{ display: none !important; }
+/* 抽屉已彻底移除（Step 3）：DOM / CSS / JS 均无残留 */
 
 /* 我来找你：常驻胶囊，银边 + 唯一粉点 */
 html .find-me{
@@ -5314,3 +5196,50 @@ html .dock .tile.t-home.on .tile-ic{ color: var(--accent) !important; }
 /* 内容底部留白 100，别被底栏挡住 */
 html .page-scroll, html .home-page{ padding-bottom: 100px !important; }
 html .find-me{ bottom: calc(80px + var(--safe-b)) !important; }
+
+/* ============================================================
+   V12 · 顶栏标题 + 更多入口（Step 3 / 抽屉已删）
+   主屏：头像 + 竖线 + 状态语 ｜ 其它页：页面标题 15px ｜ 右：更多 22px
+   ============================================================ */
+html .topbar{ padding-left: 16px !important; padding-right: 12px !important; gap: 10px !important; }
+
+/* 页面标题：默认不显示（主屏走头像+状态语） */
+html .topbar .tb-title{
+  display: none !important;
+  font-family: var(--font) !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  letter-spacing: .01em !important;
+  color: var(--text) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 46vw !important;
+}
+
+/* 打开任意一页 → 左变标题、收起头像簇 */
+html body:has(.screen.page.open) .topbar .tb-title{ display: block !important; }
+html body:has(.screen.page.open) .topbar .tb-ava,
+html body:has(.screen.page.open) .topbar .tb-line,
+html body:has(.screen.page.open) .topbar .tb-status{ display: none !important; }
+
+/* 聊天页例外：保留头像 + 竖线 + 状态语（在线状态），不显示标题 */
+html body:has(#chat.open) .topbar .tb-title{ display: none !important; }
+html body:has(#chat.open) .topbar .tb-ava,
+html body:has(#chat.open) .topbar .tb-line,
+html body:has(#chat.open) .topbar .tb-status{ display: block !important; }
+html body:has(#chat.open) .topbar .tb-ava{ display: flex !important; }
+
+/* 顶栏「更多」图标：22px 线性，点它跳更多页 */
+html .topbar .tb-btn#tbMoreBtn{
+  width: 34px !important; height: 34px !important;
+  color: var(--text-2) !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+html .topbar .tb-btn#tbMoreBtn svg{ width: 22px !important; height: 22px !important; stroke-width: 1.5 !important; }
+html .topbar .tb-btn#tbMoreBtn:active{ color: var(--accent) !important; }
+
+/* 顶栏右侧只留「更多」：聊天入口交给常驻「我来找你」与桌面「和他聊聊」卡 */
+html .topbar .tb-btn#tbChatBtn{ display: none !important; }
+

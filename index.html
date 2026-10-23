@@ -80,55 +80,7 @@
 </div>
 
 <div class="phone" id="phone">
-<!-- 汉堡：DOM 上不放顶栏里——topbar 是 flex item 且带 z-index，会建层叠上下文，
-     按钮关在里面整体只有 15，压不过抽屉 39；放 phone 直属才能盖在抽屉上 -->
-<button class="tb-btn tb-ham" id="tbHamBtn" type="button" aria-label="主模块" aria-expanded="false">
-  <svg viewBox="0 0 24 24"><use href="#i-menu"/></svg>
-</button>
-<!-- ============ 主模块抽屉（STEP A：顶栏汉堡 → 左侧抽屉） ============ -->
-<div class="drawer-mask" id="drawerMask" hidden></div>
-<aside class="drawer" id="drawer" aria-label="主模块">
-  <p class="drawer-brand">潮<span>TIDE</span></p>
-  <nav class="drawer-main" aria-label="主模块列表">
-    <button class="drawer-row" type="button" data-drawer="home">
-      <svg class="drawer-ic" viewBox="0 0 24 24"><use href="#i-home"/></svg>
-      <span class="drawer-name">现在</span>
-      <svg class="drawer-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
-    </button>
-    <button class="drawer-row" type="button" data-drawer="memory">
-      <svg class="drawer-ic" viewBox="0 0 24 24"><use href="#i-brain"/></svg>
-      <span class="drawer-name">记</span>
-      <svg class="drawer-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
-    </button>
-    <button class="drawer-row" type="button" data-drawer="calendar">
-      <svg class="drawer-ic" viewBox="0 0 24 24"><use href="#i-cal"/></svg>
-      <span class="drawer-name">日</span>
-      <svg class="drawer-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
-    </button>
-    <button class="drawer-row" type="button" data-drawer="cards">
-      <svg class="drawer-ic" viewBox="0 0 24 24"><use href="#i-heart"/></svg>
-      <span class="drawer-name">之间</span>
-      <svg class="drawer-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
-    </button>
-    <button class="drawer-row" type="button" data-drawer="settings">
-      <svg class="drawer-ic" viewBox="0 0 24 24"><use href="#i-face"/></svg>
-      <span class="drawer-name">我</span>
-      <svg class="drawer-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
-    </button>
-  </nav>
-  <div class="drawer-foot">
-    <button class="drawer-row" type="button" data-drawer="data">
-      <svg class="drawer-ic" viewBox="0 0 24 24"><use href="#i-note"/></svg>
-      <span class="drawer-name">数据</span>
-      <svg class="drawer-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
-    </button>
-    <button class="drawer-row" type="button" data-drawer="settings2">
-      <svg class="drawer-ic" viewBox="0 0 24 24"><use href="#i-gear"/></svg>
-      <span class="drawer-name">设置</span>
-      <svg class="drawer-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
-    </button>
-  </div>
-</aside>
+<!-- 抽屉已移除：导航全靠底栏五格 + 顶栏「更多」图标 -->
 
 <!-- ============ 锁屏 ============ -->
 <section class="screen lock" id="lock" aria-label="锁屏">
@@ -145,14 +97,18 @@
 
 <!-- ============ 主屏 ============ -->
 <header class="topbar" id="topbar" aria-label="状态栏">
+    <!-- 主屏：小头像 + 竖线 + 状态语 -->
     <span class="pair-ava partner tb-ava" id="tbAva"></span>
     <i class="tb-line"></i>
     <span class="tb-status" id="tbStatus">在家</span>
+    <!-- 其它页：页面标题（15px） -->
+    <span class="tb-title" id="tbTitle" aria-live="polite">桌面</span>
     <span class="tb-acts">
       <button class="tb-btn" id="tbChatBtn" type="button" aria-label="聊天"><svg viewBox="0 0 24 24"><use href="#i-chat"/></svg></button>
       <button class="tb-btn" id="chatSetBtn" hidden type="button" aria-label="聊天设置" aria-expanded="false">
         <svg viewBox="0 0 24 24"><use href="#i-gear"/></svg>
       </button>
+      <button class="tb-btn" id="tbMoreBtn" type="button" aria-label="更多"><svg viewBox="0 0 24 24"><use href="#i-dots"/></svg></button>
     </span>
   </header>
 

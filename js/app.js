@@ -519,6 +519,21 @@
     more: $('more'),
   };
 
+  /* 顶栏标题：页面 id → 中文标题（抽屉删掉后，标题由顶栏承担） */
+  const PAGE_TITLES = {
+    chat: '聊天',
+    now: '现在',
+    records: '记',
+    settings: '我',
+    todo: '待办',
+    theme: '外观',
+    courses: '课程',
+    countdown: '倒数',
+    cards: '之间',
+    calendar: '日',
+    more: '更多',
+  };
+
   let currentPage = null;
   let movingTimer = 0;
 
@@ -917,67 +932,24 @@
     });
   }
 
-  /* 顶栏右侧：主屏显示聊天入口，聊天页显示齿轮（聊天设置） */
+  /* 顶栏右侧：主屏显示聊天入口，聊天页显示齿轮（聊天设置）；
+     左侧：主屏是 头像+竖线+状态语，其它页是页面标题（15px）；
+     右侧常驻「更多」图标 → 更多页（聊天页让位给聊天设置） */
   function syncTopbar() {
     const inChat = currentPage === 'chat';
     const chatBtn = $('tbChatBtn');
     const setBtn = $('chatSetBtn');
+    const moreBtn = $('tbMoreBtn');
+    const title = $('tbTitle');
     if (chatBtn) chatBtn.hidden = inChat;
     if (setBtn) setBtn.hidden = !inChat;
+    if (moreBtn) moreBtn.hidden = inChat;
+    if (title) title.textContent = currentPage === null ? '桌面' : (PAGE_TITLES[currentPage] || '潮');
   }
 
-  /* ---- STEP A · 汉堡抽屉：主模块导航 ---- */
-  const drawer = $('drawer');
-  const drawerMask = $('drawerMask');
-
-  function openDrawer() {
-    if (!drawer || !drawerMask) return;
-    drawerMask.hidden = false;
-    drawer.classList.add('open');
-    requestAnimationFrame(() => drawerMask.classList.add('show'));
-    const ham = $('tbHamBtn');
-    if (ham) ham.setAttribute('aria-expanded', 'true');
-  }
-
-  function closeDrawer() {
-    if (!drawer || !drawerMask) return;
-    drawer.classList.remove('open');
-    drawerMask.classList.remove('show');
-    const ham = $('tbHamBtn');
-    if (ham) ham.setAttribute('aria-expanded', 'false');
-    setTimeout(() => { if (!drawer.classList.contains('open')) drawerMask.hidden = true; }, 260);
-  }
-
-  /* 抽屉行 → 页面。home 是主屏（closePage 即可）；
-     data 先进设置页再滚到数据卡（导出/导入/清空在那儿） */
-  function drawerGo(key) {
-    closeDrawer();
-    if (key === 'home') { closePage(); return; }
-    if (key === 'data') {
-      openPage('settings');
-      setTimeout(() => {
-        const c = $('setDataCard');
-        if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 280);
-      return;
-    }
-    openPage(key);
-  }
-
-  const hamBtn = $('tbHamBtn');
-  if (hamBtn) {
-    hamBtn.addEventListener('click', () => {
-      if (drawer && drawer.classList.contains('open')) closeDrawer();
-      else openDrawer();
-    });
-  }
-  if (drawerMask) drawerMask.addEventListener('click', closeDrawer);
-  document.querySelectorAll('.drawer-row[data-drawer]').forEach((b) => {
-    b.addEventListener('click', () => drawerGo(b.dataset.drawer));
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && drawer && drawer.classList.contains('open')) closeDrawer();
-  });
+  /* 顶栏「更多」图标 → 更多页（抽屉已彻底移除，导航＝底栏五格 + 更多） */
+  const topMoreBtn = $('tbMoreBtn');
+  if (topMoreBtn) topMoreBtn.addEventListener('click', () => openPage('more'));
 
   /** 通用：重建前后各量一次，让元素从旧位置滑到新位置（FLIP） */
   function flipAll(sel, keyAttr, rebuild, fromRect) {
