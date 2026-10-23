@@ -8279,3 +8279,53 @@ html .mn-days:hover {
 html .moon-head.is-in + .mn-days {
   animation: mnRise 0.95s cubic-bezier(0.22, 0.61, 0.36, 1) 0.08s both;
 }
+
+/* ---------- v55.1：时间裸放在壁纸上（不装框），名字跟着时间走 ----------
+   用户反馈两点：
+   1) 时间不该和其他卡片一样带框，要直接放上去，字体也要区别于其他
+   2) 「淼 with 小满」看起来和下面的天数卡是一伙的 —— 让它归入时间这一组，
+      居中放在时间正下方；天数卡带框独立在下，视觉上自然分开 */
+
+/* 时间组：去掉毛玻璃框，变成压在壁纸上的一堆裸字 */
+html .moon-head {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  padding: 12px 0 22px !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  /* 注意：不能用 grid-area: auto 简写，那会把横跨全屏的列/行一起清掉 */
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
+}
+html .moon-head:hover { transform: none !important; box-shadow: none !important; }
+
+/* 组内三个元素改成竖排居中（原来是 grid 三列） */
+html .mn-tag   { grid-area: auto !important; text-align: center !important; margin: 0 0 2px !important; }
+html .mn-names { grid-area: auto !important; text-align: center !important; margin: 8px 0 0 !important; }
+
+/* 时间：比别的大一号、更细、字距更紧 —— 和卡里的字明显不是一类 */
+html .mn-time {
+  grid-area: auto !important;
+  text-align: center !important;
+  font-size: clamp(58px, 17vw, 86px) !important;
+  font-weight: 200 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 0.92 !important;
+  color: #fff !important;
+  text-shadow: 0 2px 26px rgba(0, 0, 0, 0.55) !important;   /* 裸在壁纸上也要看得清 */
+}
+html[data-theme="light"] .mn-time {
+  color: var(--text) !important;
+  text-shadow: 0 2px 22px rgba(255, 255, 255, 0.75) !important;
+}
+/* 名字与 TODAY 也跟着裸放，弱化一点，别抢时间 */
+html .mn-names { font-size: 12px !important; letter-spacing: 0.12em !important; }
+html .mn-tag   { color: rgba(255, 255, 255, 0.78) !important; }
+html[data-theme="light"] .mn-tag { color: var(--k-ink3) !important; }
