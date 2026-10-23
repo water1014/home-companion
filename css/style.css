@@ -4448,3 +4448,158 @@ html .home-page[hidden] { display: none !important; }
   text-transform: uppercase;
   color: var(--text-3);
 }
+
+/* ============================================================
+   REFINE SKIN · iOS 磨砂玻璃 v1（非破坏性：整段可删，不动既有配色/数据/功能）
+   目标：把零散玻璃收口成一套统一的“磨砂/液态玻璃”表面系统
+     - 统一圆角尺度（呼应「膨胀玻璃」，卡片 26 / 控件 18 / dock 30）
+     - 统一投影为两级弥散 + 顶部高光（液态玻璃光泽）
+     - 统一毛玻璃模糊；补齐此前缺失的 :focus-visible 键盘焦点环
+     - dock 改为浮动圆角玻璃条
+   注意：背景色一律沿用既有硬编码浅色玻璃，不替换，避免深色模式卡片消失
+   ============================================================ */
+:root {
+  --r-lg: 26px;                                   /* 原 24 → 略放大，呼应膨胀玻璃 */
+  --r-md: 18px;                                   /* 控件/图标 */
+  --r-sm: 14px;                                   /* 小芯片 */
+  --r-dock: 30px;                                 /* 浮动 dock 圆角 */
+  --e-1: 0 1px 2px rgba(20,16,40,.05), 0 8px 24px rgba(60,50,90,.10);   /* 静止 */
+  --e-2: 0 2px 8px rgba(20,16,40,.07), 0 14px 36px rgba(60,50,90,.16);  /* 抬起/聚焦 */
+  --sheen: inset 0 1px 0 rgba(255,255,255,.55);  /* 顶部高光：液态玻璃光泽 */
+  --glass-blur: blur(22px) saturate(1.35);
+  --surface-line: rgba(255,255,255,.5);          /* 玻璃亮边（深浅主题通用） */
+}
+
+/* 1. 主屏卡片：补一层统一磨砂玻璃表面（此前 .w 无背景，仅是浮在页面上的内容） */
+html .bento .w {
+  background: rgba(255,255,255,.70) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  border: 1px solid var(--surface-line) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--e-1), var(--sheen) !important;
+}
+/* 拖拽落点高亮：必须压过上面的 box-shadow，保留拖拽反馈 */
+html .bento .w.drop-on { box-shadow: 0 0 0 2px var(--accent) !important; }
+
+/* 2. 子页卡片（meter/talk/mem/list/profile 用的 .glass）：统一边框/投影/高光 */
+html .glass {
+  border-radius: var(--r-lg) !important;
+  border: 1px solid var(--surface-line) !important;
+  box-shadow: var(--e-1), var(--sheen) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  backdrop-filter: var(--glass-blur) !important;
+}
+
+/* 3. 应用图标：统一玻璃 + 高光 + 软投影（dock / 应用矩阵通用） */
+html .tile-ic {
+  border-radius: var(--r-md) !important;
+  border: 1px solid var(--surface-line) !important;
+  box-shadow: var(--e-1), var(--sheen) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  backdrop-filter: var(--glass-blur) !important;
+}
+html .tile:active .tile-ic { box-shadow: var(--e-2), var(--sheen) !important; transform: scale(.94); }
+/* 应用矩阵瓦片：盖掉旧 17/15px + box-shadow:none !important */
+html .app-grid .tile-ic,
+html .app-row .tile-ic {
+  border-radius: var(--r-md) !important;
+  box-shadow: var(--e-1), var(--sheen) !important;
+}
+
+/* 4. 设置页卡片 / 输入框：统一圆角与聚焦环（背景沿用各自既有玻璃） */
+html .cp-card {
+  background: var(--card) !important;
+  border: 1px solid var(--surface-line) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--e-1), var(--sheen) !important;
+}
+html .cp-field input {
+  border-radius: var(--r-md) !important;
+  border: 1px solid var(--line) !important;
+}
+html .cp-field input:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--pink-soft) !important;
+}
+
+/* 5. 输入框 / 会话框：统一边框/圆角/高光与聚焦环（背景沿用既有 0.72 玻璃） */
+html .composer {
+  border: 1px solid var(--surface-line) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--e-1), var(--sheen) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  backdrop-filter: var(--glass-blur) !important;
+}
+html .composer:focus-within { border-color: var(--accent) !important; box-shadow: var(--e-2), var(--sheen) !important; }
+html .rec-search-input {
+  border-radius: 999px !important;
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+}
+html .rec-search-input:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--pink-soft) !important; }
+
+/* 6. dock：iOS 浮动圆角玻璃条（此前是贴底全宽直条） */
+html .dock {
+  left: 12px !important;
+  right: 12px !important;
+  bottom: calc(12px + var(--safe-b)) !important;
+  margin: 0 !important;
+  min-height: calc(58px + var(--safe-b)) !important;
+  padding: 0 12px var(--safe-b) !important;
+  border-radius: var(--r-dock) !important;
+  border: 1px solid var(--surface-line) !important;
+  background: var(--card) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  box-shadow: var(--e-2) !important;
+}
+/* 6b. dock 修正：中间「home」56px 图标会把整行撑到 79px，向下溢出到浮动条外。
+   修法——图标在浮动条内垂直居中 + 收起文字标签（原设计标签本就在视口外不可见，
+   即本来就是图标坞；收起后不再溢出、也更贴近 iOS 图标坞） */
+html .dock { align-items: center !important; align-content: center !important; }
+html .dock .tile { padding: 0 !important; justify-content: center; }
+html .dock .tile .tile-name { display: none !important; }
+
+/* 7. 分段条 / 顶栏：轻磨砂，强化“固定栏”质感（背景沿用主题 --card，深浅自适应） */
+html .seg-bar {
+  background: var(--card) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+html .topbar {
+  background: var(--card) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  backdrop-filter: var(--glass-blur) !important;
+}
+
+/* 8. 按钮：统一圆角（保留既有配色，不改色） */
+html .btn { border-radius: var(--r-md) !important; }
+html .head-act { border-radius: var(--r-md) !important; }
+html .seg-btn { border-radius: 999px !important; }
+
+/* 9. 全局键盘焦点环（补齐此前缺失的 :focus-visible 无障碍缺口） */
+html :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+html .tile:focus-visible .tile-ic,
+html .dock .tile:focus-visible,
+html .tb-btn:focus-visible,
+html .seg-btn:focus-visible,
+html .btn:focus-visible,
+html .rec-search-input:focus-visible,
+html .cp-field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* 10. 间距节奏：bento 卡间距放宽更透气；应用矩阵与上区间距收敛 */
+html .bento { gap: 14px !important; }
+html .app-grid { gap: 20px 8px !important; }
+html .app-matrix { margin-top: 24px !important; }
+
+/* 11. 无障碍：减少动效 / 增强对比 */
+@media (prefers-reduced-motion: reduce) {
+  html * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
+@media (prefers-contrast: more) {
+  html .bento .w, html .glass, html .tile-ic, html .dock, html .seg-bar, html .cp-card, html .composer {
+    border-color: var(--text-2) !important;
+  }
+}
