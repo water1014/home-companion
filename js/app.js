@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v38';
+  window.__TIDE_MARK = 'LOCAL-v39';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -514,7 +514,7 @@
     if (id === 'courses') renderCourses();
     if (id === 'countdown') renderCountdownPage();
     if (id === 'cards') renderCoupons();
-    if (id === 'partnerday') renderHerDay();
+    if (id === 'partnerday') renderPartnerDay();
     if (id === 'device') renderDevice();
     if (id === 'album') { renderAlbum(); renderAlbumCal(); }
     if (id === 'moments') renderMoments();
@@ -1947,7 +1947,7 @@
     const inp = $('input');
     if (inp) inp.placeholder = '说点什么…';
     setTxt('setAvaMe', me);
-    setTxt('setNoteHer', partnerName());
+    setTxt('setNotePartner', partnerName());
     setTxt('setUserLabel', S.memory.userName || '我');
     setTxt('setMoodLine', '在一起第 ' + daysTogether() + ' 天');
 
@@ -2112,7 +2112,7 @@
 
   /* ================= 他的一天 ================= */
 
-  function renderHerDay() {
+  function renderPartnerDay() {
     const box = $('dayList');
     if (!box) return;
     const list = (S.life.dayLog || []).slice().sort((a, b) => a.ts - b.ts).slice(-40).reverse();
@@ -3012,7 +3012,7 @@
     log.push({ ts: ts || Date.now(), text: text, kind: kind || 'idle', inferred: !!inferred });
     if (log.length > 300) S.life.dayLog = log.slice(-240);
     save(KEY.life, S.life);
-    if (currentPage === 'partnerday') renderHerDay();
+    if (currentPage === 'partnerday') renderPartnerDay();
   }
 
   /** 页面关着的那段：按状态演化的时间差推演他大概怎么过的 */
@@ -3653,7 +3653,7 @@
       const head = document.createElement('div');
       head.className = 'moment-head';
       const ava = document.createElement('div');
-      ava.className = 'pair-ava tiny right';
+      ava.className = 'pair-ava tiny partner';
       const as = document.createElement('span');
       as.textContent = (S.memory.userName || '我').slice(0, 1);
       ava.appendChild(as);
@@ -4417,12 +4417,12 @@
         b.classList.toggle('on', b.dataset.v === u[key]);
       });
     });
-    const alias = $('chatHerAlias');
+    const alias = $('chatPartnerAlias');
     if (alias) alias.value = u.partnerAlias;
-    const hp = $('chatHerAvaPrev'), mp = $('chatMyAvaPrev');
+    const hp = $('chatPartnerAvaPrev'), mp = $('chatMyAvaPrev');
     if (hp) hp.innerHTML = partnerAvaInner('m-txt');
     if (mp) mp.innerHTML = myAvaInner('m-txt');
-    const hc = $('chatHerAvaClr'); if (hc) hc.hidden = !u.partnerAvatar;
+    const hc = $('chatPartnerAvaClr'); if (hc) hc.hidden = !u.partnerAvatar;
     const mc = $('chatMyAvaClr'); if (mc) mc.hidden = !u.myAvatar;
   }
 
@@ -4502,7 +4502,7 @@
     bindSeg('fs', false);
     bindSeg('bg', false);
 
-    const alias = $('chatHerAlias');
+    const alias = $('chatPartnerAlias');
     if (alias) alias.addEventListener('input', () => {
       S.chatUI.partnerAlias = alias.value;
       saveChatUI();
@@ -4511,11 +4511,11 @@
     });
 
     // 头像：换图 / 用首字
-    const upH = $('chatHerAvaUp'), clrH = $('chatHerAvaClr');
+    const upH = $('chatPartnerAvaUp'), clrH = $('chatPartnerAvaClr');
     const upM = $('chatMyAvaUp'), clrM = $('chatMyAvaClr');
-    if (upH) upH.addEventListener('click', () => { const f = $('chatHerAvaFile'); if (f) f.click(); });
+    if (upH) upH.addEventListener('click', () => { const f = $('chatPartnerAvaFile'); if (f) f.click(); });
     if (upM) upM.addEventListener('click', () => { const f = $('chatMyAvaFile'); if (f) f.click(); });
-    bindAva('chatHerAvaFile', (data) => {
+    bindAva('chatPartnerAvaFile', (data) => {
       S.chatUI.partnerAvatar = data; saveChatUI();
       setHTML('chatAvaPartner', partnerAvaInner('')); renderHistory(); syncChatPanel();
     });

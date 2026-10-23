@@ -146,7 +146,7 @@
   <header class="page-head">
     <button class="back" data-back aria-label="回到主屏"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
       <div class="head-mid">
-        <div class="pair-ava tiny right" id="chatAvaWrap"><span id="chatAvaPartner">满</span></div>
+        <div class="pair-ava tiny partner" id="chatAvaWrap"><span id="chatAvaPartner">满</span></div>
         <div>
           <p class="head-name" id="chatName">宋祁</p>
           <p class="head-status" id="chatStatus">…</p>
@@ -185,11 +185,11 @@
         <p class="cp-head-t">他</p>
         <div class="cp-ava-row">
           <div class="cp-ava-unit">
-            <div class="cp-ava" id="chatHerAvaPrev"><span>宋</span></div>
+            <div class="cp-ava" id="chatPartnerAvaPrev"><span>宋</span></div>
             <span class="cp-ava-label">他的头像</span>
             <div class="cp-ava-acts">
-              <button class="cp-link" id="chatHerAvaUp" type="button">换图</button>
-              <button class="cp-link dim" id="chatHerAvaClr" type="button" hidden>用首字</button>
+              <button class="cp-link" id="chatPartnerAvaUp" type="button">换图</button>
+              <button class="cp-link dim" id="chatPartnerAvaClr" type="button" hidden>用首字</button>
             </div>
           </div>
           <div class="cp-ava-unit">
@@ -201,11 +201,11 @@
             </div>
           </div>
         </div>
-        <input type="file" id="chatHerAvaFile" accept="image/*" hidden />
+        <input type="file" id="chatPartnerAvaFile" accept="image/*" hidden />
         <input type="file" id="chatMyAvaFile" accept="image/*" hidden />
         <label class="cp-field">
           <span class="cp-field-name">聊天里对他的称呼</span>
-          <input type="text" id="chatHerAlias" placeholder="用本名「宋祁」" maxlength="12" />
+          <input type="text" id="chatPartnerAlias" placeholder="用本名「宋祁」" maxlength="12" />
         </label>
         <p class="cp-hint">只在聊天界面生效，不改动他在别处的名字。</p>
       </section>
@@ -294,7 +294,7 @@
 
   <div class="page-scroll">
     <section class="glass mood-hero">
-      <div class="pair-ava big right"><span id="moodAvaPartner">满</span></div>
+      <div class="pair-ava big partner"><span id="moodAvaPartner">满</span></div>
       <p class="mood-word" id="moodWord">平静</p>
       <p class="mood-sub" id="moodSub">像一杯放凉了的茶</p>
       <div class="mood-picker" id="moodPicker">
@@ -347,12 +347,12 @@
 
   <div class="page-scroll">
     <section class="glass profile-card">
-      <div class="pair-ava big left"><span id="setAvaMe">我</span></div>
+      <div class="pair-ava big me"><span id="setAvaMe">我</span></div>
       <div class="profile-mid">
         <p class="profile-name" id="setUserLabel">我</p>
         <p class="profile-sub" id="setMoodLine">这台手机里住着一个人。</p>
       </div>
-      <p class="profile-note">他的备注<b id="setNoteHer">宋祁</b></p>
+      <p class="profile-note">他的备注<b id="setNotePartner">宋祁</b></p>
     </section>
 
     <!-- 全部应用（原应用页的图标都收在这） -->
