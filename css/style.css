@@ -8329,3 +8329,27 @@ html[data-theme="light"] .mn-time {
 html .mn-names { font-size: 12px !important; letter-spacing: 0.12em !important; }
 html .mn-tag   { color: rgba(255, 255, 255, 0.78) !important; }
 html[data-theme="light"] .mn-tag { color: var(--k-ink3) !important; }
+
+/* ---------- v56.1：「谁 with 谁」归入天数卡（用户澄清：它属于时间下面那个组件） ---------- */
+html .mn-days {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+html .mn-days-line {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: center !important;
+  gap: 14px !important;
+  margin: 0 !important;
+}
+/* 名字在卡内当作副题：更小、更淡，跟天数一组 */
+html .mn-names {
+  grid-area: auto !important;
+  text-align: center !important;
+  margin: 0 !important;
+  font-size: 11.5px !important;
+  letter-spacing: 0.14em !important;
+  opacity: 0.82;
+}

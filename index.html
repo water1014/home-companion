@@ -127,14 +127,16 @@
        相册、日历、日记、设置全部移出（归 FLOWER / MIRROR） -->
   <div class="home-pager" id="homePager">
     <section class="home-page active" data-page="0" aria-label="月">
-      <!-- 时间卡：TODAY 标签 / 时间（居中）/ 右侧呼吸圆点 + 两人名字 -->
+      <!-- 时间：裸放在壁纸上（无框），只留 TODAY 标签 -->
       <header class="moon-head" id="moonHead">
         <p class="mn-tag"><em>TODAY</em><span id="mnDate">—</span></p>
         <p class="mn-time" id="mnTime">—</p>
-        <p class="mn-names" id="mnNames">—</p>
       </header>
-      <!-- 在一起的天数：单独一张卡，和时间分开，不再连成一片 -->
-      <p class="mn-days" id="mnDaysCard"><b id="mnDays">—</b><i>DAYS TOGETHER</i></p>
+      <!-- 天数卡：天数 + DAYS TOGETHER + 「谁 with 谁」都归在这一张卡里 -->
+      <section class="mn-days" id="mnDaysCard">
+        <p class="mn-days-line"><b id="mnDays">—</b><i>DAYS TOGETHER</i></p>
+        <p class="mn-names" id="mnNames">—</p>
+      </section>
 
       <section class="mn-now" id="moonNow" aria-label="此刻">
         <p class="mn-label"><em>NOW</em><span>此刻</span></p>
