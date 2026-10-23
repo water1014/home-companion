@@ -6224,3 +6224,18 @@ html[data-theme="dark"] .set-page .switch[aria-checked="true"] i{
 html[data-theme="light"] .set-page .switch[aria-checked="true"] i{
   background: #ffffff !important;
 }
+
+/* ---------- V14.3 归位：应用组进「设置」，与其它分组同级 ---------- */
+html .set-page #setApps{
+  display: block;
+  margin-top: 10px;
+}
+html .set-page #setApps .list-card{ margin-top: 0; }
+html .set-page #setApps .list-card + .list-card{ margin-top: 10px !important; }
+/* 「应用 · 现在」这种组标题比参数组标题再轻一点，读起来不抢 */
+html .set-page #setApps .list-head{
+  letter-spacing: .14em !important;
+  opacity: .7 !important;
+}
+/* 更多页：第一个分组不要顶部多余留白 */
+html .more-page .page-scroll > .list-card:first-child{ margin-top: 0 !important; }

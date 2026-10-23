@@ -599,7 +599,7 @@
     if (id === 'countdown') renderCountdownPage();
     if (id === 'cards') renderCoupons();
     if (id === 'theme') renderTheme();
-    if (id === 'more') { renderMoreApps(); syncMoreAcct(); }
+    if (id === 'settings') renderAppRows();
     if (id === 'calendar') renderCalendarPage();
   }
 
@@ -890,10 +890,11 @@
   /* v2 单页渲染：
      #bento = 卡片（renderBento）；#appGrid = 全部应用（应用矩阵单独成区，见 .app-matrix）
      不再有第二、第三页，分页圆点已删 */
-  /* 「更多」页 = 应用抽屉：按 APP_CATS 五组列出全部 APPS。
-     已经做好的可点进页面；还没做的显示「待做」，点一下给出它打算做什么。 */
-  function renderMoreApps() {
-    const box = $('moreApps');
+  /* 设置页里的「应用」分组：按 APP_CATS 五组列出全部 APPS，
+     和「外观 / 接入 / 主动 / 数据」同级。已经做好的可点进页面；
+     还没做的显示「待做」，点一下给出它打算做什么。 */
+  function renderAppRows() {
+    const box = $('setApps');
     if (!box) return;
     box.innerHTML = '';
     APP_CATS.forEach((cat) => {
@@ -903,7 +904,7 @@
       card.className = 'glass list-card';
       const head = document.createElement('p');
       head.className = 'list-head';
-      head.textContent = cat.name;
+      head.textContent = '应用 · ' + cat.name;
       card.appendChild(head);
       list.forEach((a) => {
         const b = document.createElement('button');
@@ -921,13 +922,6 @@
       });
       box.appendChild(card);
     });
-  }
-
-  /* 更多页账号行：头像 + 你的名字 */
-  function syncMoreAcct() {
-    const ava = $('moreAva');
-    if (ava) ava.innerHTML = myAvaInner('');
-    setTxt('moreName', S.memory.userName || '我');
   }
 
   function renderApps() {
@@ -4872,8 +4866,7 @@
     applyAppearance();     // 明暗 / 字体（head 内联脚本已挂过一次，这里兜底 + 同步设置页）
     renderBento();
     renderApps();
-    renderMoreApps();
-    syncMoreAcct();
+    renderAppRows();
     renderCards();
     renderMood();
     renderChips();
@@ -5041,6 +5034,12 @@
       if (act) {
         if (act.dataset.act === 'about') toast('潮 · TIDE · 一起过日子');
         else if (act.dataset.act === 'help') toast('有事翻翻这里，翻不到就来问我。');
+        else if (act.dataset.act === 'edit') {
+          // 编辑桌面：复用设置页那个按钮（回主屏 + 进编辑态）
+          const btn = $('btnEditLayout');
+          if (btn) btn.click();
+          else { closePage(); }
+        }
       }
     });
     const calPrev = $('calPrev'), calNext = $('calNext');

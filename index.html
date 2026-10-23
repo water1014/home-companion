@@ -349,25 +349,18 @@
 <!-- ============ 更多（Step 2：我 / 数据 / 应用 三组） ============ -->
 <section class="screen page more-page" id="more" aria-label="更多">
   <div class="page-scroll">
-    <!-- 账号行：学 iOS 设置的头像行 -->
-    <section class="glass acct-card">
-      <div class="acct-ava me" id="moreAva">我</div>
-      <div class="acct-mid">
-        <p class="acct-name" id="moreName">我</p>
-        <p class="acct-sub">潮 · TIDE · 全部应用</p>
-      </div>
-      <span class="acct-chev" aria-hidden="true"></span>
+    <!-- 更多 ≠ 设置：这里只放「没地方放的小东西」和去设置的入口 -->
+    <section class="glass list-card">
+      <button class="row nav" type="button" data-go="settings"><svg class="row-ic"><use href="#i-gear"/></svg><span class="row-name">设置<small>外观 · 接入 · 主动 · 全部应用</small></span></button>
+      <button class="row nav" type="button" data-go="cards"><svg class="row-ic"><use href="#i-mail"/></svg><span class="row-name">收件箱<small>未读信 · 留言 · 欠账</small></span></button>
+      <button class="row nav" type="button" data-go="records"><svg class="row-ic"><use href="#i-menu"/></svg><span class="row-name">搜索<small>记忆 · 相册 · 日记</small></span></button>
     </section>
 
-    <!-- 五组应用：由 renderMoreApps() 按 APPS + APP_CATS 渲染 -->
-    <div id="moreApps"></div>
-
-    <!-- 系统组：设置 / 外观 / 关于 -->
     <section class="glass list-card">
-      <p class="list-head">系统</p>
-      <button class="row nav" type="button" data-go="settings"><svg class="row-ic"><use href="#i-gear"/></svg><span class="row-name">设置</span></button>
+      <p class="list-head">其它</p>
+      <button class="row nav" type="button" data-act="edit"><svg class="row-ic"><use href="#i-home"/></svg><span class="row-name">编辑桌面<small>拖动卡片与图标，收起不想看的</small></span></button>
       <button class="row nav" type="button" data-go="theme"><svg class="row-ic"><use href="#i-palette"/></svg><span class="row-name">外观</span></button>
-      <button class="row nav" type="button" data-go="settings"><svg class="row-ic"><use href="#i-note"/></svg><span class="row-name">数据</span></button>
+      <button class="row nav" type="button" data-act="help"><svg class="row-ic"><use href="#i-note"/></svg><span class="row-name">帮助</span></button>
       <button class="row nav" type="button" data-act="about"><svg class="row-ic"><use href="#i-star"/></svg><span class="row-name">关于</span><span class="row-side">潮 · TIDE</span></button>
     </section>
   </div>
@@ -478,6 +471,9 @@
       </button>
       <button class="row danger" id="btnReset"><svg class="row-ic"><use href="#i-star"/></svg><span class="row-name">清空所有数据</span><span class="row-side"></span></button>
     </section>
+
+    <!-- 应用：和「外观 / 接入 / 主动 / 数据」同级的一组，由 renderAppRows() 按 APPS + APP_CATS 渲染 -->
+    <div id="setApps"></div>
 
     <p class="foot-note">潮起时你在，潮落时我在</p>
   </div>
