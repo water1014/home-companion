@@ -149,12 +149,11 @@
      打开某页时对应格亮；Home 是圆形凸起键，点它回主屏。
      data-app 保留，角标查询（.tile[data-app]）不用改。 */
   const DOCK_TABS = [
-    { id: 'homeKey',  name: '桌面', icon: 'i-home',  page: null },
-    { id: 'now',      name: '现在', icon: 'i-face',  page: 'now', seg: 'status' },
-    { id: 'memory',   name: '记',   icon: 'i-brain', page: 'records', seg: 'memory' },
+    { id: 'records',  name: '记',   icon: 'i-book',  page: 'records', seg: 'memory' },
     { id: 'calendar', name: '日',   icon: 'i-cal',   page: 'calendar' },
+    { id: 'homeKey',  name: '主页', icon: 'i-home',  page: null },
     { id: 'between',  name: '之间', icon: 'i-heart', page: 'cards' },
-    { id: 'settings', name: '我',   icon: 'i-gear',  page: 'settings' },
+    { id: 'more',     name: '更多', icon: 'i-dots',  page: 'settings' },
   ];
 
   /* 应用/dock 顺序可拖动换位，存本地；读出来时按注册表校准，缺的补默认 */

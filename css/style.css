@@ -5254,3 +5254,63 @@ html .c-status .st-word{
 }
 html .c-status .st-sub{ font-size: 11.5px !important; }
 html .c-status .st-dot{ right: 14px; bottom: 14px; }
+
+/* ============================================================
+   V11 · 底栏五格 + 凸起主页（Step 1）
+   [记][日][●主页][之间][更多]；中间凸起圆，文字仅选中显示
+   ============================================================ */
+html .dock{
+  left: 12px !important; right: 12px !important;
+  bottom: calc(10px + var(--safe-b)) !important;
+  height: calc(62px + var(--safe-b)) !important;
+  padding: 0 4px !important;
+  grid-template-columns: repeat(5, 1fr) !important;
+  gap: 0 !important;
+  border-radius: 20px !important;
+  border: 1px solid var(--line) !important;
+  background: rgba(18,18,24,.82) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.4) !important;
+  backdrop-filter: blur(22px) saturate(1.4) !important;
+  box-shadow: none !important;
+  align-items: center !important; align-content: center !important;
+  overflow: visible !important;
+}
+html[data-theme="light"] .dock{ background: rgba(255,255,255,.72) !important; }
+
+/* 普通格：图标 22 / stroke 1.5，文字只在选中时显示 */
+html .dock .tile{
+  padding: 0 !important; gap: 2px !important;
+  color: var(--text-2) !important; background: transparent !important; border: 0 !important;
+}
+html .dock .tile .tile-ic{
+  width: 30px !important; height: 30px !important;
+  border-radius: 0 !important; background: transparent !important; border: 0 !important;
+  display: grid; place-items: center;
+}
+html .dock .tile .tile-ic svg{ width: 22px !important; height: 22px !important; stroke-width: 1.5 !important; }
+html .dock .tile .tile-name{
+  display: none !important; font-size: 10px !important; line-height: 1.1; letter-spacing: .02em;
+}
+html .dock .tile.on .tile-name{ display: block !important; }
+html .dock .tile.on .tile-ic{ background: transparent !important; color: var(--accent) !important; }
+html .dock .tile.on .tile-name{ color: var(--accent) !important; }
+
+/* 中间主页：56 圆 / -14 凸起 / 实底描边 / 无光环无渐变 */
+html .dock .tile.t-home{ position: relative; }
+html .dock .tile.t-home .tile-ic{
+  width: 56px !important; height: 56px !important;
+  border-radius: 50% !important;
+  background: #1b1b22 !important;
+  border: 1px solid var(--line) !important;
+  transform: translateY(-14px) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+html[data-theme="light"] .dock .tile.t-home .tile-ic{ background: #ffffff !important; }
+html .dock .tile.t-home .tile-ic svg{ width: 24px !important; height: 24px !important; stroke-width: 1.5 !important; }
+html .dock .tile.t-home .tile-name{ display: none !important; }
+html .dock .tile.t-home.on .tile-ic{ color: var(--accent) !important; }
+
+/* 内容底部留白 100，别被底栏挡住 */
+html .page-scroll, html .home-page{ padding-bottom: 100px !important; }
+html .find-me{ bottom: calc(80px + var(--safe-b)) !important; }
