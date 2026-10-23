@@ -5070,3 +5070,63 @@ html .find-me .fm-dot{ width: 6px; height: 6px; border-radius: 50%; background: 
 html .find-me:active{ transform: scale(.96); }
 html[data-theme="light"] .find-me{ background: rgba(255,255,255,.86); box-shadow: 0 8px 24px rgba(0,0,0,.10); }
 body:has(#chat.open) .find-me{ display: none !important; }
+
+/* ============================================================
+   V5 · 玻璃壁纸（桌面首页）
+   参考：全屏壁纸 + 悬浮磨砂玻璃卡 + DAYS TOGETHER 主视觉 + 浮动内缩 dock
+   暗=银黑玻璃 / 亮=浅蓝照片墙玻璃
+   ============================================================ */
+/* 壁纸底（.bg 在手机最底层，仅主屏/锁屏能看见；子页有不透明底覆盖） */
+html[data-theme="dark"] .bg{
+  background: radial-gradient(140% 100% at 50% -12%, #1c2637 0%, #101322 46%, #0A0A0F 100%) !important;
+  background-image: radial-gradient(140% 100% at 50% -12%, #1c2637 0%, #101322 46%, #0A0A0F 100%) !important;
+}
+html[data-theme="dark"] .bg::before{ opacity: 0 !important; }
+html[data-theme="light"] .bg{
+  background: radial-gradient(140% 100% at 50% -12%, #e8f0f8 0%, #cfdcec 46%, #eef3f8 100%) !important;
+  background-image: radial-gradient(140% 100% at 50% -12%, #e8f0f8 0%, #cfdcec 46%, #eef3f8 100%) !important;
+}
+html .bg::after{ opacity: .05 !important; }
+html .home-page, html .home-pager{ background: transparent !important; }
+
+/* 悬浮磨砂玻璃卡（主屏卡片） */
+html .bento .card, html .card{
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.09) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(1.5) !important;
+  backdrop-filter: blur(26px) saturate(1.5) !important;
+}
+html[data-theme="light"] .bento .card, html[data-theme="light"] .card{
+  background: rgba(255,255,255,.52) !important;
+  border: 1px solid rgba(255,255,255,.72) !important;
+  box-shadow: 0 10px 28px rgba(80,110,150,.12), inset 0 1px 0 rgba(255,255,255,.72) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(1.4) !important;
+  backdrop-filter: blur(26px) saturate(1.4) !important;
+}
+
+/* 主视觉：DAYS TOGETHER（参考 OUR TIDE） */
+html .c-days .days-num::before{
+  content: 'DAYS TOGETHER' !important;
+  letter-spacing: .2em !important; text-indent: .2em !important;
+  font-size: 9px !important;
+}
+html .c-days .days-since{ letter-spacing: .02em !important; }
+
+/* dock 浮动内缩圆角（参考图底部玻璃 dock） */
+html .dock{
+  left: 14px !important; right: 14px !important;
+  bottom: calc(12px + var(--safe-b)) !important;
+  height: calc(60px + var(--safe-b)) !important;
+  border-radius: 26px !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: 0 12px 34px rgba(0,0,0,.40) !important;
+}
+html[data-theme="light"] .dock{ box-shadow: 0 12px 30px rgba(80,110,150,.16) !important; }
+html[data-theme="light"] .dock{
+  background: rgba(255,255,255,.6) !important;
+  border: 1px solid rgba(255,255,255,.75) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.4) !important;
+  backdrop-filter: blur(22px) saturate(1.4) !important;
+}
+html .find-me{ bottom: calc(84px + var(--safe-b)) !important; }
