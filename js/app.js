@@ -19,12 +19,12 @@
   const APPEAR_KEY = { theme: 'tide.theme', font: 'tide.font' };
 
   function appearCfg() {
-    let theme = 'light', font = 'serif';
+    let theme = 'dark', font = 'serif';
     try {
-      theme = localStorage.getItem(APPEAR_KEY.theme) || 'light';
+      theme = localStorage.getItem(APPEAR_KEY.theme) || 'dark';
       font = localStorage.getItem(APPEAR_KEY.font) || 'serif';
     } catch (_) {}
-    return { theme: theme === 'dark' ? 'dark' : 'light', font: font === 'sans' ? 'sans' : 'serif' };
+    return { theme: theme === 'light' ? 'light' : 'dark', font: font === 'sans' ? 'sans' : 'serif' };
   }
 
   function applyAppearance(theme, font) {

@@ -4752,3 +4752,210 @@ html .composer .send{
   color: #fff !important;
   border-radius: 999px !important;
 }
+
+/* ============================================================
+   V3 · NIGHT TIDE —— 暗色浪漫设计系统（整站视觉 + 结构重排）
+   深紫夜底 / 紫色氛围光晕 / 暗玻璃面板 / 衬线大标题。
+   本层覆盖既有皮肤；整段可删。允许改配色与字体（本版执行）。
+   ============================================================ */
+
+/* ---- 0. 令牌：深紫夜底（浅色保留为「纸感」变体） ---- */
+:root{
+  --panel: rgba(255,255,255,0.74);
+  --panel-line: rgba(0,0,0,0.06);
+  --panel-2: rgba(255,255,255,0.55);
+}
+html[data-theme="dark"]{
+  --bg: #07050d;
+  --card: rgba(255,255,255,0.06);
+  --line: rgba(255,255,255,0.09);
+  --text: #f4effc;
+  --text-2: rgba(244,239,252,0.60);
+  --text-3: rgba(244,239,252,0.34);
+  --accent: #a98bff;
+  --pink-soft: rgba(169,139,255,0.17);
+  --glow-op: 1;
+  --noise-op: 0.02;
+  --r-lg: 26px; --r-md: 18px;
+  --e-1: 0 1px 2px rgba(0,0,0,.30), 0 12px 30px rgba(6,3,16,.52);
+  --e-2: 0 2px 8px rgba(0,0,0,.36), 0 22px 54px rgba(6,3,16,.62);
+  --sheen: inset 0 1px 0 rgba(255,255,255,.07);
+  --surface-line: rgba(169,139,250,.18);
+  --panel: rgba(26,20,42,0.74);
+  --panel-line: rgba(169,139,250,.16);
+  --panel-2: rgba(255,255,255,0.045);
+}
+
+/* ---- 1. 夜底 + 紫色氛围光晕 ---- */
+html[data-theme="dark"] .bg{
+  background: radial-gradient(125% 85% at 50% -12%, #17102c 0%, #0a0714 46%, #05030b 100%) !important;
+  background-image: radial-gradient(125% 85% at 50% -12%, #17102c 0%, #0a0714 46%, #05030b 100%) !important;
+  filter: none !important;
+}
+html[data-theme="dark"] .bg::before{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:1;
+  background:
+    radial-gradient(62% 42% at 16% 2%, rgba(140,100,255,.30), transparent 62%),
+    radial-gradient(55% 45% at 90% 20%, rgba(90,70,205,.18), transparent 60%),
+    radial-gradient(70% 45% at 50% 108%, rgba(120,80,225,.16), transparent 62%);
+}
+html[data-theme="dark"] .bg-blob{
+  display:block !important; position:absolute; border-radius:50%;
+  filter: blur(80px); opacity:.55; pointer-events:none; mix-blend-mode: screen;
+}
+html[data-theme="dark"] .bg-blob.b1{ width:72vmin; height:72vmin; left:-14%; top:-10%; background: radial-gradient(circle, rgba(152,112,255,.5), transparent 68%); }
+html[data-theme="dark"] .bg-blob.b2{ width:60vmin; height:60vmin; right:-16%; top:16%; background: radial-gradient(circle, rgba(92,72,215,.38), transparent 68%); }
+html[data-theme="dark"] .bg-blob.b3{ width:74vmin; height:74vmin; left:8%; bottom:-22%; background: radial-gradient(circle, rgba(122,84,225,.32), transparent 68%); }
+
+/* ---- 2. 面板：暗玻璃（卡片 / 设置组 / 子页卡） ---- */
+html .glass, html .card, html .list-card, html .bento .card{
+  background: var(--panel) !important;
+  border: 1px solid var(--panel-line) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--e-1), var(--sheen) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.35) !important;
+  backdrop-filter: blur(24px) saturate(1.35) !important;
+  color: var(--text) !important;
+}
+/* 卡片内文字跟随主题 */
+html .card .row, html .card p, html .card span { color: inherit; }
+
+/* ---- 3. 顶栏 / tab 栏：暗玻璃通栏 ---- */
+html .topbar{
+  background: linear-gradient(180deg, rgba(10,7,20,.86), rgba(10,7,20,.30)) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
+  backdrop-filter: blur(20px) saturate(1.2) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+html .dock{
+  background: rgba(12,8,24,.82) !important;
+  border-top: 1px solid var(--panel-line) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.25) !important;
+  backdrop-filter: blur(22px) saturate(1.25) !important;
+  box-shadow: none !important;
+}
+html .dock .tile.on .tile-ic{ background: var(--pink-soft) !important; color: var(--accent) !important; }
+html .dock .tile .tile-name{ color: var(--text-3) !important; }
+html .dock .tile.on .tile-name{ color: var(--accent) !important; }
+
+/* ---- 4. 设置页：分组行 / 图标底座 / 控件 ---- */
+html .list-head{ color: var(--accent) !important; opacity:.9; letter-spacing:.08em; }
+html .list-card .row{ border-bottom-color: var(--line) !important; }
+html .row-ic{ background: rgba(169,139,255,.14) !important; stroke: #b7a4ff !important; }
+html .row:nth-child(odd) .row-ic{ background: rgba(120,150,230,.13) !important; stroke: #9fb3e8 !important; }
+html .row-name{ color: var(--text) !important; }
+html .row-name small{ color: var(--text-3) !important; }
+html .row-side{ color: var(--text-3) !important; }
+html .row.danger, html .row.danger .row-name{ color: #ff9db0 !important; }
+html .row.danger .row-ic{ background: rgba(255,120,150,.14) !important; stroke: #ff9db0 !important; }
+html .list-card button.row::after{ color: var(--text-3); }
+
+/* ---- 5. 控件：分段 / 开关 / 输入 / 下拉 / 胶囊 ---- */
+html .seg{ background: var(--panel-2) !important; border: 1px solid var(--line) !important; }
+html .seg button{ color: var(--text-2); }
+html .seg button[aria-pressed="true"], html .seg button.on, html .seg-btn.on{
+  background: var(--accent) !important; color: #140a28 !important; border-color: transparent !important;
+}
+html .seg-btn{ background: var(--panel-2) !important; border: 1px solid var(--line) !important; color: var(--text-2) !important; }
+html .switch{ background: rgba(255,255,255,0.16) !important; }
+html .switch[aria-checked="true"]{ background: var(--accent) !important; }
+html .row input, html .row textarea, input, textarea, select, .mini-select, .form-row select{
+  background: transparent !important; color: var(--text) !important;
+}
+html .cp-field input, html .rec-search-input{
+  background: var(--panel-2) !important; border: 1px solid var(--line) !important; color: var(--text) !important;
+}
+html .cp-field input:focus, html .rec-search-input:focus{ border-color: var(--accent) !important; }
+html .btn{ background: var(--accent) !important; color: #140a28 !important; border: 0 !important; }
+html .head-act{ background: var(--panel-2) !important; color: var(--text-2) !important; border: 1px solid var(--line) !important; }
+html .chip, html .cat-pill{ background: var(--panel-2) !important; color: var(--text-2) !important; border: 1px solid var(--line) !important; }
+html .cat-pill.on{ background: var(--accent) !important; color: #140a28 !important; }
+html .wall-dot{ background: var(--panel-2) !important; border-color: var(--line) !important; color: var(--text-2) !important; }
+html .hint{ color: var(--text-3) !important; }
+html .warn{ color: #ffc48a !important; }
+html .foot-note{ color: var(--text-3) !important; }
+html .memories li{ background: var(--panel-2) !important; border-color: var(--line) !important; color: var(--text-2) !important; }
+
+/* ---- 6. 聊天：输入区 / 气泡 / 思考块 / 快捷回复 ---- */
+html .composer{
+  background: var(--panel) !important;
+  border: 1px solid var(--panel-line) !important;
+  box-shadow: var(--e-1), var(--sheen) !important;
+}
+html #input{ color: var(--text) !important; }
+html #input::placeholder{ color: var(--text-3) !important; }
+html .msg.partner .bubble{
+  background: var(--panel) !important; color: var(--text) !important;
+  border: 1px solid var(--panel-line) !important;
+}
+html .msg.me .bubble{ background: rgba(169,139,255,.20) !important; color: var(--text) !important; }
+html .think-card{ background: var(--panel-2) !important; border-color: var(--line) !important; }
+html .think-body{ color: var(--text-2) !important; border-top-color: var(--line) !important; }
+html .quick button, html .quick .q{ background: var(--panel-2) !important; color: var(--text-2) !important; border: 1px solid var(--line) !important; }
+
+/* ---- 7. 抽屉 / 编辑提示 ---- */
+html .drawer{ background: rgba(12,8,24,.92) !important; border-right-color: var(--panel-line) !important; }
+html #editHint{ background: var(--panel) !important; border-color: var(--panel-line) !important; color: var(--text-2) !important; }
+html #editDone{ background: var(--accent) !important; color: #140a28 !important; }
+
+/* ---- 8. 首页 DAY 主视觉：更高更满（结构强化） ---- */
+html .bento .c-days{ min-height: 168px !important; padding: 20px 18px !important; }
+html .c-days .days-num{
+  font-size: clamp(56px, 17vw, 82px) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #c9b6ff 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent !important;
+  filter: drop-shadow(0 6px 24px rgba(150,110,255,.35));
+}
+html .c-days .days-num::before{ color: var(--accent) !important; opacity:.85; }
+html .c-days .days-since{ color: var(--text-2) !important; }
+html .c-days .days-pair{ transform: scale(.92); }
+
+/* ---- 9. 排版：衬线大标题 + 标签字距 ---- */
+html .en-label, html .app-matrix-title{ color: var(--accent) !important; opacity:.85; }
+html .days-num, html .big-clock, html .lock-time, html .days-since{ font-family: var(--font-serif); }
+
+/* ---- 10. 杂项：主题色/日历/占位 ---- */
+html .mini-tile, html .app-matrix .tile-ic{ border-color: var(--line) !important; }
+html .tile-ic{ background: var(--panel-2) !important; border-color: var(--line) !important; }
+html .app-grid .tile-ic{ background: var(--panel-2) !important; }
+html .cal-head2 button, html .cal-grid .cg-w{ color: var(--text-2) !important; }
+
+/* ---- 11. V3 补丁：子页氛围光 / 快捷胶囊 / 用户气泡 ---- */
+html .screen.page, html .screen.page.open{
+  background:
+    radial-gradient(120% 60% at 50% 0%, #17102b 0%, #0a0714 52%, #06040d 100%) !important;
+}
+html .quick .quick-bar, html .quick .chip{
+  background: rgba(255,255,255,0.06) !important;
+  color: var(--text-2) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+}
+html .msg.me .bubble{
+  background: rgba(169,139,255,0.24) !important;
+  border: 1px solid rgba(169,139,255,0.26) !important;
+}
+html .msg.partner .bubble{ border: 1px solid var(--panel-line) !important; }
+
+/* ---- 12. 浅色（纸感）变体修正：收回被暗色强制规则波及的部分 ---- */
+html[data-theme="light"] .dock{
+  background: rgba(255,255,255,0.86) !important;
+  border-top: 1px solid rgba(0,0,0,0.06) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.1) !important;
+  backdrop-filter: blur(20px) saturate(1.1) !important;
+}
+html[data-theme="light"] .dock .tile .tile-name{ color: rgba(0,0,0,0.42) !important; }
+html[data-theme="light"] .dock .tile.on .tile-name{ color: var(--accent) !important; }
+html[data-theme="light"] .topbar{
+  background: linear-gradient(180deg, rgba(245,244,247,0.92), rgba(245,244,247,0.30)) !important;
+}
+html[data-theme="light"] .screen.page,
+html[data-theme="light"] .screen.page.open{ background: var(--bg) !important; }
+html[data-theme="light"] .c-days .days-num{
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  color: var(--text) !important;
+  filter: none !important;
+}
+html[data-theme="light"] .c-days .days-num::before{ color: var(--text-3) !important; }

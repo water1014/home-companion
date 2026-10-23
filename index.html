@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-<meta name="theme-color" content="#eef0f4" />
+<meta name="theme-color" content="#07050d" />
 <meta name="description" content="潮 · TIDE — 潮起时你在，潮落时我在。" />
 <title>潮 · TIDE</title>
 <link rel="manifest" href="manifest.webmanifest" />
@@ -20,10 +20,10 @@
     try {
       var t = localStorage.getItem('tide.theme');
       var f = localStorage.getItem('tide.font');
-      document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark';
       document.documentElement.dataset.font = f === 'sans' ? 'sans' : 'serif';
     } catch (_) {
-      document.documentElement.dataset.theme = 'light';
+      document.documentElement.dataset.theme = 'dark';
       document.documentElement.dataset.font = 'serif';
     }
   })();
