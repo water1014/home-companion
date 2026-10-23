@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v43';
+  window.__TIDE_MARK = 'LOCAL-v44';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -60,7 +60,7 @@
 
   /* ============================================================
      应用注册表 —— 之后加功能就在这里加一条
-     page: 'chat' | 'now' | 'memory' | 'settings'
+     page: 'chat' | 'now' | 'records' | 'settings' | null
      page 留空 = 占位页（点开会显示 desc 里写好的设想）
      ============================================================ */
   /* 贴纸色板：浅底 / 同色深线 */
@@ -94,9 +94,9 @@
     { id: 'music',    name: '音乐', icon: 'i-music',   cat: 'now', desc: '想做成「一起听」：同一个进度条，两边同时听到同一秒。\n真同步需要服务端，纯前端只能做到手动对齐。' },
 
     /* 【过去】已经存下来的东西 */
-    { id: 'memory',   name: '记忆', icon: 'i-brain',   cat: 'past', page: 'memory' },
-    { id: 'album',    name: '相册', icon: 'i-album',   cat: 'past', page: 'album' },
-    { id: 'moments',  name: '朋友圈', icon: 'i-moments', cat: 'past', page: 'moments' },
+    { id: 'memory',   name: '记忆', icon: 'i-brain',   cat: 'past', page: 'records', seg: 'memory' },
+    { id: 'album',    name: '相册', icon: 'i-album',   cat: 'past', page: 'records', seg: 'album' },
+    { id: 'moments',  name: '朋友圈', icon: 'i-moments', cat: 'past', page: 'records', seg: 'moments' },
     { id: 'notes',    name: '记录', icon: 'i-note',    cat: 'past', desc: '聊天记录导出、日记流水，按时间堆在这里。' },
     { id: 'travel',   name: '旅行', icon: 'i-plane',   cat: 'past', desc: '想去哪、什么时候去、要带什么。攒够了就出发。' },
     { id: 'starsea',  name: '星海', icon: 'i-starsea', cat: 'past', desc: '一片只属于你们的夜空。看过的、想去的、说过的，都挂成星星。' },
@@ -140,7 +140,7 @@
   const DOCK_DEFAULT = [
     { id: 'mood',     name: '他', icon: 'i-face',  page: 'now', seg: 'status' },
     { id: 'chat',     name: '说', icon: 'i-chat',  page: 'chat' },
-    { id: 'memory',   name: '记', icon: 'i-brain', page: 'memory' },
+    { id: 'memory',   name: '记', icon: 'i-brain', page: 'records', seg: 'memory' },
     { id: 'settings', name: '我', icon: 'i-gear',  page: 'settings' },
   ];
 
@@ -150,7 +150,7 @@
      data-app 保留，角标查询（.tile[data-app]）不用改。 */
   const DOCK_TABS = [
     { id: 'now',     name: '现在', icon: 'i-face',  page: 'now', seg: 'status' },
-    { id: 'memory',   name: '记',   icon: 'i-brain', page: 'memory' },
+    { id: 'memory',   name: '记',   icon: 'i-brain', page: 'records', seg: 'memory' },
     { id: 'homeKey',  name: '',     icon: 'i-home',  page: null },
     { id: 'calendar', name: '日',   icon: 'i-cal',   page: 'calendar' },
     { id: 'settings', name: '我',   icon: 'i-gear',  page: 'settings' },
@@ -508,15 +508,13 @@
   const pages = {
     chat: $('chat'),
     now: $('now'),          // 容器页：状态 / 一天 / 设备
-    memory: $('memory'),
+    records: $('records'),  // 容器页：记忆 / 相册 / 朋友圈
     settings: $('settings'),
     todo: $('todo'),
     theme: $('theme'),
     courses: $('courses'),
     countdown: $('countdown'),
     cards: $('cards'),
-    album: $('album'),
-    moments: $('moments'),
     calendar: $('calendar'),
   };
 
@@ -580,13 +578,10 @@
       const first = el.querySelector('.seg-btn');
       switchSeg(id, seg || lastSeg(id) || (first ? first.dataset.seg : null));
     }
-    if (id === 'memory') renderMemoryPage();
     if (id === 'settings') syncSettingsForm();
     if (id === 'courses') renderCourses();
     if (id === 'countdown') renderCountdownPage();
     if (id === 'cards') renderCoupons();
-    if (id === 'album') { renderAlbum(); renderAlbumCal(); }
-    if (id === 'moments') renderMoments();
     if (id === 'theme') renderTheme();
     if (id === 'calendar') renderCalendarPage();
   }
@@ -632,11 +627,28 @@
   }
 
   /* 每个分段渲染什么：分段 key → 渲染函数（now 页先接，其他容器页后续接） */
+  /* 记容器页共用搜索词：顶部搜索框对所有分段（记忆 / 相册 / 朋友圈）生效 */
+  let recSearchTerm = '';
+  const recSearchEl = $('recSearch');
+  if (recSearchEl) {
+    recSearchEl.addEventListener('input', () => {
+      recSearchTerm = recSearchEl.value.trim().toLowerCase();
+      const seg = lastSeg('records') || 'memory';
+      const fn = SEG_RENDER.records && SEG_RENDER.records[seg];
+      if (fn) fn();
+    });
+  }
+
   const SEG_RENDER = {
     now: {
       status: () => renderMood(),
       day: () => renderPartnerDay(),
       device: () => renderDevice(),
+    },
+    records: {
+      memory: () => renderMemoryPage(),
+      album: () => { renderAlbum(); renderAlbumCal(); },
+      moments: () => renderMoments(),
     },
   };
 
@@ -1265,7 +1277,7 @@
     music:   { page: 0, size: 'g-4x1', name: '一起听', go: null },
     status:  { page: 1, size: 'g-2x2', name: '他的状态', go: 'now', seg: 'status' },
     device:  { page: 1, size: 'g-2x2', name: '他的设备', go: 'now', seg: 'device' },
-    album:   { page: 1, size: 'g-2x2', name: '相册', go: 'album' },
+    album:   { page: 1, size: 'g-2x2', name: '相册', go: 'records', seg: 'album' },
     week:    { page: 1, size: 'g-2x2', name: '这一周', go: null },
     quote:   { page: 2, size: 'g-4x1', name: '一句话', go: null },
   };
@@ -3533,6 +3545,7 @@
     let list = all;
     if (albumFilter) list = list.filter((p) => dayStr(p.ts) === albumFilter);
     if (albumStyle) list = list.filter((p) => (ALBUM_STYLES.indexOf(p.st) >= 0 ? p.st : 'plain') === albumStyle);
+    if (recSearchTerm) list = list.filter((p) => ((p.cap || '').toLowerCase().includes(recSearchTerm)) || dayStr(p.ts).includes(recSearchTerm));
     if (hint) {
       hint.hidden = false;
       hint.textContent = albumFilter
@@ -3675,13 +3688,14 @@
     const list = $('momentList');
     const hint = $('momentsHint');
     const items = S.life.moments || [];
+    const src = recSearchTerm ? items.filter((m) => (m.text || '').toLowerCase().includes(recSearchTerm)) : items;
     if (hint) {
       hint.hidden = !!items.length;
       hint.textContent = emptyTextOf('moments', '没发过，发一条试试');
     }
     if (!list) return;
     list.innerHTML = '';
-    items.slice().reverse().forEach((mo) => {
+    src.slice().reverse().forEach((mo) => {
       const card = document.createElement('section');
       card.className = 'glass moment-card';
 
@@ -3774,7 +3788,7 @@
       mo.replyTs = Date.now();
       saveLife();
       renderMoments();
-      if (currentPage !== 'moments') addBadge('moments');
+      if (currentPage !== 'records') addBadge('moments');
     };
     const pending = () => {
       const cards = [...document.querySelectorAll('.moment-card')];
@@ -4167,13 +4181,15 @@
     const ul = $('allMemories');
     if (!ul) return;
     const facts = S.memory.facts || [];
+    const q = recSearchTerm;
+    const src = q ? facts.filter((f) => (f || '').toLowerCase().includes(q)) : facts;
 
     $('memCount').textContent = facts.length;
     $('allMemoryHint').hidden = facts.length > 0;
 
     ul.innerHTML = '';
-    facts.slice().reverse().forEach((f, revIdx) => {
-      const idx = facts.length - 1 - revIdx;
+    src.slice().reverse().forEach((f) => {
+      const idx = facts.indexOf(f);
       const li = document.createElement('li');
       const span = document.createElement('span');
       span.textContent = f;
@@ -4790,7 +4806,7 @@
       });
     }
     const moreMem = $('btnHomeMemories');
-    if (moreMem) moreMem.addEventListener('click', () => openPage('memory'));
+    if (moreMem) moreMem.addEventListener('click', () => openPage('records', 'memory'));
 
     renderDots();
     // 字体加载完/旋转屏幕后重新量一次宽度

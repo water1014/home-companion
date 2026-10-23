@@ -495,27 +495,66 @@
 </section>
 
 <!-- ============ 记忆库 ============ -->
-<section class="screen page memory-page" id="memory" aria-label="记忆">
-
+<section class="screen page mod-page" id="records" aria-label="记">
+  <div class="rec-search">
+    <input type="search" id="recSearch" class="rec-search-input" placeholder="搜索记忆 / 相册 / 朋友圈…" aria-label="搜索" />
+  </div>
+  <nav class="seg-bar" id="recordsSegBar" aria-label="分段">
+    <button type="button" class="seg-btn on" data-seg="memory">记忆</button>
+    <button type="button" class="seg-btn" data-seg="album">相册</button>
+    <button type="button" class="seg-btn" data-seg="moments">朋友圈</button>
+  </nav>
   <div class="page-scroll">
-    <section class="glass mem-main">
-      <p class="mem-count"><b id="memCount">0</b><span>条记忆</span></p>
-      <p class="mem-sub">跟着他一起，跨对话保留。</p>
-    </section>
+    <div class="seg-pane on" data-seg="memory">
+      <section class="glass mem-main">
+        <p class="mem-count"><b id="memCount">0</b><span>条记忆</span></p>
+        <p class="mem-sub">跟着他一起，跨对话保留。</p>
+      </section>
 
-    <section class="glass mem-card">
-      <header class="card-head"><h3>全部</h3><button class="text-btn" id="btnAddMemory2">添加</button></header>
-      <ul class="memories" id="allMemories"></ul>
-      <p class="hint" id="allMemoryHint" hidden>他会在聊天里自己记下你说的事，也可以手动加。</p>
-    </section>
+      <section class="glass mem-card">
+        <header class="card-head"><h3>全部</h3><button class="text-btn" id="btnAddMemory2">添加</button></header>
+        <ul class="memories" id="allMemories"></ul>
+        <p class="hint" id="allMemoryHint" hidden>他会在聊天里自己记下你说的事，也可以手动加。</p>
+      </section>
 
-    <section class="glass mem-note">
-      <p class="hint">
-        现在存在这台设备的浏览器里。<br>
-        以后接跨窗口 / 跨平台的记忆同步时，这里是入口 ——
-        每条记忆都带来源和时间，才能被别的会话认出来。
-      </p>
-    </section>
+      <section class="glass mem-note">
+        <p class="hint">
+          现在存在这台设备的浏览器里。<br>
+          以后接跨窗口 / 跨平台的记忆同步时，这里是入口 ——
+          每条记忆都带来源和时间，才能被别的会话认出来。
+        </p>
+      </section>
+    </div>
+
+    <div class="seg-pane" data-seg="album" hidden>
+      <div class="album-cats" id="albumCats" aria-label="按样式筛选"></div>
+      <p class="hint" id="albumHint">第一张图放这儿</p>
+      <section class="glass album-cal" id="albumCal" hidden>
+        <div class="acal-nav">
+          <button type="button" id="acalPrev">‹</button>
+          <span id="acalTitle">—</span>
+          <button type="button" id="acalNext">›</button>
+        </div>
+        <div class="acal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+        <div class="acal-days" id="acalDays"></div>
+      </section>
+      <div class="album-grid" id="albumGrid"></div>
+      <input type="file" id="photoFile" accept="image/*" hidden>
+    </div>
+
+    <div class="seg-pane" data-seg="moments" hidden>
+      <p class="hint" id="momentsHint">没发过，发一条试试</p>
+      <div id="momentList"></div>
+      <section class="glass moment-composer">
+        <textarea id="momentText" rows="2" maxlength="500" placeholder="这一刻的想法…"></textarea>
+        <img id="momentPreview" alt="" hidden>
+        <div class="moment-row">
+          <button type="button" id="momentPhoto" class="moment-btn">＋ 配张图</button>
+          <button type="button" id="momentSend" class="moment-send">发出去</button>
+        </div>
+        <input type="file" id="momentFile" accept="image/*" hidden>
+      </section>
+    </div>
   </div>
 </section>
 
@@ -575,41 +614,6 @@
   </div>
 </section>
 
-<!-- ============ 相册 ============ -->
-<section class="screen page" id="album" aria-label="相册">
-  <div class="page-scroll">
-    <div class="album-cats" id="albumCats" aria-label="按样式筛选"></div>
-    <p class="hint" id="albumHint">第一张图放这儿</p>
-    <section class="glass album-cal" id="albumCal" hidden>
-      <div class="acal-nav">
-        <button type="button" id="acalPrev">‹</button>
-        <span id="acalTitle">—</span>
-        <button type="button" id="acalNext">›</button>
-      </div>
-      <div class="acal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
-      <div class="acal-days" id="acalDays"></div>
-    </section>
-    <div class="album-grid" id="albumGrid"></div>
-    <input type="file" id="photoFile" accept="image/*" hidden>
-  </div>
-</section>
-
-<!-- ============ 朋友圈 ============ -->
-<section class="screen page" id="moments" aria-label="朋友圈">
-  <div class="page-scroll">
-    <p class="hint" id="momentsHint">没发过，发一条试试</p>
-    <div id="momentList"></div>
-    <section class="glass moment-composer">
-      <textarea id="momentText" rows="2" maxlength="500" placeholder="这一刻的想法…"></textarea>
-      <img id="momentPreview" alt="" hidden>
-      <div class="moment-row">
-        <button type="button" id="momentPhoto" class="moment-btn">＋ 配张图</button>
-        <button type="button" id="momentSend" class="moment-send">发出去</button>
-      </div>
-      <input type="file" id="momentFile" accept="image/*" hidden>
-    </section>
-  </div>
-</section>
 
 <!-- ============ 美化 ============ -->
 <section class="screen page" id="theme" aria-label="美化">

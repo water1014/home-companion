@@ -4394,3 +4394,23 @@ html .home-page[hidden] { display: none !important; }
 /* 分段内容：只有摊开的那段占位；切换时的淡入由 .screen.page 过渡之外单独给 */
 .seg-pane { display: flex; flex-direction: column; gap: 14px; }
 .seg-pane[hidden] { display: none; }
+
+/* ---- 11. 记容器页顶部共用搜索框（v44 页面合并）：只在文件末尾新增控件样式，
+        不动上面任何既有规则 ---- */
+.rec-search { flex: 0 0 auto; padding: 10px 16px 4px; }
+.rec-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 9px 16px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.rec-search-input:focus { border-color: var(--accent); }
+.rec-search-input::placeholder { color: var(--text-2); }
