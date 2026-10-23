@@ -5130,3 +5130,38 @@ html[data-theme="light"] .dock{
   backdrop-filter: blur(22px) saturate(1.4) !important;
 }
 html .find-me{ bottom: calc(84px + var(--safe-b)) !important; }
+
+/* ============================================================
+   V6 · 氛围壁纸（雨夜 / 海雾）
+   把平渐变做成有质感的底，玻璃卡才「沉」得下去。纯视觉，不动功能。
+   ============================================================ */
+/* 暗：深蓝夜 + 冷光 bloom + 暗角 */
+html[data-theme="dark"] .bg{
+  background: radial-gradient(120% 90% at 50% -18%, #1a2740 0%, #0f1524 38%, #090a12 70%, #06060a 100%) !important;
+  background-image: radial-gradient(120% 90% at 50% -18%, #1a2740 0%, #0f1524 38%, #090a12 70%, #06060a 100%) !important;
+}
+html[data-theme="dark"] .bg::before{
+  content: "" !important; position: absolute; inset: 0; pointer-events: none; opacity: 1 !important;
+  background:
+    radial-gradient(48% 30% at 78% 2%, rgba(120,160,255,.20), transparent 62%),
+    radial-gradient(55% 34% at 14% 10%, rgba(90,120,200,.15), transparent 62%),
+    radial-gradient(120% 62% at 50% 120%, rgba(0,0,0,.58), transparent 60%);
+  mix-blend-mode: screen;
+}
+/* 亮：海雾 + 白 bloom */
+html[data-theme="light"] .bg{
+  background: radial-gradient(120% 95% at 50% -18%, #eaf2fa 0%, #d4e2f0 42%, #e9f0f7 76%, #f2f6fa 100%) !important;
+  background-image: radial-gradient(120% 95% at 50% -18%, #eaf2fa 0%, #d4e2f0 42%, #e9f0f7 76%, #f2f6fa 100%) !important;
+}
+html[data-theme="light"] .bg::before{
+  content: "" !important; position: absolute; inset: 0; pointer-events: none; opacity: 1 !important;
+  background:
+    radial-gradient(46% 30% at 76% 0%, rgba(255,255,255,.85), transparent 60%),
+    radial-gradient(52% 36% at 18% 102%, rgba(150,195,225,.32), transparent 62%);
+}
+html .bg::after{ opacity: .055 !important; mix-blend-mode: overlay; }
+/* 玻璃更通透，让壁纸透出来 */
+html .bento .card, html .card{
+  -webkit-backdrop-filter: blur(30px) saturate(1.6) !important;
+  backdrop-filter: blur(30px) saturate(1.6) !important;
+}
