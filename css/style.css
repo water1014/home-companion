@@ -7980,7 +7980,7 @@ html[data-theme="light"] .rec-search-input::placeholder{ color: var(--k-ink3) !i
    ============================================================ */
 
 /* ---------- 1. 壁纸透出来：主屏铺高清壁纸 + 极暗遮罩 ---------- */
-#home { position: relative; isolation: isolate; }
+#home { isolation: isolate; }
 #home::before,
 #home::after {
   content: "";
@@ -8352,4 +8352,152 @@ html .mn-names {
   font-size: 11.5px !important;
   letter-spacing: 0.14em !important;
   opacity: 0.82;
+}
+
+/* ============================================================
+   WATER / FLOWER / MIRROR：按 MOON 的标准统一材质
+   —— 壁纸透出 + 毛玻璃卡片 + 拍立得白边错落
+      只作用于 #chat / #records / #mirror，其他页不动
+   ============================================================ */
+
+/* ---------- 1. 子页背景：去掉灰白底，透出高清壁纸 + 遮罩 ---------- */
+#chat, #records, #mirror {
+  background: transparent !important;
+  /* 注意：不要写 position:relative —— .screen 是 absolute inset:0，
+     覆盖它会把这页拽进文档流、排到主屏下面（y 直接落到屏幕外） */
+  isolation: isolate;
+}
+#chat::before, #records::before, #mirror::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -2;
+  pointer-events: none;
+  background:
+    var(--wall-img, url("../icons/wall.jpg")) center / cover no-repeat,
+    linear-gradient(168deg, #2b2438 0%, #191428 55%, #241d33 100%);
+}
+#chat::after, #records::after, #mirror::after {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+      rgba(9, 7, 16, 0.76) 0%,
+      rgba(9, 7, 16, 0.58) 48%,
+      rgba(9, 7, 16, 0.74) 100%);
+}
+html[data-theme="light"] #chat::after,
+html[data-theme="light"] #records::after,
+html[data-theme="light"] #mirror::after {
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.86) 0%,
+      rgba(255, 255, 255, 0.70) 48%,
+      rgba(255, 255, 255, 0.84) 100%);
+}
+
+/* ---------- 2. FLOWER / MIRROR 的卡片：毛玻璃 + 两层阴影 ---------- */
+#records .list-card,
+#records .glass,
+#mirror .list-card,
+#mirror .glass {
+  background: rgba(255, 255, 255, 0.10) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    0 10px 30px rgba(0, 0, 0, 0.18) !important;
+  transition: transform 320ms var(--ease), box-shadow 320ms var(--ease);
+}
+html[data-theme="light"] #records .list-card,
+html[data-theme="light"] #records .glass,
+html[data-theme="light"] #mirror .list-card,
+html[data-theme="light"] #mirror .glass {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow:
+    0 2px 8px rgba(28, 28, 40, 0.06),
+    0 10px 30px rgba(28, 28, 40, 0.10) !important;
+}
+#records .list-card:hover,
+#mirror .list-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 18px 44px rgba(0, 0, 0, 0.26) !important;
+}
+
+/* ---------- 3. 相册：真实拍立得（8px 白边 + 柔和投影 + 散落错落） ---------- */
+#mirror .album-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 22px 16px !important;
+  padding: 10px 4px 16px !important;
+}
+#mirror .album-cell {
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.18));
+}
+#mirror .album-cell .photo-frame {
+  background: #ffffff !important;
+  border: 8px solid #ffffff !important;
+  border-radius: 3px !important;
+  padding: 0 0 12px !important;      /* 底边留厚，像真拍立得 */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 14px 30px rgba(0, 0, 0, 0.28) !important;
+  transition: transform 340ms var(--ease), box-shadow 340ms var(--ease);
+}
+#mirror .album-cell img {
+  border-radius: 0 !important;
+  aspect-ratio: 1 / 1;
+}
+/* 散落感：奇偶交替倾斜，而不是整齐两列 */
+#mirror .album-cell:nth-child(odd)  .photo-frame { transform: rotate(-1.7deg); }
+#mirror .album-cell:nth-child(even) .photo-frame { transform: rotate(1.3deg); }
+/* 捏起来：悬停/按压时摆正、放大、投影变深 */
+#mirror .album-cell:hover .photo-frame,
+#mirror .album-cell:active .photo-frame,
+#mirror .album-cell.show-ops .photo-frame {
+  transform: rotate(0deg) translateY(-4px) scale(1.035);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.2),
+    0 22px 46px rgba(0, 0, 0, 0.36) !important;
+}
+#mirror .album-cell figcaption {
+  color: #55555e !important;
+  font-size: 10.5px !important;
+  letter-spacing: 0.04em !important;
+  padding: 7px 2px 0 !important;
+}
+
+/* ---------- 4. WATER：气泡与输入区在暗壁纸上的适配 ---------- */
+html .chat-page .stream { padding: 16px 22px 8px !important; }
+#chat .msg .bubble {
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 8px 22px rgba(0, 0, 0, 0.16) !important;
+}
+
+/* ---------- 5. 收口：底部留出悬浮底栏的高度 + FLOWER 分段不溢出 ---------- */
+#records .page-scroll,
+#mirror .page-scroll {
+  padding-bottom: 112px !important;   /* 别让最后一张卡/配图框被胶囊底栏压住 */
+}
+/* FLOWER 四个分段在小屏会挤到「待办」被截断，收一点内边距与字距 */
+#records .seg-bar {
+  gap: 4px !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  overflow-x: auto !important;          /* 小屏放不下时可滑，不硬切 */
+  scrollbar-width: none;
+}
+#records .seg-bar::-webkit-scrollbar { display: none; }
+#records .seg-bar .seg-btn {
+  padding: 6px 9px !important;
+  font-size: 10.5px !important;
+  letter-spacing: -0.01em !important;
+  white-space: nowrap !important;
 }
