@@ -8,10 +8,10 @@
 <title>潮 · TIDE</title>
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
-<!-- 字体系统：衬线（Playfair Display / Noto Serif SC）+ 手写（Ma Shan Zheng）；断网时回退系统字 -->
+<!-- 字体系统：Fraunces（大数字/英文标题）+ Noto Serif SC（中文标题）+ Ma Shan Zheng（便签手写） -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..600&family=Noto+Serif+SC:wght@300;400;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200..500;1,9..144,300..400&family=Noto+Serif+SC:wght@300;400;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
 <style>
   /* 主题/字体在读样式表前先落地，避免深色用户闪一下白底 */
@@ -122,21 +122,51 @@
 <main class="screen home" id="home" aria-label="主屏">
   <div class="home-dim" aria-hidden="true"></div>
 
-  <!-- 桌面：单页，竖向滚动（STEP B 重构）
-       卡片流（#bento）+ 应用矩阵（.app-matrix，区前小标题「应用」）。
-       长按图标进编辑，可在本页内重新排序；不再分多页、无分页圆点。 -->
+  <!-- ══════ MOON · 月 —— 极简仪表盘：只看，不操作 ══════
+       时间 / 日期 → 纪念日天数 → NOW 此刻（波形 + 碎碎念）→ WRITE / TALK → 音乐细条
+       相册、日历、日记、设置全部移出（归 FLOWER / MIRROR） -->
   <div class="home-pager" id="homePager">
-    <section class="home-page active" data-page="0" aria-label="桌面">
-      <header class="ed-head">
-        <p class="ed-date" id="edDate">—</p>
-        <p class="ed-time" id="edTime">—</p>
-        <p class="ed-hello" id="edHello">—</p>
+    <section class="home-page active" data-page="0" aria-label="月">
+      <header class="moon-head" id="moonHead">
+        <p class="mn-tag"><em>TODAY</em><span id="mnDate">—</span></p>
+        <p class="mn-time" id="mnTime">—</p>
+        <p class="mn-days"><b id="mnDays">—</b><i>DAYS TOGETHER</i></p>
+        <p class="mn-names" id="mnNames">—</p>
       </header>
-      <div class="bento gap-comfy" id="bento" aria-label="卡片"></div>
-      <section class="app-matrix" aria-label="应用矩阵">
-        <p class="app-matrix-title">应用</p>
-        <div class="app-grid" id="appGrid" aria-label="应用"></div>
+
+      <section class="mn-now" id="moonNow" aria-label="此刻">
+        <p class="mn-label"><em>NOW</em><span>此刻</span></p>
+        <div class="mn-wave" aria-hidden="true">
+          <svg viewBox="0 0 480 40" preserveAspectRatio="none"><path id="mnWave" d=""/></svg>
+        </div>
+        <div class="mn-nums">
+          <span><b id="mnMood">—</b><i>心情</i></span>
+          <span><b id="mnEnergy">—</b><i>精力</i></span>
+        </div>
+        <p class="mn-say" id="mnSay">—</p>
       </section>
+
+      <nav class="mn-acts" id="moonActs" aria-label="快捷入口">
+        <button type="button" class="mn-act" data-moon-go="records">
+          <em>WRITE</em><span>写点什么</span>
+        </button>
+        <button type="button" class="mn-act" data-moon-go="chat">
+          <em>TALK</em><span>去水边</span>
+        </button>
+      </nav>
+
+      <div class="mn-music" id="moonMusic">
+        <span class="mn-mu-meta">
+          <b id="mnMuTitle">—</b>
+          <i id="mnMuArtist"></i>
+        </span>
+        <button type="button" class="mn-mu-play" id="mnMuPlay" aria-label="播放">
+          <svg class="ic-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19.5 12z"/></svg>
+          <svg class="ic-pause" viewBox="0 0 24 24"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>
+        </button>
+        <span class="mn-mu-time" id="mnMuTime">--:--</span>
+        <i class="mn-mu-track" aria-hidden="true"></i>
+      </div>
     </section>
   </div>
 </main>

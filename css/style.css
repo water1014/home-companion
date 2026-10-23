@@ -6341,3 +6341,918 @@ html .cal-empty{
 html .mo-bar i{
   background: linear-gradient(90deg, rgb(var(--mood-rgb, 200, 203, 210)), rgba(255, 255, 255, .9)) !important;
 }
+
+/* ============================================================
+   V16 · KEPT —— 极简细线 + 大留白
+   目标：从「厚重的半透明卡片堆叠」变成「发丝线分隔 + 呼吸感」。
+   只追加一层，整段可删；LocalStorage / API / 拖拽逻辑一律不动。
+   ============================================================ */
+
+/* ---------- 0. 令牌：一条线走天下 ---------- */
+:root{
+  --k-line: rgba(255, 255, 255, .12);
+  --k-line-soft: rgba(255, 255, 255, .07);
+  --k-wash: rgba(255, 255, 255, .035);
+  --k-display: 'Fraunces', 'Noto Serif SC', 'Songti SC', serif;
+  --k-serif: 'Noto Serif SC', 'Songti SC', serif;
+  --k-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+}
+html[data-theme="light"]{
+  --k-line: rgba(22, 22, 26, .13);
+  --k-line-soft: rgba(22, 22, 26, .07);
+  --k-wash: rgba(22, 22, 26, .028);
+}
+
+/* ---------- 1. 排版：细字重 / 大行高 / Fraunces ---------- */
+html body{
+  font-family: var(--k-sans) !important;
+  font-weight: 300 !important;
+  line-height: 1.8 !important;
+  -webkit-font-smoothing: antialiased;
+}
+html .days-num, html .days-since, html .days-names,
+html .td-day, html .ed-time, html .lock-time, html .big-clock,
+html .mo-v, html .st-word, html .tile-num,
+html .vi-title, html .cal-page-title, html #daysNum,
+html .acct-name, html .profile-name{
+  font-family: var(--k-display) !important;
+  font-weight: 300 !important;
+  letter-spacing: -.02em !important;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+html .acct-name, html .profile-name, html .st-word, html .vi-title{
+  font-weight: 400 !important;
+  letter-spacing: -.01em !important;
+}
+/* 中文标题：Noto Serif SC，细一档 */
+html .list-head, html .qt, html .c-quote .qt{
+  font-family: var(--k-serif) !important;
+  font-weight: 400 !important;
+}
+/* 英文小标签：极小、大写、宽字距、半透明 */
+html .td-eyebrow, html .vi-eyebrow, html .pl-eyebrow,
+html .mo-eyebrow, html .app-matrix-title, html .nt-eyebrow,
+html .ed-date, html .mm-k em{
+  font-family: var(--k-sans) !important;
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  letter-spacing: .2em !important;
+  text-indent: .2em;
+  text-transform: uppercase;
+  opacity: .5;
+  color: var(--text-2) !important;
+}
+/* 正文行高统一 1.8 */
+html .st-sub, html .mo-say, html .q, html .qt,
+html .row-name, html .row small, html .msg .bubble,
+html .bt-cell, html .pl-cap, html .cal-day .row-name small{
+  line-height: 1.8 !important;
+  font-weight: 300 !important;
+}
+
+/* ---------- 2. 拆掉所有厚卡片 ---------- */
+html .card,
+html .bento .card,
+html .glass,
+html .list-card,
+html .cp-card,
+html .profile-card,
+html .think-card,
+html .acct-card,
+html .cal-day{
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+/* 顶栏 / 分段条 / 底栏：也去玻璃 */
+html .topbar{
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border-bottom: 1px solid var(--k-line) !important;
+}
+html .seg-bar{
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border-bottom: 1px solid var(--k-line-soft) !important;
+}
+html .dock{
+  background: var(--k-wash) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: 1px solid var(--k-line) !important;
+  border-radius: 22px !important;
+  box-shadow: none !important;
+}
+html .composer,
+html .rec-search-input,
+html .cp-field input,
+html .chip,
+html .find-me{
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  border: 1px solid var(--k-line) !important;
+}
+html .row-ic{
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  stroke: var(--text-2) !important;
+  color: var(--text-2) !important;
+}
+html[data-theme="dark"] .row-ic{
+  stroke: var(--text-2) !important;
+  color: var(--text-2) !important;
+}
+/* 卡片顶部高光层：删掉 */
+html .bento .card::after,
+html .glass::after{ content: none !important; }
+
+/* 触感：不要阴影，只留极轻的透明反馈 */
+html .bento .card.tap:active{
+  background: var(--k-wash) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ---------- 3. 首页顶部：弧形细线 + 超大天数 ---------- */
+html .home-page{ padding: 10px 22px 120px !important; }
+html .ed-head{
+  position: relative;
+  padding: 4px 0 22px !important;
+  border-bottom: 1px solid var(--k-line) !important;
+  margin-bottom: 0 !important;
+}
+html .ed-arc{
+  display: block;
+  width: 100%;
+  height: 74px;
+  margin: 0 0 10px;
+  color: var(--text);
+  opacity: .22;
+  overflow: visible;
+}
+html[data-theme="light"] .ed-arc{ opacity: .18; }
+html .ed-date{
+  margin: 0 0 10px !important;
+  font-size: 10px !important;
+  letter-spacing: .2em !important;
+  text-indent: .2em;
+  text-transform: uppercase;
+  opacity: .5;
+  color: var(--text-2) !important;
+}
+html .ed-days{
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+html .ed-days b{
+  font-family: var(--k-display) !important;
+  font-size: clamp(92px, 27vw, 136px) !important;
+  font-weight: 300 !important;
+  line-height: .84 !important;
+  letter-spacing: -.04em !important;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--text) !important;
+}
+html .ed-days i{
+  font-family: var(--k-serif) !important;
+  font-style: normal;
+  font-size: 15px !important;
+  letter-spacing: .12em;
+  color: var(--text-3) !important;
+  transform: translateY(-.2em);
+}
+html .ed-sub{
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 10px 0 0 !important;
+  font-size: 12.5px !important;
+  color: var(--text-3) !important;
+  letter-spacing: .02em;
+}
+html .ed-sub em{
+  font-family: var(--k-serif) !important;
+  font-style: italic;
+  font-size: 11px;
+  letter-spacing: .16em;
+  opacity: .7;
+}
+html .ed-hello{
+  margin: 14px 0 0 !important;
+  font-family: var(--k-serif) !important;
+  font-size: 14px !important;
+  color: var(--text-2) !important;
+  letter-spacing: .04em;
+  line-height: 1.8 !important;
+}
+
+/* ---------- 4. 首页列表化：卡片 → 细线分隔的行 ---------- */
+html .bento{
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  grid-auto-rows: auto !important;
+}
+html .bento .card{
+  display: block !important;
+  grid-column: auto !important;
+  grid-row: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 24px 0 !important;
+  border-bottom: 1px solid var(--k-line) !important;
+  overflow: visible !important;
+  cursor: default;
+}
+html .bento .card.tap{ cursor: pointer; }
+html .bento .card:last-child{ border-bottom: 1px solid var(--k-line) !important; }
+
+/* 天数卡已移到页头，若被打开也不做成方块 */
+html .c-days{ display: none !important; }
+
+/* 情绪面板：两行细条，标签更小 */
+html .c-mood{ padding: 22px 0 !important; }
+html .c-mood .mo{ height: auto !important; gap: 12px !important; }
+html .mo-head{ gap: 10px !important; }
+html .mo-ava{ width: 24px !important; height: 24px !important; font-size: 10px !important; }
+html .mo-name{ font-family: var(--k-serif) !important; font-size: 13px !important; }
+html .mo-row{ gap: 12px !important; }
+html .mo-k{ flex: 0 0 34px !important; font-size: 10.5px !important; letter-spacing: .16em !important; }
+html .mo-bar{ height: 1px !important; background: var(--k-line) !important; }
+html .mo-bar i{ height: 1px !important; }
+html .mo-v{ flex: 0 0 42px !important; font-size: 12px !important; font-weight: 300 !important; }
+html .mo-say{ margin: 4px 0 0 !important; font-size: 12px !important; color: var(--text-3) !important; }
+
+/* 记忆：一排小点 */
+html .c-mem{ padding: 22px 0 !important; }
+html .mm{ display: flex; flex-direction: column; gap: 12px; }
+html .mm-k{
+  margin: 0 !important;
+  font-family: var(--k-serif) !important;
+  font-size: 13px !important;
+  color: var(--text) !important;
+  letter-spacing: .06em;
+  display: flex; align-items: baseline; gap: 10px;
+}
+html .mm-k em{ font-style: normal; }
+html .mm-dots{ display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+html .mm-d{
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  border: 1px solid var(--k-line);
+  background: transparent;
+  display: block;
+}
+html .mm-d.on{
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 6px rgba(200, 203, 210, .45);
+}
+html .mm-hint{
+  margin: 0 !important;
+  font-size: 11.5px !important;
+  color: var(--text-3) !important;
+  line-height: 1.8 !important;
+}
+
+/* 状态：名字大一点，副标淡一点 */
+html .c-status{ padding: 22px 0 !important; }
+html .c-status .st-ava{ width: 26px !important; height: 26px !important; font-size: 10px !important; }
+html .c-status .st-word{
+  margin: 8px 0 0 !important;
+  font-family: var(--k-display) !important;
+  font-size: 30px !important;
+  font-weight: 300 !important;
+  letter-spacing: -.02em !important;
+  line-height: 1.2 !important;
+}
+html .c-status .st-sub{ margin: 2px 0 0 !important; font-size: 12px !important; color: var(--text-3) !important; }
+html .c-status .st-dot{ top: 26px !important; right: 2px !important; }
+
+/* 聊聊：一行字 + 箭头，不是方块 */
+html .c-chat{ padding: 22px 0 !important; display: block !important; }
+html .c-chat .g-ic{ width: 18px !important; height: 18px !important; opacity: .5; display: block; }
+html .c-chat .tile-t{
+  margin: 8px 0 0 !important;
+  font-family: var(--k-serif) !important;
+  font-size: 15px !important;
+  color: var(--text) !important;
+  letter-spacing: .04em;
+}
+
+/* 之间：三格变成一行三段 */
+html .c-between{ padding: 22px 0 !important; }
+html .c-between .bt{ gap: 14px !important; }
+html .c-between .bt-head{
+  margin: 0 0 12px !important;
+  font-family: var(--k-serif) !important;
+  font-size: 13px !important;
+  letter-spacing: .06em;
+  color: var(--text) !important;
+}
+html .c-between .bt-cells{ gap: 0 !important; }
+html .c-between .bt-cell{
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html .c-between .bt-cell + .bt-cell{ border-left: 1px solid var(--k-line) !important; padding-left: 14px !important; }
+html .c-between .tile-num{
+  font-family: var(--k-display) !important;
+  font-size: 26px !important;
+  font-weight: 300 !important;
+  letter-spacing: -.02em !important;
+}
+html .c-between .tile-t{ font-size: 10px !important; letter-spacing: .16em !important; color: var(--text-3) !important; }
+
+/* 音乐：一条横线贯穿 */
+html .c-music{ padding: 22px 0 18px !important; }
+html .mu-line{ display: flex; align-items: center; gap: 14px; }
+html .mu-meta{ flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+html .mu-title{
+  font-family: var(--k-serif) !important;
+  font-size: 15px !important;
+  color: var(--text) !important;
+  letter-spacing: .02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+html .mu-artist{
+  font-size: 11px !important;
+  color: var(--text-3) !important;
+  letter-spacing: .04em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+html .mu-play{
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border: 1px solid var(--k-line) !important;
+  border-radius: 50%;
+  background: transparent !important;
+  color: var(--text) !important;
+  cursor: pointer;
+  padding: 0;
+}
+html .mu-play svg{ width: 14px; height: 14px; fill: currentColor; stroke: none; }
+html .mu-play .ic-pause{ display: none; }
+html .card.playing .mu-play .ic-play{ display: none; }
+html .card.playing .mu-play .ic-pause{ display: block; }
+html .mu-time{
+  flex: 0 0 auto;
+  font-family: var(--k-display) !important;
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--text-3) !important;
+  font-variant-numeric: tabular-nums;
+}
+html .mu-track{
+  margin-top: 12px;
+  height: 1px;
+  background: var(--k-line-soft);
+  position: relative;
+  overflow: hidden;
+}
+html .mu-track i{
+  display: block; height: 100%; width: 0;
+  background: var(--accent);
+  transition: width 400ms ease;
+}
+html .card.playing .mu-track i{ width: 34%; }
+
+/* 相册：细边框相纸，不铺满 */
+html .c-album{ padding: 22px 0 !important; }
+html .c-album .pl{ gap: 10px !important; height: auto !important; }
+html .pl-rail{ padding: 2px 0 6px !important; gap: 12px !important; }
+html .pl-item{
+  width: 116px !important;
+  padding: 6px 6px 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--k-line) !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+  transform: rotate(var(--tilt, 0deg)) !important;
+}
+html .pl-img{ height: 104px !important; border-radius: 0 !important; }
+html .c-album.is-empty .pl-item{ width: 92px !important; }
+html .c-album.is-empty .pl-img{ height: 70px !important; }
+html .pl-cap{ font-family: var(--k-sans) !important; font-size: 10.5px !important; color: var(--text-3) !important; padding: 6px 2px 8px !important; }
+
+/* 便签：去掉胶带和纸感，只留一段衬线引言 */
+html .c-quote{ padding: 26px 0 !important; }
+html .c-quote .nt-tape{ display: none !important; }
+html .nt-eyebrow{ margin: 0 0 10px !important; }
+html .c-quote .qt{
+  font-family: var(--k-serif) !important;
+  font-size: 19px !important;
+  font-weight: 300 !important;
+  line-height: 1.9 !important;
+  letter-spacing: .04em !important;
+  color: var(--text) !important;
+  text-align: left !important;
+}
+
+/* 应用矩阵：只有图标，没有底 */
+html .app-matrix{
+  margin-top: 26px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+html .app-matrix-title{
+  margin: 0 0 16px !important;
+  padding: 0 !important;
+  font-size: 10px !important;
+  letter-spacing: .2em !important;
+  opacity: .5;
+  text-align: left !important;
+}
+html .app-grid .tile-ic{
+  background: transparent !important;
+  border: 1px solid var(--k-line-soft) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+html .app-grid .tile-ic svg{ stroke-width: 1.25 !important; color: var(--text-2) !important; }
+html .app-grid .tile-t{ font-size: 10px !important; color: var(--text-3) !important; letter-spacing: .04em; }
+
+/* ---------- 5. 聊天：先只做「动作去框」，其余下一步 ---------- */
+html .msg .bubble{
+  background: var(--k-wash) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 14px !important;
+}
+html .msg .bubble em{
+  display: block;
+  font-style: italic !important;
+  font-size: 12.5px !important;
+  color: var(--text-3) !important;
+  opacity: .6;
+  border-left: 0 !important;
+  padding-left: 0 !important;
+  margin-bottom: 6px !important;
+}
+html .think-card{
+  background: transparent !important;
+  border: 1px solid var(--k-line-soft) !important;
+  border-radius: 10px !important;
+}
+html .think-head{ font-size: 11px !important; color: var(--text-3) !important; }
+html .think-head::before{ content: '·'; margin-right: 6px; opacity: .6; }
+
+/* 输入区：只留一条线 */
+html #chat .composer-wrap{
+  background: transparent !important;
+  border-top: 1px solid var(--k-line-soft) !important;
+}
+html .composer{ border-radius: 0 !important; border: 0 !important; border-bottom: 1px solid var(--k-line) !important; }
+
+/* ---------- 6. 设置/更多：列表化（去掉卡片壳，每行一条线） ---------- */
+html .set-page .list-card,
+html .more-page .list-card{
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 0 18px !important;
+}
+html .set-page .row,
+html .more-page .row{
+  background: transparent !important;
+  border-bottom: 1px solid var(--k-line) !important;
+  border-radius: 0 !important;
+}
+html .set-page .profile-card{ padding: 6px 0 16px !important; border-bottom: 1px solid var(--k-line) !important; }
+html .set-page .list-head,
+html .more-page .list-head{
+  padding: 4px 0 10px !important;
+  font-family: var(--k-sans) !important;
+  font-size: 10px !important;
+  letter-spacing: .2em !important;
+  text-indent: .2em;
+  text-transform: uppercase;
+  opacity: .5;
+}
+html .set-page .row-ic,
+html .more-page .row-ic{
+  background: transparent !important;
+  border: 0 !important;
+  stroke: var(--text-3) !important;
+  color: var(--text-3) !important;
+  opacity: .9;
+}
+
+/* ---------- 7. 无障碍 / 对比度兜底 ---------- */
+/* 壁纸偏亮的地方压一层极弱蒙版，保证细字可读（不加回卡片） */
+html .home-page::before,
+html .page-scroll::before{
+  content: '';
+  position: fixed; inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .18), rgba(0, 0, 0, .26));
+  pointer-events: none;
+  z-index: -1;
+}
+html[data-theme="light"] .home-page::before,
+html[data-theme="light"] .page-scroll::before{
+  background: linear-gradient(180deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, .62));
+}
+html :focus-visible{
+  outline: 1px solid var(--accent) !important;
+  outline-offset: 3px !important;
+}
+
+@media (prefers-reduced-motion: reduce){
+  html .mu-track i{ transition: none !important; }
+}
+
+/* ---------- V16.1 对比度与细节修正 ---------- */
+/* 自定义两档次要墨色：不再靠 opacity 叠，避免 10px 小字糊掉 */
+:root{
+  --k-ink2: rgba(242, 242, 244, .70);
+  --k-ink3: rgba(242, 242, 244, .52);
+}
+html[data-theme="light"]{
+  --k-ink2: rgba(22, 22, 26, .72);
+  --k-ink3: rgba(22, 22, 26, .58);
+}
+
+/* 微标签：颜色交给令牌，opacity 只做一点点柔化 */
+html .td-eyebrow, html .vi-eyebrow, html .pl-eyebrow,
+html .mo-eyebrow, html .app-matrix-title, html .nt-eyebrow,
+html .ed-date, html .mm-k em{
+  color: var(--k-ink3) !important;
+  opacity: 1 !important;
+  font-weight: 400 !important;
+}
+/* 次要正文 */
+html .ed-sub, html .ed-hello, html .mm-hint, html .mo-k, html .mo-say,
+html .c-status .st-sub, html .c-chat .tile-t, html .mu-artist, html .mu-time,
+html .c-between .tile-t, html .pl-cap, html .set-page .row-side,
+html .more-page .row-side, html .set-page .row small{
+  color: var(--k-ink2) !important;
+}
+html .mm-hint, html .c-status .st-sub, html .mu-artist, html .pl-cap,
+html .mo-k, html .c-between .tile-t{ color: var(--k-ink3) !important; }
+
+/* 蒙版降回「极弱」：先前 0.5~0.62 把浅色壁纸洗白了 */
+html .home-page::before,
+html .page-scroll::before{
+  background: linear-gradient(180deg, rgba(0, 0, 0, .10), rgba(0, 0, 0, .18)) !important;
+}
+html[data-theme="light"] .home-page::before,
+html[data-theme="light"] .page-scroll::before{
+  background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .26)) !important;
+}
+
+/* 天数卡彻底不出现（即使被编辑面板打开） */
+html .bento .card.c-days,
+html .bento .card.c-days.tap{ display: none !important; }
+
+/* 弧形：改成真正的椭圆弧，高度收一半，不再被拉伸成三角 */
+html .ed-arc{
+  height: 56px !important;
+  margin: 0 0 14px !important;
+  opacity: .26 !important;
+}
+html[data-theme="light"] .ed-arc{ opacity: .20 !important; }
+
+/* 相册/之间/音乐 在细线行里的呼吸再大一点 */
+html .bento .card{ padding: 26px 0 !important; }
+html .bento .card:first-child{ padding-top: 18px !important; }
+
+/* ---------- V16.2 浅色别再洗白：蒙版再降一档，让底下的蓝灰回来 ---------- */
+html[data-theme="light"] .home-page::before,
+html[data-theme="light"] .page-scroll::before{
+  background: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .13)) !important;
+}
+/* 弧形再亮一点点，才看得出是一条线 */
+html .ed-arc{ opacity: .34 !important; }
+html[data-theme="light"] .ed-arc{ opacity: .26 !important; }
+/* 浅色微标签再加深一档 */
+html[data-theme="light"]{ --k-ink3: rgba(22, 22, 26, .66); }
+
+/* ---------- V16.3 聊天页收口：气泡不再是「亮块」，系统提示只留一条细线 ---------- */
+html .msg .bubble,
+html .msg.me .bubble,
+html .msg.partner .bubble,
+html .msg.partner .bubble:last-child,
+html .msg.me .bubble:last-child{
+  background: var(--k-wash) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+html .miss-you,
+html .sys-note,
+html .sys-note.mem-pill,
+html .self-think{
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: 1px solid var(--k-line-soft) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+html .miss-you{ border-radius: 12px !important; }
+html .mem-pill .mn-t b{ color: var(--text) !important; }
+html .chip{ border-radius: 999px !important; }
+/* 快捷胶囊与输入区的细线语言统一 */
+html .quick .chip{ border-color: var(--k-line) !important; color: var(--k-ink2) !important; }
+
+/* ============================================================
+   V18 · 镜花水月 —— 四 Tab（月/水/花/镜）+ MOON 首页
+   ============================================================ */
+
+/* ---------- 1. 底栏：四格，英文小字 + 中文 ---------- */
+html .dock{
+  grid-template-columns: repeat(4, 1fr) !important;
+  height: calc(66px + var(--safe-b)) !important;
+  border-radius: 20px !important;
+}
+html .dock .tile{ gap: 3px !important; color: var(--k-ink3) !important; }
+html .dock .tile .tile-ic{ width: 24px !important; height: 24px !important; background: transparent !important; border: 0 !important; }
+html .dock .tile .tile-ic svg{ width: 21px !important; height: 21px !important; stroke-width: 1.1 !important; }
+html .dock .tile .tile-name,
+html .dock .tile.on .tile-name{
+  display: flex !important; flex-direction: column; align-items: center; gap: 1px;
+}
+html .dock .tile-name em{
+  font-style: normal;
+  font-size: 8px !important;
+  line-height: 1;
+  letter-spacing: .16em !important;
+  text-indent: .16em;
+  text-transform: uppercase;
+  opacity: .55;
+}
+html .dock .tile-name span{
+  font-size: 10px !important;
+  line-height: 1.2;
+  letter-spacing: .1em;
+  font-weight: 300;
+}
+html .dock .tile.on{ color: var(--text) !important; }
+html .dock .tile.on .tile-name em{ opacity: .85; }
+/* 选中不再用实心圆，只换颜色 + 顶上一点 */
+html .dock .tile.on .tile-ic{ background: transparent !important; color: var(--text) !important; }
+html .dock .tile.on::before{
+  content: '';
+  position: absolute; top: 6px;
+  width: 3px; height: 3px; border-radius: 50%;
+  background: var(--accent);
+  opacity: .9;
+}
+html .dock .tile{ position: relative; }
+
+/* ---------- 2. MOON 版式：24px 边距 / 32px 段落 ---------- */
+html .home-page{
+  padding: 6px 24px 130px !important;
+}
+html .moon-head{
+  padding: 18px 0 30px !important;
+  margin-bottom: 0 !important;
+  border-bottom: 1px solid var(--k-line) !important;
+}
+html .mn-tag{
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 0 0 14px !important;
+  font-size: 11px !important;
+  letter-spacing: .15em !important;
+  text-transform: uppercase;
+  color: var(--k-ink3) !important;
+}
+html .mn-tag em{ font-style: normal; opacity: .6; }
+html .mn-tag span{ font-size: 11px; letter-spacing: .15em; }
+html .mn-time{
+  margin: 0 !important;
+  font-family: var(--k-display) !important;
+  font-size: clamp(44px, 13vw, 62px) !important;
+  font-weight: 300 !important;
+  line-height: .95 !important;
+  letter-spacing: -.02em !important;
+  color: var(--text) !important;
+  font-variant-numeric: tabular-nums;
+}
+html .mn-days{
+  display: flex; align-items: baseline; gap: 12px;
+  margin: 18px 0 0 !important;
+  line-height: .9 !important;
+}
+html .mn-days b{
+  font-family: var(--k-display) !important;
+  font-size: clamp(84px, 25vw, 124px) !important;
+  font-weight: 300 !important;
+  line-height: .84 !important;
+  letter-spacing: -.04em !important;
+  color: var(--text) !important;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+html .mn-days i{
+  font-style: normal;
+  font-size: 11px !important;
+  letter-spacing: .15em !important;
+  text-transform: uppercase;
+  color: var(--k-ink3) !important;
+  white-space: nowrap;
+}
+html .mn-names{
+  margin: 12px 0 0 !important;
+  font-size: 12.5px !important;
+  letter-spacing: .04em;
+  color: var(--k-ink2) !important;
+}
+
+/* NOW · 此刻 */
+html .mn-now{
+  padding: 26px 0 30px !important;
+  border-bottom: 1px solid var(--k-line) !important;
+}
+html .mn-label{
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 0 0 16px !important;
+  font-size: 11px !important;
+  letter-spacing: .15em !important;
+  text-transform: uppercase;
+  color: var(--k-ink3) !important;
+}
+html .mn-label em{ font-style: normal; opacity: .6; }
+html .mn-label span{ letter-spacing: .1em; text-transform: none; font-size: 11.5px; }
+html .mn-wave{
+  position: relative;
+  height: 40px;
+  overflow: hidden;
+  margin: 0 0 14px;
+}
+html .mn-wave svg{
+  display: block;
+  width: 200%;
+  height: 100%;
+  animation: mnDrift 22s linear infinite;
+}
+html .mn-wave path{
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: .55;
+  vector-effect: non-scaling-stroke;
+}
+@keyframes mnDrift{ from{ transform: translateX(0); } to{ transform: translateX(-50%); } }
+html .mn-nums{ display: flex; gap: 34px; margin: 0 0 12px; }
+html .mn-nums span{ display: flex; align-items: baseline; gap: 6px; }
+html .mn-nums b{
+  font-family: var(--k-display) !important;
+  font-size: 21px !important;
+  font-weight: 300 !important;
+  letter-spacing: -.02em !important;
+  color: var(--text) !important;
+  font-variant-numeric: tabular-nums;
+}
+html .mn-nums i{ font-style: normal; font-size: 10px !important; letter-spacing: .16em; color: var(--k-ink3) !important; }
+html .mn-say{
+  margin: 0 !important;
+  font-family: var(--k-serif) !important;
+  font-size: 13.5px !important;
+  line-height: 1.9 !important;
+  letter-spacing: .04em;
+  color: var(--k-ink2) !important;
+}
+
+/* WRITE / TALK：文字按钮，底边线展开 */
+html .mn-acts{
+  display: flex; gap: 40px;
+  padding: 26px 0 28px !important;
+  border-bottom: 1px solid var(--k-line) !important;
+}
+html .mn-act{
+  position: relative;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+  padding: 0 0 8px;
+  border: 0; background: none; cursor: pointer;
+  color: var(--k-ink2);
+  font-family: var(--k-sans);
+  -webkit-tap-highlight-color: transparent;
+  transition: color 260ms ease;
+}
+html .mn-act em{
+  font-style: normal;
+  font-size: 10px !important;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  opacity: .6;
+}
+html .mn-act span{
+  font-family: var(--k-serif) !important;
+  font-size: 15px !important;
+  letter-spacing: .06em;
+  font-weight: 300;
+}
+html .mn-act::after{
+  content: '';
+  position: absolute; left: 0; bottom: 0;
+  height: 1px; width: 0;
+  background: currentColor;
+  transition: width 340ms cubic-bezier(.22, .61, .36, 1);
+}
+html .mn-act:hover, html .mn-act:focus-visible, html .mn-act:active{ color: var(--text); }
+html .mn-act:hover::after, html .mn-act:focus-visible::after, html .mn-act:active::after{ width: 100%; }
+
+/* 音乐：底部一条细线，不是卡片 */
+html .mn-music{
+  position: relative;
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 0 20px;
+  border-bottom: 1px solid var(--k-line);
+}
+html .mn-mu-meta{ flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+html .mn-mu-meta b{
+  font-family: var(--k-serif) !important;
+  font-size: 14px !important;
+  font-weight: 300 !important;
+  letter-spacing: .03em;
+  color: var(--text) !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+html .mn-mu-meta i{
+  font-style: normal;
+  font-size: 10.5px !important;
+  letter-spacing: .06em;
+  color: var(--k-ink3) !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+html .mn-mu-play{
+  flex: 0 0 auto;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  padding: 0; cursor: pointer;
+  border: 1px solid var(--k-line);
+  border-radius: 50%;
+  background: none;
+  color: var(--text);
+  transition: border-color 220ms ease;
+}
+html .mn-mu-play:hover{ border-color: var(--text); }
+html .mn-mu-play svg{ width: 12px; height: 12px; fill: currentColor; stroke: none; }
+html .mn-mu-play .ic-pause{ display: none; }
+html .mn-music.playing .mn-mu-play .ic-play{ display: none; }
+html .mn-music.playing .mn-mu-play .ic-pause{ display: block; }
+html .mn-mu-time{
+  flex: 0 0 auto;
+  font-family: var(--k-display) !important;
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--k-ink3) !important;
+  font-variant-numeric: tabular-nums;
+}
+html .mn-mu-track{
+  position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: transparent;
+  overflow: hidden;
+}
+html .mn-mu-track::after{
+  content: '';
+  display: block; height: 100%; width: 0;
+  background: var(--accent);
+  transition: width 900ms linear;
+}
+html .mn-music.playing .mn-mu-track::after{ width: 38%; }
+
+/* ---------- 3. 开场动效：浮起 + 淡入 ---------- */
+@keyframes mnRise{
+  from{ opacity: 0; transform: translateY(16px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+html .mn-days, html .mn-now, html .mn-acts{ opacity: 0; }
+html .moon-head.is-in .mn-days{ animation: mnRise .95s cubic-bezier(.22, .61, .36, 1) both; }
+html .moon-head.is-in .mn-time{ animation: mnRise .8s cubic-bezier(.22, .61, .36, 1) both; }
+html .mn-now.is-in{ animation: mnRise .95s cubic-bezier(.22, .61, .36, 1) .14s both; }
+html .mn-acts.is-in{ animation: mnRise .95s cubic-bezier(.22, .61, .36, 1) .26s both; }
+
+@media (prefers-reduced-motion: reduce){
+  html .mn-wave svg{ animation: none !important; }
+  html .mn-days, html .mn-now, html .mn-acts{ opacity: 1 !important; }
+  html .moon-head.is-in .mn-days,
+  html .moon-head.is-in .mn-time,
+  html .mn-now.is-in,
+  html .mn-acts.is-in{ animation: none !important; }
+}
+
+/* ---------- V18.1 MOON 收口 ---------- */
+/* 音乐条沉到页面底部，中间留白不空转 */
+html .mn-music{ margin-top: auto; }
+html .home-page{ padding-bottom: 118px !important; }
+/* 波形再清楚一点，仍是一条细线 */
+html .mn-wave path{ opacity: .75; }
+/* 底栏已经有 WATER 了，右下角那颗常驻胶囊在 MOON 是多余的 */
+html #findMe{ display: none !important; }

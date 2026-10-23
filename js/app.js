@@ -148,12 +148,12 @@
      tab = 点亮规则：currentPage 为 null（主屏）时 Home 亮，
      打开某页时对应格亮；Home 是圆形凸起键，点它回主屏。
      data-app 保留，角标查询（.tile[data-app]）不用改。 */
+  /* 镜花水月 · 四 Tab：月 MOON / 水 WATER / 花 FLOWER / 镜 MIRROR */
   const DOCK_TABS = [
-    { id: 'records',  name: '记',   icon: 'i-book',  page: 'records', seg: 'memory' },
-    { id: 'calendar', name: '日',   icon: 'i-cal',   page: 'calendar' },
-    { id: 'homeKey',  name: '主页', icon: 'i-home',  page: null },
-    { id: 'between',  name: '之间', icon: 'i-heart', page: 'cards' },
-    { id: 'more',     name: '更多', icon: 'i-dots',  page: 'more' },
+    { id: 'moon',   name: '月', en: 'MOON',   icon: 'i-home',  page: null },
+    { id: 'water',  name: '水', en: 'WATER',  icon: 'i-chat',  page: 'chat' },
+    { id: 'flower', name: '花', en: 'FLOWER', icon: 'i-book',  page: 'records', seg: 'memory' },
+    { id: 'mirror', name: '镜', en: 'MIRROR', icon: 'i-gear',  page: 'settings' },
   ];
 
   /* 应用/dock 顺序可拖动换位，存本地；读出来时按注册表校准，缺的补默认 */
@@ -613,6 +613,7 @@
     currentPage = null;
     syncDock();
     syncTopbar();
+    replayMoon();          // 回月的时候，天数再浮一次
   }
 
   document.querySelectorAll('[data-back]').forEach((b) => {
@@ -935,7 +936,7 @@
     renderDock();
   }
 
-  /* v42 新 dock：五格固定，中间 Home 圆形凸起；不再跟着 DOCK 排列变 */
+  /* 镜花水月 · 四格底栏：图标 + 英文小字 + 中文 */
   function renderDock() {
     const dock = $('dock');
     if (!dock) return;
@@ -943,13 +944,13 @@
     DOCK_TABS.forEach((t) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'tile' + (t.page === null ? ' t-home' : '');
+      b.className = 'tile';
       b.dataset.app = t.id;
-      b.dataset.tab = t.page === null ? 'homeKey' : t.page;
-      b.setAttribute('aria-label', t.name || '回主屏');
+      b.dataset.tab = t.page === null ? 'moon' : t.page;
+      b.setAttribute('aria-label', (t.en || '') + ' ' + (t.name || ''));
       b.innerHTML =
         '<span class="tile-ic"><svg><use href="#' + t.icon + '"/></svg></span>' +
-        (t.name ? '<span class="tile-name">' + t.name + '</span>' : '<span class="tile-name" aria-hidden="true"></span>');
+        '<span class="tile-name"><em>' + (t.en || '') + '</em><span>' + (t.name || '') + '</span></span>';
       b.addEventListener('click', () => {
         if (t.page === null) closePage();
         else openPage(t.page, t.seg);
@@ -961,7 +962,7 @@
 
   /* dock 点亮：主屏（currentPage 为 null）→ Home；打开某页 → 对应格 */
   function syncDock() {
-    const key = currentPage === null ? 'homeKey' : currentPage;
+    const key = currentPage === null ? 'moon' : currentPage;
     document.querySelectorAll('.dock .tile').forEach((t) => {
       t.classList.toggle('on', t.dataset.tab === key);
     });
@@ -1362,6 +1363,7 @@
     today:   { page: 0, size: 'g-4x2', name: '今日', go: 'calendar' },
     days:    { page: 0, size: 'g-4x2', name: '在一起多少天', go: 'now', seg: 'status' },
     mood:    { page: 0, size: 'g-4x2', name: '他的情绪', go: 'now', seg: 'status' },
+    mem:     { page: 0, size: 'g-4x2', name: '记忆', go: 'records', seg: 'memory' },
     status:  { page: 0, size: 'g-2x2', name: '他的状态', go: 'now', seg: 'status' },
     chat:    { page: 0, size: 'g-2x2', name: '和他聊聊', go: 'chat' },
     between: { page: 0, size: 'g-4x2', name: '之间', go: 'cards' },
@@ -1372,7 +1374,9 @@
     quote:   { page: 0, size: 'g-4x2', name: '一句话', go: null },
   };
   /* 美化页开关的列举顺序 = 桌面从上到下 */
-  const DT_ORDER = ['days', 'mood', 'status', 'chat', 'between', 'album', 'music', 'quote', 'today', 'device', 'week'];
+  /* 天数不再是一张卡：它已经升到页头（.ed-head）做超大标题，
+     所以 days 从列表里摘掉，只留 DT_CARDS 里的定义给编辑面板认。 */
+  const DT_ORDER = ['mood', 'mem', 'status', 'chat', 'between', 'album', 'music', 'quote', 'today', 'device', 'week'];
 
   /* 收起了哪些卡片：存 S.settings.widgets.hidden。
      老配置里是旧组件 id（pair/clock/quad…），这里只认 DT_CARDS 里有的。
@@ -1537,19 +1541,27 @@
         '<p class="mo-say" id="moSay"></p>' +
       '</div>',
 
+    /* 音乐：一条横线贯穿。左歌名 / 中播放键 / 右时长，下面一条极细进度条 */
     music: () =>
-      '<div class="vi">' +
-        '<button class="vi-disc" id="muPlay" type="button" aria-label="播放">' +
-          '<span class="vi-groove" aria-hidden="true"></span>' +
-          '<span class="vi-label"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-music"/></svg></span>' +
-          '<span class="vi-hole" aria-hidden="true"></span>' +
+      '<div class="mu-line">' +
+        '<span class="mu-meta">' +
+          '<span class="mu-title" id="muTitle">想听什么，放给我</span>' +
+          '<span class="mu-artist" id="muArtist"></span>' +
+        '</span>' +
+        '<button class="mu-play" id="muPlay" type="button" aria-label="播放">' +
+          '<svg class="ic-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19.5 12z"/></svg>' +
+          '<svg class="ic-pause" viewBox="0 0 24 24"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>' +
         '</button>' +
-        '<div class="vi-meta">' +
-          '<p class="vi-eyebrow">NOW PLAYING</p>' +
-          '<p class="vi-title" id="muTitle">想听什么，放给我</p>' +
-          '<p class="vi-artist" id="muArtist"></p>' +
-          '<div class="vi-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>' +
-        '</div>' +
+        '<span class="mu-time" id="muTime">--:--</span>' +
+      '</div>' +
+      '<div class="mu-track" aria-hidden="true"><i></i></div>',
+
+    /* 记忆：一排极小的点表示收集进度（空心＝还没记，实心＝已记下） */
+    mem: () =>
+      '<div class="mm">' +
+        '<p class="mm-k">记忆<em>MEMORY</em></p>' +
+        '<div class="mm-dots" id="mmDots" role="img" aria-label="记忆收集进度"></div>' +
+        '<p class="mm-hint" id="mmHint"></p>' +
       '</div>',
 
     /* 拍立得相册墙（g-4x2）：白边 + 微倾 + 质感阴影，横向滑动 */
@@ -1590,7 +1602,7 @@
     setTxt('daysNames', partnerName() + ' with ' + (S.memory.userName || '我'));
     setTxt('daysSince', 'since ' + (S.memory.startDate || todayStr()).replace(/-/g, '.'));
     renderToday();
-    renderEdHead();
+    renderMoon();
 
     // 状态卡：今天挑过的心情词，没挑就看他现在的
     setHTML('stAva', partnerAvaInner(''));
@@ -1600,6 +1612,9 @@
 
     // 情绪面板：精力 / 心情（真实 persona 值）+ 一句他的状态
     renderMoodCard();
+
+    // 记忆收集进度
+    renderMemRow();
 
     // 设备格：浏览器给的真实电量，采不到就 —
     const d = S.life.device || {};
@@ -1634,6 +1649,29 @@
     const rgb = mix(206, 232) + ',' + mix(214, 212) + ',' + mix(228, 196);
     document.documentElement.style.setProperty('--mood-rgb', rgb);
     document.documentElement.style.setProperty('--mood-t', t.toFixed(2));
+  }
+
+  /* 记忆收集进度：一排小点，实心＝记下了，空心＝还空着。
+     12 个格子是对外展示的「收集格」，不是数据上限（记忆本身最多 40 条）。 */
+  const MEM_SLOTS = 12;
+  function renderMemRow() {
+    const box = $('mmDots');
+    if (!box) return;
+    const n = (S.memory.facts || []).length;
+    const filled = Math.min(n, MEM_SLOTS);
+    box.innerHTML = '';
+    for (let i = 0; i < MEM_SLOTS; i++) {
+      const d = document.createElement('i');
+      d.className = 'mm-d' + (i < filled ? ' on' : '');
+      box.appendChild(d);
+    }
+    const hint = $('mmHint');
+    if (hint) {
+      hint.textContent = n
+        ? '已记下 ' + n + ' 条'
+        : '还没记下什么。说点关于你自己的事，他会记住。';
+    }
+    box.setAttribute('aria-label', '记忆收集进度：' + Math.min(n, MEM_SLOTS) + ' / ' + MEM_SLOTS);
   }
 
   /* 情绪面板：精力 / 心情 两条极细进度条（真实 persona 数值）+ 一句他的话 */
@@ -1738,15 +1776,90 @@
   }
 
   /* 编辑风时间头：大写日期 + 超大时间 + 按时间问候（纯真实时间） */
-  function renderEdHead() {
-    if (!$('edTime')) return;
+  /* 首页顶：日期（含时间）+ 超大天数 + 名字 + 问候。天数不再是卡片，直接是页面标题。 */
+  /* ---------- MOON · 月：极简仪表盘 ---------- */
+  const MOON_DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const MOON_MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+  /* 心跳波形：一条两倍宽的余弦叠加，靠 CSS 平移做「呼吸」 */
+  function buildMoonWave() {
+    const path = $('mnWave');
+    if (!path) return;
+    const W = 480, H = 40, STEP = 4;
+    let d = '';
+    for (let x = 0; x <= W; x += STEP) {
+      const t = x / W;
+      const amp = 9 * (0.6 + 0.4 * Math.sin(t * Math.PI * 2));
+      const y = H / 2 + Math.sin(t * Math.PI * 10) * amp;
+      d += (x === 0 ? 'M' : 'L') + x + ' ' + y.toFixed(2);
+    }
+    path.setAttribute('d', d);
+  }
+
+  function renderMoon() {
+    if (!$('mnDate')) return;
     const now = new Date();
-    const D = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    const MO = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-    setTxt('edDate', D[now.getDay()] + ', ' + MO[now.getMonth()] + ' ' + now.getDate());
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
-    setTxt('edTime', hh + ':' + mm);
+    setTxt('mnDate', MOON_DOW[now.getDay()] + ', ' + MOON_MON[now.getMonth()] + ' ' + now.getDate());
+    setTxt('mnTime', hh + ':' + mm);
+    setTxt('mnDays', String(daysSince()));
+    setTxt('mnNames', partnerName() + ' with ' + (S.memory.userName || '我'));
+
+    const p = S.persona || {};
+    setTxt('mnMood', Math.round(p.mood === undefined ? 58 : p.mood) + '%');
+    setTxt('mnEnergy', Math.round(p.energy === undefined ? 60 : p.energy) + '%');
+    setTxt('mnSay', P.moodSub(S.persona));
+
+    const song = (S.life.music || [])[0];
+    setTxt('mnMuTitle', song ? song.title : '想听什么，放给我');
+    setTxt('mnMuArtist', song ? (song.artist || '') : '');
+  }
+
+  /* 回首页时重播开场：天数浮起 + 淡入 */
+  function replayMoon() {
+    const head = $('moonHead'), now = $('moonNow'), acts = $('moonActs');
+    if (!head) return;
+    [head, now, acts].forEach((el) => { if (el) el.classList.remove('is-in'); });
+    void head.offsetWidth;
+    requestAnimationFrame(() => {
+      if (head) head.classList.add('is-in');
+      if (now) now.classList.add('is-in');
+      if (acts) acts.classList.add('is-in');
+    });
+  }
+
+  /* MOON 的交互：两个文字入口 + 音乐条（只是视觉播放态，歌单没有真实音源） */
+  function setupMoon() {
+    const acts = $('moonActs');
+    if (acts) {
+      acts.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-moon-go]');
+        if (b) openPage(b.dataset.moonGo);
+      });
+    }
+    const play = $('mnMuPlay');
+    const bar = $('moonMusic');
+    if (play && bar) {
+      play.addEventListener('click', () => {
+        const on = bar.classList.toggle('playing');
+        play.setAttribute('aria-label', on ? '暂停' : '播放');
+      });
+    }
+    buildMoonWave();
+    replayMoon();
+  }
+
+  function renderEdHead() {
+    if (!$('edDate')) return;
+    const now = new Date();
+    const D = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    const MO = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    setTxt('edDate', D[now.getDay()] + ', ' + MO[now.getMonth()] + ' ' + now.getDate() + ' · ' + hh + ':' + mm);
+    setTxt('edDays', String(daysSince()));
+    setTxt('edNames', partnerName() + ' with ' + (S.memory.userName || '我'));
     const h = now.getHours();
     setTxt('edHello', h < 5 ? '夜深了。' : h < 11 ? '早上好。' : h < 13 ? '中午好。' : h < 18 ? '下午好。' : h < 23 ? '晚上好。' : '夜深了。');
   }
@@ -5029,6 +5142,7 @@
     applyMoodTint();       // 主色色温先跟情绪对齐，再画界面
     renderBento();
     renderApps();
+    setupMoon();
     renderAppRows();
     renderCards();
     renderMood();
