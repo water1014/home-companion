@@ -864,7 +864,8 @@ button { font-family: inherit; }
 
 .composer-wrap {
   flex: 0 0 auto;
-  padding: 4px 14px calc(12px + var(--safe-b));
+  /* 浮动 dock 高 58px + 安全区，聊天输入框需抬到 dock 之上 */
+  padding: 4px 14px calc(58px + var(--safe-b) + 10px);
 }
 
 .quick {
@@ -3937,16 +3938,19 @@ body { font-family: var(--font); color: var(--text); }
 
 .screen-zone { position: relative; flex: 1; min-height: 0; }
 
-/* 内容区：左右 20px，底部给 dock + 凸起 Home 让位（!important 压旧皮肤 16px） */
-.page-scroll, .home-page { padding-left: 20px !important; padding-right: 20px !important; }
-.page-scroll { padding-bottom: calc(76px + var(--safe-b) + 20px) !important; }
-.home-page { padding-bottom: calc(76px + var(--safe-b) + 12px) !important; }
+/* 内容区：左右 20px；顶距统一 16px、底距统一 96px（dock 改为浮动覆盖，不再占流内高度） */
+.page-scroll, .home-page { padding-left: 20px !important; padding-right: 20px !important; padding-top: 16px !important; }
+.page-scroll, .home-page { padding-bottom: 96px !important; }
 
 /* ---- 4. dock：五格，中间 Home 圆形凸起 ---- */
+/* dock：58px 浮动（绝对定位覆盖在内容之上，不再占流内高度；内容用 96px 底距让位） */
 .dock {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  margin: 0;
   flex: 0 0 auto;
-  height: calc(76px + var(--safe-b));
-  padding-bottom: var(--safe-b);
+  height: calc(58px + var(--safe-b));
+  padding: 0 12px var(--safe-b);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: end;
@@ -4228,19 +4232,30 @@ html .dock .tile svg {
       平底(var(--card)) + 细描边(var(--line)) + 线性单色图标(currentColor)
    ============================================================ */
 
-/* ---- 1. 分页：横滑吸附；每页自己竖滚（编辑态锁横滚，靠拖拽翻页） ---- */
+/* ---- 1. 桌面：单页，竖向滚动（STEP B 重构：去掉横滑与分页圆点） ---- */
 html .home-pager {
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-}
-html .home-page {
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: block;
   overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: none;
   -webkit-overflow-scrolling: touch;
-  scroll-snap-align: start;
+  overscroll-behavior-y: contain;
   scrollbar-width: none;
-  padding-top: 10px;
+}
+html .home-pager::-webkit-scrollbar { display: none; }
+html .home-page {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 0;                 /* 卡片流与「应用矩阵」之间用 .app-matrix 的 margin 控距 */
+  scroll-snap-align: none;
+  /* 顶距统一 16 / 底距统一 96（给浮动 dock 让位）；左右 20px 由更上方规则统一给 */
+  padding-top: 16px !important;
+  padding-bottom: 96px !important;
 }
 html .home-page::-webkit-scrollbar { display: none; }
 
@@ -4368,9 +4383,11 @@ html .home-page[hidden] { display: none !important; }
 .seg-bar {
   flex: 0 0 auto;
   display: flex;
+  align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 16px 4px;
+  min-height: 44px;            /* 与骨架一致：顶栏 48 → 分段条 44 */
+  padding: 6px 16px;
 }
 .seg-btn {
   border: 1px solid var(--line);
@@ -4414,3 +4431,20 @@ html .home-page[hidden] { display: none !important; }
 }
 .rec-search-input:focus { border-color: var(--accent); }
 .rec-search-input::placeholder { color: var(--text-2); }
+
+/* ============================================================
+   应用矩阵（STEP B 重构）：桌面卡片流之下的独立一区
+   区前小标题「应用」11px；内部四列网格（沿用 .app-grid）
+   ============================================================ */
+.app-matrix {
+  margin-top: 28px;
+}
+.app-matrix-title {
+  margin: 0 0 12px;
+  padding: 0 2px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}

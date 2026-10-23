@@ -159,29 +159,18 @@
 <main class="screen home" id="home" aria-label="主屏">
   <div class="home-dim" aria-hidden="true"></div>
 
-  <!-- 桌面：三页横滑吸附（STEP B）
-       P1 卡片+应用行混排（bento） / P2 卡片+应用矩阵 / P3 应用矩阵+一句话
-       圆点在底部，长按图标进编辑（拖动换页/换位），数据页 = 设置页 -->
+  <!-- 桌面：单页，竖向滚动（STEP B 重构）
+       卡片流（#bento）+ 应用矩阵（.app-matrix，区前小标题「应用」）。
+       长按图标进编辑，可在本页内重新排序；不再分多页、无分页圆点。 -->
   <div class="home-pager" id="homePager">
-
-    <section class="home-page active" data-page="0" aria-label="桌面第一页">
-      <div class="bento gap-comfy" id="bento" aria-label="卡片与应用"></div>
+    <section class="home-page active" data-page="0" aria-label="桌面">
+      <div class="bento gap-comfy" id="bento" aria-label="卡片"></div>
+      <section class="app-matrix" aria-label="应用矩阵">
+        <p class="app-matrix-title">应用</p>
+        <div class="app-grid" id="appGrid" aria-label="应用"></div>
+      </section>
     </section>
-
-    <section class="home-page" data-page="1" aria-label="桌面第二页">
-      <div class="dt-cards" id="dtCards2" aria-label="卡片"></div>
-      <div class="app-grid" id="appGrid" aria-label="应用"></div>
-    </section>
-
-    <section class="home-page" data-page="2" aria-label="桌面第三页">
-      <div class="app-grid" id="appGrid2" aria-label="应用"></div>
-      <div class="dt-cards" id="dtCards3" aria-label="卡片"></div>
-    </section>
-
   </div>
-
-  <!-- 分页圆点：JS renderDots 生成，点圆点跳页 -->
-  <div class="pager-dots" id="pagerDots" aria-hidden="true"></div>
 </main>
 
 <!-- ============ 聊天 ============ -->

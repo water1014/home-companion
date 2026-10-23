@@ -818,35 +818,32 @@
   /* 应用不再按固定数量切页：三页各有各的名单（hc.v1.appPages），
      拖到哪页就归哪页，每页放几个由你摆（各有放得下的上限）。
      APPS 仍是全量目录（顺序 = 三页名单拼起来），给四格/其他地方按 id 找应用用。 */
-  const PAGE_CAP = [0, 8, 40];   // 首页的上限跟着「组件行数」走，见 page1Cap()
+  /* v2 单页桌面：应用不再分三页，全部归到一页（appPages[0]），
+     首页上限给到很大，clampPages / rebalanceOnce 自然把应用都留在第 0 页 */
+  const PAGE_CAP = [999, 0, 0];
 
-  function page1Cap() {
-    const cfg = homeCfg();
-    return cfg.mix ? Math.max(0, Math.min(3, cfg.rows | 0)) * 4 : 0;
-  }
+  function page1Cap() { return 999; }
   function pageCap(i) { return i === 0 ? page1Cap() : PAGE_CAP[i]; }
 
+  /* v2 单页桌面：无论老数据怎么分三页，统统合并到一页（appPages[0]），
+     顺序 = 老第一页 → 第二页 → 第三页；名单里没有的新应用补到最后 */
   function loadPages() {
     const ids = APPS.map((a) => a.id);
     const saved = load(KEY.pages, null);
-    let out = null;
+    const merged = [];
+    const seen = {};
     if (Array.isArray(saved) && saved.length === 3) {
-      const seen = {};
-      out = saved.map((l) => (Array.isArray(l) ? l : []).map((x) => ID_ALIAS[x] || x).filter((id) => {
-        if (seen[id] || ids.indexOf(id) < 0) return false;
+      saved.forEach((l) => (Array.isArray(l) ? l : []).forEach((x) => {
+        const id = ID_ALIAS[x] || x;
+        if (seen[id] || ids.indexOf(id) < 0) return;
         seen[id] = true;
-        return true;
-      }).map(findApp));
-      // 新版本加进来的应用，名单里没有 → 补到第三页末尾
-      ids.forEach((id) => { if (!seen[id]) out[2].push(findApp(id)); });
+        merged.push(findApp(id));
+      }));
+    } else {
+      ids.forEach((id) => { if (!seen[id]) { seen[id] = true; merged.push(findApp(id)); } });
     }
-    if (!out) {
-      // 老数据迁移：按容量切（首页 page1Cap 个、第二页 8 个、剩下的第三页），
-      // 和美化页的上限对得上，不会出现第二页空荡荡
-      const cap1 = page1Cap();
-      out = [APPS.slice(0, cap1), APPS.slice(cap1, cap1 + PAGE_CAP[1]), APPS.slice(cap1 + PAGE_CAP[1])];
-    }
-    return out;
+    ids.forEach((id) => { if (!seen[id]) merged.push(findApp(id)); });
+    return [merged, [], []];
   }
 
   function pagesSave() {
@@ -873,34 +870,15 @@
   }
 
   // appPages 在 appSliceStart 定义之后初始化（依赖 HOME_DEFAULT/homeCfg），见那儿
-  /* STEP B 三页渲染：
-     P1 = #bento（renderBento：卡片 + 应用行混排）
-     P2 = #dtCards2（status/device/album/week 四张 2x2）+ #appGrid（appPages[1]）
-     P3 = #appGrid2（appPages[2]）+ #dtCards3（quote）
-     哪页空着就收起来，圆点跟着少一个 */
+  /* v2 单页渲染：
+     #bento = 卡片（renderBento）；#appGrid = 全部应用（应用矩阵单独成区，见 .app-matrix）
+     不再有第二、第三页，分页圆点已删 */
   function renderApps() {
-    const g1 = $('appGrid');
-    const g2 = $('appGrid2');
-    const c2 = $('dtCards2');
-    const c3 = $('dtCards3');
-    const hidden = dtHidden();
-    if (g1) { g1.innerHTML = ''; appPages[1].forEach((a) => g1.appendChild(makeTile(a))); }
-    if (g2) { g2.innerHTML = ''; appPages[2].forEach((a) => g2.appendChild(makeTile(a))); }
-    if (c2) {
-      c2.innerHTML = '';
-      DT_ORDER.filter((id) => DT_CARDS[id].page === 1 && hidden.indexOf(id) < 0)
-        .forEach((id) => c2.appendChild(makeDtCard(id)));
+    const grid = $('appGrid');
+    if (grid) {
+      grid.innerHTML = '';
+      appPages[0].forEach((a) => grid.appendChild(makeTile(a)));
     }
-    if (c3) {
-      c3.innerHTML = '';
-      DT_ORDER.filter((id) => DT_CARDS[id].page === 2 && hidden.indexOf(id) < 0)
-        .forEach((id) => c3.appendChild(makeDtCard(id)));
-    }
-    // 整页都没内容就收起来，别留一屏空白（display:none 由 CSS 的 [hidden] 规则保证）
-    const p2 = g1 ? g1.closest('.home-page') : null;
-    if (p2) p2.hidden = g1.children.length === 0 && (!c2 || c2.children.length === 0);
-    const p3 = g2 ? g2.closest('.home-page') : null;
-    if (p3) p3.hidden = g2.children.length === 0 && (!c3 || c3.children.length === 0);
     syncPagerPages();
     updateGrid();   // 卡片是刚重建的 DOM，内容（状态/电量/相册/一句话…）马上刷，别等 60s tick
     renderDock();
@@ -1271,23 +1249,37 @@
      page = 落在哪一页（0/1/2）；size = 四栏栅格占位；go = 点整卡进哪个页
      卡片内容用下面的 GRID_HTML；能不能收由美化页的开关决定
      ============================================================ */
+  /* v2 单页桌面：所有卡片都在第 0 页；尺寸只准两种——
+     4x2 全宽卡 / 2x2 半宽卡（1x1 只留给应用矩阵）。
+     顺序即桌面从上到下的顺序（device/album/week 默认收起，见 dtHidden） */
   const DT_CARDS = {
     days:    { page: 0, size: 'g-4x2', name: '在一起多少天', go: 'now', seg: 'status' },
-    between: { page: 0, size: 'g-4x1', name: '之间', go: 'cards' },
-    music:   { page: 0, size: 'g-4x1', name: '一起听', go: null },
-    status:  { page: 1, size: 'g-2x2', name: '他的状态', go: 'now', seg: 'status' },
-    device:  { page: 1, size: 'g-2x2', name: '他的设备', go: 'now', seg: 'device' },
-    album:   { page: 1, size: 'g-2x2', name: '相册', go: 'records', seg: 'album' },
-    week:    { page: 1, size: 'g-2x2', name: '这一周', go: null },
-    quote:   { page: 2, size: 'g-4x1', name: '一句话', go: null },
+    status:  { page: 0, size: 'g-2x2', name: '他的状态', go: 'now', seg: 'status' },
+    chat:    { page: 0, size: 'g-2x2', name: '和他聊聊', go: 'chat' },
+    between: { page: 0, size: 'g-4x2', name: '之间', go: 'cards' },
+    music:   { page: 0, size: 'g-4x2', name: '一起听', go: null },
+    device:  { page: 0, size: 'g-2x2', name: '他的设备', go: 'now', seg: 'device' },
+    album:   { page: 0, size: 'g-2x2', name: '相册', go: 'records', seg: 'album' },
+    week:    { page: 0, size: 'g-4x2', name: '这一周', go: null },
+    quote:   { page: 0, size: 'g-4x2', name: '一句话', go: null },
   };
-  /* 美化页开关的列举顺序 */
-  const DT_ORDER = ['days', 'status', 'device', 'between', 'music', 'album', 'week', 'quote'];
+  /* 美化页开关的列举顺序 = 桌面从上到下 */
+  const DT_ORDER = ['days', 'status', 'chat', 'between', 'music', 'device', 'album', 'week', 'quote'];
 
   /* 收起了哪些卡片：存 S.settings.widgets.hidden。
-     老配置里是旧组件 id（pair/clock/quad…），这里只认 DT_CARDS 里有的 */
+     老配置里是旧组件 id（pair/clock/quad…），这里只认 DT_CARDS 里有的。
+     v2：device / album / week 不再上桌面（内容和「现在 / 记」页重复），
+     首次进入新单页桌面时默认收起——想留着可在「美化 → 桌面组件」里开回来 */
+  const HOME_EXTRA_HIDDEN = ['device', 'album', 'week'];
   function dtHidden() {
     const w = S.settings.widgets || {};
+    if (!w.__homeV2) {                       // 每个用户只标记一次，之后完全交给用户自己
+      const set = new Set(Array.isArray(w.hidden) ? w.hidden : []);
+      HOME_EXTRA_HIDDEN.forEach((id) => { if (DT_CARDS[id]) set.add(id); });
+      w.hidden = Array.from(set);
+      w.__homeV2 = true;
+      save(KEY.settings, S.settings);
+    }
     const hid = Array.isArray(w.hidden) ? w.hidden : [];
     return hid.filter((id) => DT_CARDS[id]);
   }
@@ -1339,32 +1331,15 @@
      P3 = 应用矩阵（#appGrid2）+ 卡片（#dtCards3）
      ============================================================ */
 
-  /** P1：page 0 的卡片（days/between/music），按 mix 配置在卡之间插应用行 */
+  /** 桌面卡片：按 DT_ORDER 顺序把第 0 页的卡片铺进 #bento。
+     应用不再混进卡片流，单独成「应用矩阵」区（见 .app-matrix） */
   function renderBento() {
     const box = $('bento');
     if (!box) return;
-    const cfg = homeCfg();
-    const rowCount = cfg.mix ? Math.max(0, Math.min(3, cfg.rows | 0)) : 0;
-    const every = Math.max(1, cfg.every | 0);
-    const p1 = appPages[0];
     const hidden = dtHidden();
     box.innerHTML = '';
-
-    let placed = 0;
-    DT_ORDER.filter((id) => DT_CARDS[id].page === 0 && hidden.indexOf(id) < 0).forEach((id, i) => {
-      box.appendChild(makeDtCard(id));
-      // 卡片之间插一行应用，让眼睛有地方歇一下
-      if (placed < rowCount && (i + 1) % every === 0) {
-        const apps = p1.slice(placed * 4, placed * 4 + 4);
-        if (apps.length) box.appendChild(makeAppRow(apps));
-        placed += 1;
-      }
-    });
-    while (placed < rowCount) {
-      const apps = p1.slice(placed * 4, placed * 4 + 4);
-      if (apps.length) box.appendChild(makeAppRow(apps));
-      placed += 1;
-    }
+    DT_ORDER.filter((id) => DT_CARDS[id].page === 0 && hidden.indexOf(id) < 0)
+      .forEach((id) => box.appendChild(makeDtCard(id)));
     updateGrid();   // 卡片内容（天数/之间计数/音乐/相册…）马上刷，不等 60 秒 tick
   }
 
@@ -1406,6 +1381,10 @@
       '<p class="st-word" id="stWord">—</p>' +
       '<p class="st-sub" id="stSub"></p>' +
       '<i class="breath st-dot" aria-hidden="true"></i>',
+
+    chat: () =>
+      '<svg class="g-ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chat"/></svg>' +
+      '<p class="tile-t">和他聊聊</p>',
 
     device: () =>
       '<div class="dv">' +
@@ -1598,7 +1577,7 @@
     if (btn) btn.hidden = !on;
     const hint = $('editHint');
     if (hint) {
-      hint.textContent = '拖住图标贴左右边自动翻页 · 点空白收工 · v' + APP_VER;
+      hint.textContent = '拖住图标可重新排序 · 点空白收工 · v' + APP_VER;
       hint.hidden = !on;
     }
     if (!on) {
