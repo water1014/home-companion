@@ -8112,8 +8112,8 @@ html .mn-days b {
 html .mn-names::before {
   content: "";
   display: inline-block;
-  width: 6px; height: 6px;
-  margin-right: 8px;
+  width: 4px; height: 4px;
+  margin-right: 7px;
   border-radius: 50%;
   vertical-align: middle;
   background: var(--accent);
@@ -8801,3 +8801,503 @@ html[data-theme="light"] .set-page .row.danger .row-ic {
   stroke: #c2606f !important;
   color: #c2606f !important;
 }
+
+/* ============================================================
+   v61 · MOON 首页 + FLOWER 卡片流：彻底去仪表盘化
+   —— 打破绝对网格 / 三层边缘光玻璃 / 大衬线 / 票根入口 / 手帐卡片流
+   ============================================================ */
+
+/* ---------- 0. 全局：玻璃的三层边缘光（外阴影 + 内顶部高光 + 极细描边） ---------- */
+html .glass,
+html .mn-now,
+html .mn-music,
+html .mn-acts,
+html .mn-days {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 8px rgba(0, 0, 0, 0.14),
+    0 18px 48px rgba(0, 0, 0, 0.24) !important;
+}
+html[data-theme="light"] .glass,
+html[data-theme="light"] .mn-now,
+html[data-theme="light"] .mn-music,
+html[data-theme="light"] .mn-acts,
+html[data-theme="light"] .mn-days {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 2px 8px rgba(28, 28, 40, 0.07),
+    0 18px 48px rgba(28, 28, 40, 0.12) !important;
+}
+
+/* ============================================================
+   MOON · 月：顶部大面积留白 + 中间巨大衬线时间与天数
+   ============================================================ */
+
+html .home-page[data-page="0"] {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  align-content: start !important;
+  padding: 44px 18px 124px !important;
+}
+
+/* 行位重排：时间 → 天数 → 状态卡（窄、悬浮、错落）→ 入口票根 → 音乐细条 */
+html .moon-head { grid-column: 1 / -1 !important; grid-row: 1 !important; }
+html .mn-days   { grid-column: 1 / -1 !important; grid-row: 2 !important; }
+html .mn-now    { grid-column: 1 / -1 !important; grid-row: 3 !important; }
+html .mn-acts   { grid-column: 1 / -1 !important; grid-row: 4 !important; }
+html .mn-music  { grid-column: 1 / -1 !important; grid-row: 5 !important; }
+
+/* ---------- 时间：裸字、巨大、字距收紧、压在壁纸上 ---------- */
+html .moon-head {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0 !important;
+  padding: 0 0 10px !important;
+  /* 时间是裸字，不许有任何框和阴影（旧的高特异性亮色规则会压回来，这里压死） */
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-theme="light"] .moon-head {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html .mn-tag {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 10px !important;
+  margin: 0 0 10px !important;
+}
+html .mn-tag em {
+  font-size: 9px !important;
+  letter-spacing: 0.28em !important;
+  opacity: 0.5 !important;
+  font-style: normal;
+}
+html .mn-tag span {
+  font-size: 9.5px !important;
+  letter-spacing: 0.2em !important;
+  opacity: 0.55 !important;
+}
+html .mn-time {
+  font-family: var(--k-display) !important;
+  font-size: clamp(76px, 23vw, 116px) !important;
+  font-weight: 200 !important;
+  letter-spacing: -0.055em !important;
+  line-height: 0.86 !important;
+  margin: 0 !important;
+  color: #fff !important;
+  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5) !important;
+}
+html[data-theme="light"] .mn-time {
+  color: var(--text) !important;
+  text-shadow: 0 2px 26px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ---------- 天数：独立卡片，但数字是杂志级大衬线 ---------- */
+html .mn-days {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  padding: 22px 20px 24px !important;
+  margin: 0 6% !important;          /* 不占满全宽，往里收一点 */
+  border-radius: 26px !important;
+}
+html .mn-days-line {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+  justify-content: center !important;
+  gap: 12px !important;
+}
+html .mn-days b {
+  font-family: var(--k-display) !important;
+  font-size: clamp(84px, 24vw, 124px) !important;
+  font-weight: 200 !important;
+  letter-spacing: -0.05em !important;
+  line-height: 0.9 !important;
+  color: #fff !important;
+  text-shadow: 0 4px 36px rgba(0, 0, 0, 0.34);
+}
+html[data-theme="light"] .mn-days b { color: var(--text) !important; text-shadow: none; }
+html .mn-days i {
+  font-style: normal;
+  font-size: 9px !important;
+  letter-spacing: 0.24em !important;
+  opacity: 0.5 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+html[data-theme="light"] .mn-days i { color: var(--k-ink3) !important; }
+html .mn-names {
+  margin: 6px 0 0 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.16em !important;
+  opacity: 0.66 !important;
+  color: #fff !important;
+}
+html[data-theme="light"] .mn-names { color: var(--k-ink3) !important; }
+
+/* ---------- 状态卡：稍窄的悬浮卡，微倾，有呼吸波形 ---------- */
+html .mn-now {
+  margin: 0 4% 0 3% !important;
+  padding: 18px 20px 20px !important;
+  border-radius: 26px !important;
+  transform: rotate(-0.8deg) !important;
+}
+html .mn-now:hover {
+  transform: rotate(-0.3deg) translateY(-4px) !important;
+}
+html .mn-label {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 9px !important;
+  margin: 0 0 4px !important;
+}
+html .mn-label em {
+  font-style: normal;
+  font-size: 9px !important;
+  letter-spacing: 0.26em !important;
+  opacity: 0.5 !important;
+}
+html .mn-label span {
+  font-size: 10.5px !important;
+  letter-spacing: 0.14em !important;
+  opacity: 0.62 !important;
+}
+/* 呼吸：波形整体缓慢起伏 */
+html .mn-wave {
+  height: 40px !important;
+  margin: 4px 0 10px !important;
+  transform-origin: 50% 50%;
+  animation: mnBreathe 7.5s ease-in-out infinite;
+}
+html .mn-wave path {
+  stroke: rgba(255, 255, 255, 0.82) !important;
+  stroke-width: 1.1 !important;
+  opacity: 0.8 !important;
+}
+html[data-theme="light"] .mn-wave path { stroke: var(--accent) !important; opacity: 0.6 !important; }
+@keyframes mnBreathe {
+  0%, 100% { transform: scaleY(0.86) translateY(1px); }
+  50%      { transform: scaleY(1.12) translateY(-1px); }
+}
+/* 数值：两枚大衬线数字并排 */
+html .mn-nums {
+  display: flex !important;
+  gap: 26px !important;
+  margin: 0 0 10px !important;
+}
+html .mn-nums span { display: flex !important; align-items: baseline !important; gap: 6px !important; }
+html .mn-nums b {
+  font-family: var(--k-display) !important;
+  font-size: 26px !important;
+  font-weight: 200 !important;
+  letter-spacing: -0.03em !important;
+  color: #fff !important;
+}
+html[data-theme="light"] .mn-nums b { color: var(--text) !important; }
+html .mn-nums i {
+  font-style: normal;
+  font-size: 9px !important;
+  letter-spacing: 0.2em !important;
+  opacity: 0.5 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+html[data-theme="light"] .mn-nums i { color: var(--k-ink3) !important; }
+/* 碎碎念 */
+html .mn-say {
+  margin: 0 !important;
+  font-size: 13.5px !important;
+  font-weight: 300 !important;
+  line-height: 1.85 !important;
+  letter-spacing: 0.03em !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+html[data-theme="light"] .mn-say { color: var(--text-2) !important; }
+
+/* ---------- WRITE / TALK：票根样式（细线 + 撕口 + 虚线分隔） ---------- */
+html .mn-acts {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 14px !important;
+  padding: 0 !important;
+  margin: 4px 3% 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+html .mn-acts:hover { transform: none !important; box-shadow: none !important; }
+html .mn-act {
+  position: relative;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  padding: 15px 10px 17px !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  transition: transform 280ms var(--ease), background 280ms var(--ease), border-color 280ms var(--ease);
+}
+html .mn-act:hover {
+  transform: translateY(-4px) !important;
+  background: rgba(255, 255, 255, 0.13) !important;
+  border-color: rgba(255, 255, 255, 0.34) !important;
+}
+html .mn-act:active { transform: translateY(0) !important; }
+/* 两张票根中间撕口 */
+/* 票根冲孔：用 mask 真的把两个圆挖掉，透出壁纸 */
+html .mn-act {
+  --notch: radial-gradient(circle 5.5px at 0 50%, transparent 0 5.2px, #000 5.4px);
+  -webkit-mask-image: var(--notch), var(--notch);
+  mask-image: var(--notch), var(--notch);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-position: left center, right center;
+  mask-position: left center, right center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+html .mn-act em {
+  font-style: normal;
+  font-size: 9px !important;
+  letter-spacing: 0.28em !important;
+  opacity: 0.55 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+html .mn-act span {
+  font-size: 14px !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.08em !important;
+  color: #fff !important;
+}
+html[data-theme="light"] .mn-act {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(0, 0, 0, .07) !important;
+}
+html[data-theme="light"] .mn-act:hover { background: rgba(255, 255, 255, 0.72) !important; }
+html[data-theme="light"] .mn-act em { color: var(--k-ink3) !important; }
+html[data-theme="light"] .mn-act span { color: var(--text) !important; }
+html[data-theme="light"] .mn-act::after {
+  background-image: linear-gradient(180deg,
+      rgba(28,28,40,.34) 0 4px, transparent 4px 9px);
+}
+
+/* ---------- 音乐：一条细窄的横条，压在最后 ---------- */
+html .mn-music {
+  margin: 0 4% 0 5% !important;
+  padding: 13px 16px 14px !important;
+  border-radius: 18px !important;
+  transform: rotate(0.5deg) !important;
+}
+html .mn-music:hover { transform: rotate(0deg) translateY(-4px) !important; }
+
+/* ============================================================
+   FLOWER · 花：手帐卡片流（不规则、纸张阴影、顶部胶带）
+   ============================================================ */
+
+/* 分类 Tab：细线 + 滑动指示器（指示器由 JS 定位） */
+html .fl-page .seg-bar {
+  position: relative;
+  gap: 20px !important;
+  padding: 10px 24px 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(12, 12, 17, 0.42) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.4) !important;
+  backdrop-filter: blur(18px) saturate(1.4) !important;
+}
+html[data-theme="light"] .fl-page .seg-bar {
+  background: rgba(255, 255, 255, 0.42) !important;
+  border-bottom-color: rgba(22, 22, 26, 0.09) !important;
+}
+html .fl-page .seg-btn {
+  font-family: var(--k-display) !important;
+  font-size: 11px !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.14em !important;
+  opacity: 0.45 !important;
+  padding: 8px 0 13px !important;
+  color: #fff !important;
+  transition: opacity 260ms var(--ease), color 260ms var(--ease);
+}
+html .fl-page .seg-btn.on {
+  opacity: 1 !important;
+  color: #fff !important;
+  font-weight: 400 !important;
+}
+html[data-theme="light"] .fl-page .seg-btn { color: var(--text) !important; }
+/* 滑动指示器 */
+html .fl-page .seg-ink {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 1.5px;
+  width: 0;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+  transition: transform 420ms var(--ease), width 420ms var(--ease);
+  pointer-events: none;
+}
+html[data-theme="light"] .fl-page .seg-ink {
+  background: var(--text);
+  box-shadow: none;
+}
+
+/* 卡片流：不规则纸片 */
+html .fl-page .fl-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  padding: 18px 0 8px !important;
+}
+html .fl-page .fl-item {
+  position: relative;
+  padding: 20px 18px 20px !important;
+  margin: 0 4% 0 3% !important;
+  border: 0 !important;
+  border-bottom: 0 !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, 0.09) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  backdrop-filter: blur(16px) saturate(135%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 1px 3px rgba(0, 0, 0, 0.10),
+    0 12px 30px rgba(0, 0, 0, 0.18) !important;
+  transition: transform 320ms var(--ease), box-shadow 320ms var(--ease), background 320ms var(--ease);
+}
+html[data-theme="light"] .fl-page .fl-item {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 3px rgba(28, 28, 40, 0.06),
+    0 12px 30px rgba(28, 28, 40, 0.10) !important;
+}
+/* 错落：奇偶微倾 + 上下错位 */
+html .fl-page .fl-item:nth-child(odd)  { transform: rotate(-0.7deg) translateY(4px); }
+html .fl-page .fl-item:nth-child(even) { transform: rotate(0.6deg) translateY(-3px); margin-left: 6% !important; margin-right: 2% !important; }
+html .fl-page .fl-item:nth-child(3n)   { transform: rotate(-0.35deg) translateY(2px); }
+html .fl-page .fl-item:hover {
+  transform: rotate(0deg) translateY(-4px) !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 3px 10px rgba(0, 0, 0, 0.14),
+    0 22px 50px rgba(0, 0, 0, 0.28) !important;
+}
+html[data-theme="light"] .fl-page .fl-item:hover { background: rgba(255, 255, 255, 0.8) !important; }
+html .fl-page .fl-item:active { transform: rotate(0deg) translateY(0) !important; }
+/* 顶部一条半透明胶带 */
+html .fl-page .fl-item::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 62px;
+  height: 18px;
+  transform: translateX(-50%) rotate(-1.6deg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0.13));
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
+  border-right: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 1px;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+html .fl-page .fl-item:nth-child(even)::before { transform: translateX(-50%) rotate(2.2deg); }
+
+/* 卡片内的日期/标签/正文 */
+html .fl-page .fl-when {
+  margin: 0 0 8px !important;
+  font-size: 9.5px !important;
+  letter-spacing: 0.2em !important;
+  opacity: 0.55 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+html[data-theme="light"] .fl-page .fl-when { color: var(--k-ink3) !important; }
+html .fl-page .fl-text {
+  font-size: 14.5px !important;
+  font-weight: 300 !important;
+  line-height: 1.9 !important;
+  letter-spacing: 0.015em !important;
+  color: #fff !important;
+  padding-right: 20px;
+}
+html[data-theme="light"] .fl-page .fl-text { color: var(--text) !important; }
+html .fl-page .fl-item.is-done .fl-text { color: rgba(255, 255, 255, 0.45) !important; }
+html[data-theme="light"] .fl-page .fl-item.is-done .fl-text { color: var(--k-ink3) !important; }
+html .fl-page .fl-del {
+  top: 16px !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+html[data-theme="light"] .fl-page .fl-del { color: var(--k-ink3) !important; }
+/* 待办的勾：留在卡片内 */
+html .fl-page .fl-item.task { padding-left: 46px !important; }
+html .fl-page .fl-check { left: 20px !important; top: 24px !important; }
+
+/* 统计条：小标签 + 数字，做得轻 */
+html .fl-page .fl-stat {
+  padding: 6px 0 14px !important;
+  margin: 0 3% !important;
+  border-bottom: 0 !important;
+}
+html .fl-page .fl-stat b {
+  font-family: var(--k-display) !important;
+  font-size: 22px !important;
+  font-weight: 200 !important;
+  letter-spacing: -0.03em !important;
+  color: #fff !important;
+}
+html[data-theme="light"] .fl-page .fl-stat b { color: var(--text) !important; }
+html .fl-page .fl-stat i {
+  font-size: 8.5px !important;
+  letter-spacing: 0.22em !important;
+  opacity: 0.45 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+html[data-theme="light"] .fl-page .fl-stat i { color: var(--k-ink3) !important; }
+
+/* 写作区：也做成一张纸 */
+html .fl-page .fl-compose {
+  margin: 0 3% 2% !important;
+  padding: 18px 18px 16px !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+html[data-theme="light"] .fl-page .fl-compose {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border-bottom-color: rgba(22, 22, 26, 0.09) !important;
+}
+html .fl-page .fl-compose textarea,
+html .fl-page .fl-compose input[type="text"] { color: #fff !important; }
+html[data-theme="light"] .fl-page .fl-compose textarea,
+html[data-theme="light"] .fl-page .fl-compose input[type="text"] { color: var(--text) !important; }
+html .fl-page .fl-tip { color: rgba(255, 255, 255, 0.6) !important; }
+html[data-theme="light"] .fl-page .fl-tip { color: var(--k-ink3) !important; }
+html .fl-page .fl-empty {
+  margin: 26px 3% !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+html[data-theme="light"] .fl-page .fl-empty { color: var(--k-ink3) !important; }

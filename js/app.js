@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v60';
+  window.__TIDE_MARK = 'LOCAL-v61';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -681,6 +681,24 @@
     },
   };
 
+  /** 分类条的滑动指示器：跟随当前分段滑动（FLOWER 用细线 + 滑动下划线） */
+  function moveSegInk(bar) {
+    if (!bar) return;
+    if (!bar.closest('.fl-page')) return;   // 只有 FLOWER 用滑动指示器
+    let ink = bar.querySelector('.seg-ink');
+    if (!ink) {
+      ink = document.createElement('i');
+      ink.className = 'seg-ink';
+      bar.appendChild(ink);
+    }
+    const on = bar.querySelector('.seg-btn.on');
+    if (!on) { ink.style.width = '0px'; return; }
+    const br = bar.getBoundingClientRect();
+    const or = on.getBoundingClientRect();
+    ink.style.width = Math.round(or.width) + 'px';
+    ink.style.transform = 'translateX(' + Math.round(or.left - br.left) + 'px)';
+  }
+
   function switchSeg(page, seg) {
     const box = pages[page];
     if (!box || !box.classList.contains('mod-page')) return;
@@ -702,6 +720,7 @@
       bar.querySelectorAll('.seg-btn').forEach((b) => {
         b.classList.toggle('on', b.dataset.seg === seg);
       });
+      moveSegInk(bar);
     }
     if (!hit) return;
     rememberSeg(page, seg);
@@ -5410,6 +5429,12 @@
     }
 
     window.addEventListener('resize', () => { resize(); build(); });
+
+    /* 窗口尺寸变了，FLOWER 分类条的滑动指示器要重新对齐 */
+    window.addEventListener('resize', () => {
+      const bar = document.querySelector('#records .seg-bar');
+      if (bar) moveSegInk(bar);
+    });
     if (window.MutationObserver) {
       new MutationObserver(() => { if (themeMode() !== mode) start(); })
         .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
