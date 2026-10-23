@@ -4362,3 +4362,35 @@ html .app-grid .tile-name { font-size: 10.5px; }
 /* ---- 9. 空页收起来：作者样式（section.home-page{display:flex}）会盖掉 UA 的
       [hidden]{display:none}，显式补一条，特异性 + !important 双保险 ---- */
 html .home-page[hidden] { display: none !important; }
+
+/* ---- 10. 容器页分段（v43 页面合并 15→8）：顶部一排胶囊，选中实底 --accent。
+        新控件新增样式，不动上面任何既有规则 ---- */
+.seg-bar {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px 4px;
+}
+.seg-btn {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text-2);
+  font-family: var(--font);
+  font-size: 12.5px;
+  line-height: 1;
+  padding: 7px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.seg-btn:active { transform: scale(0.96); }
+.seg-btn.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+/* 分段内容：只有摊开的那段占位；切换时的淡入由 .screen.page 过渡之外单独给 */
+.seg-pane { display: flex; flex-direction: column; gap: 14px; }
+.seg-pane[hidden] { display: none; }

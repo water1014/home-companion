@@ -315,51 +315,76 @@
   </aside>
 </section>
 
-<!-- ============ 心情（他的状态） ============ -->
-<section class="screen page mood-page" id="mood" aria-label="状态">
-
+<!-- ============ 现在（状态 / 一天 / 设备 三合一容器页） ============ -->
+<section class="screen page mod-page" id="now" aria-label="现在">
+  <nav class="seg-bar" id="nowSegBar" aria-label="分段">
+    <button type="button" class="seg-btn on" data-seg="status">状态</button>
+    <button type="button" class="seg-btn" data-seg="day">一天</button>
+    <button type="button" class="seg-btn" data-seg="device">设备</button>
+  </nav>
   <div class="page-scroll">
-    <section class="glass mood-main">
-      <div class="pair-ava big partner"><span id="moodAvaPartner">满</span></div>
-      <p class="mood-word" id="moodWord">平静</p>
-      <p class="mood-sub" id="moodSub">像一杯放凉了的茶</p>
-      <div class="mood-picker" id="moodPicker">
-        <button type="button" data-mood="平静">平静</button>
-        <button type="button" data-mood="想你">想你</button>
-        <button type="button" data-mood="有点累">有点累</button>
-        <button type="button" data-mood="还不错">还不错</button>
-        <button type="button" data-mood="有点烦">有点烦</button>
-        <button type="button" data-mood="空">空</button>
-      </div>
-      <p class="mood-echo" id="moodEcho" hidden></p>
-    </section>
+    <div class="seg-pane on" data-seg="status">
+      <section class="glass mood-main">
+        <div class="pair-ava big partner"><span id="moodAvaPartner">满</span></div>
+        <p class="mood-word" id="moodWord">平静</p>
+        <p class="mood-sub" id="moodSub">像一杯放凉了的茶</p>
+        <div class="mood-picker" id="moodPicker">
+          <button type="button" data-mood="平静">平静</button>
+          <button type="button" data-mood="想你">想你</button>
+          <button type="button" data-mood="有点累">有点累</button>
+          <button type="button" data-mood="还不错">还不错</button>
+          <button type="button" data-mood="有点烦">有点烦</button>
+          <button type="button" data-mood="空">空</button>
+        </div>
+        <p class="mood-echo" id="moodEcho" hidden></p>
+      </section>
 
-    <section class="glass meter-card">
-      <div class="meter">
-        <div class="meter-top"><span>心情</span><span class="meter-val" id="vMood">62</span></div>
-        <div class="bar"><i id="bMood"></i></div>
-      </div>
-      <div class="meter">
-        <div class="meter-top"><span>精力</span><span class="meter-val" id="vEnergy">48</span></div>
-        <div class="bar"><i id="bEnergy"></i></div>
-      </div>
-      <div class="meter">
-        <div class="meter-top"><span>亲密度</span><span class="meter-val" id="vAffection">12</span></div>
-        <div class="bar pink"><i id="bAffection"></i></div>
-      </div>
-    </section>
+      <section class="glass meter-card">
+        <div class="meter">
+          <div class="meter-top"><span>心情</span><span class="meter-val" id="vMood">62</span></div>
+          <div class="bar"><i id="bMood"></i></div>
+        </div>
+        <div class="meter">
+          <div class="meter-top"><span>精力</span><span class="meter-val" id="vEnergy">48</span></div>
+          <div class="bar"><i id="bEnergy"></i></div>
+        </div>
+        <div class="meter">
+          <div class="meter-top"><span>亲密度</span><span class="meter-val" id="vAffection">12</span></div>
+          <div class="bar pink"><i id="bAffection"></i></div>
+        </div>
+      </section>
 
-    <section class="glass talk-card">
-      <header class="card-head"><h3>今天他说过</h3><span class="week-sub" id="talkCount"></span></header>
-      <ul class="talk-list" id="talkList"></ul>
-      <p class="hint" id="talkHint" hidden>今天还很安静。你说一句，他就会接。</p>
-    </section>
+      <section class="glass talk-card">
+        <header class="card-head"><h3>今天他说过</h3><span class="week-sub" id="talkCount"></span></header>
+        <ul class="talk-list" id="talkList"></ul>
+        <p class="hint" id="talkHint" hidden>今天还很安静。你说一句，他就会接。</p>
+      </section>
 
-    <section class="glass mem-card">
-      <header class="card-head"><h3>他记得的事</h3><button class="text-btn" id="btnAddMemory">添加</button></header>
-      <ul class="memories" id="memories"></ul>
-      <p class="hint" id="memoryHint" hidden>他记事，是从你说第一件小事开始的。</p>
-    </section>
+      <section class="glass mem-card">
+        <header class="card-head"><h3>他记得的事</h3><button class="text-btn" id="btnAddMemory">添加</button></header>
+        <ul class="memories" id="memories"></ul>
+        <p class="hint" id="memoryHint" hidden>他记事，是从你说第一件小事开始的。</p>
+      </section>
+    </div>
+
+    <div class="seg-pane" data-seg="day" hidden>
+      <section class="glass day-note">
+        <p class="hint">
+          页面开着的时候，下面是他真的做过的事。<br>
+          页面关掉后他没有后台 —— 那段时间是照着他状态的变化推出来的，标了「推」。<br>
+          想要真的后台唤醒，得有服务器和推送，以后再说。
+        </p>
+      </section>
+      <section class="glass list-card" id="dayList"></section>
+    </div>
+
+    <div class="seg-pane" data-seg="device" hidden>
+      <p class="hint">他能看到的就是这些：浏览器愿意告诉网页的那点信息。没有位置、没有你的任何隐私。</p>
+      <section class="glass list-card" id="deviceList"></section>
+      <section class="glass">
+        <p class="hint" id="deviceLine">—</p>
+      </section>
+    </div>
   </div>
 </section>
 
@@ -546,31 +571,6 @@
         <button class="btn ghost" type="button" id="cardCancel">取消</button>
         <button class="btn" type="button" id="cardSave">存下</button>
       </div>
-    </section>
-  </div>
-</section>
-
-<!-- ============ 他的一天 ============ -->
-<section class="screen page" id="partnerday" aria-label="一天">
-  <div class="page-scroll">
-    <section class="glass day-note">
-      <p class="hint">
-        页面开着的时候，下面是他真的做过的事。<br>
-        页面关掉后他没有后台 —— 那段时间是照着他状态的变化推出来的，标了「推」。<br>
-        想要真的后台唤醒，得有服务器和推送，以后再说。
-      </p>
-    </section>
-    <section class="glass list-card" id="dayList"></section>
-  </div>
-</section>
-
-<!-- ============ 查手机 ============ -->
-<section class="screen page" id="device" aria-label="设备">
-  <div class="page-scroll">
-    <p class="hint">他能看到的就是这些：浏览器愿意告诉网页的那点信息。没有位置、没有你的任何隐私。</p>
-    <section class="glass list-card" id="deviceList"></section>
-    <section class="glass">
-      <p class="hint" id="deviceLine">—</p>
     </section>
   </div>
 </section>

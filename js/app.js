@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v42c';
+  window.__TIDE_MARK = 'LOCAL-v43';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -60,7 +60,7 @@
 
   /* ============================================================
      应用注册表 —— 之后加功能就在这里加一条
-     page: 'chat' | 'mood' | 'memory' | 'settings'
+     page: 'chat' | 'now' | 'memory' | 'settings'
      page 留空 = 占位页（点开会显示 desc 里写好的设想）
      ============================================================ */
   /* 贴纸色板：浅底 / 同色深线 */
@@ -85,9 +85,9 @@
   const APPS_DEFAULT = [
     /* 【现在】当下正在发生的事 */
     { id: 'chat',     name: '聊天', icon: 'i-chat',    cat: 'now', page: 'chat' },
-    { id: 'mood',     name: '状态', icon: 'i-face',    cat: 'now', page: 'mood' },
-    { id: 'partnerday', name: '一天', icon: 'i-sunrise', cat: 'now', page: 'partnerday' },
-    { id: 'device',   name: '设备', icon: 'i-device',  cat: 'now', page: 'device' },
+    { id: 'mood',     name: '状态', icon: 'i-face',    cat: 'now', page: 'now', seg: 'status' },
+    { id: 'partnerday', name: '一天', icon: 'i-sunrise', cat: 'now', page: 'now', seg: 'day' },
+    { id: 'device',   name: '设备', icon: 'i-device',  cat: 'now', page: 'now', seg: 'device' },
     { id: 'health',   name: '健康', icon: 'i-health',  cat: 'now', desc: '睡眠、喝水、久坐。数字旁边会跟一句人话，比如「今天只走了 800 步，坐太久了」。' },
     { id: 'forecast',  name: '天气', icon: 'i-sun',     cat: 'now', desc: '今天的温度、有没有雨。不接 API 就先手动记，接了就自动。' },
     { id: 'voice',    name: '声音', icon: 'i-wave',    cat: 'now', desc: '让他读出来，或者发一条语音。先在本地合成，不联网也能响。' },
@@ -138,7 +138,7 @@
 
   /* 底部常驻四个：他 / 说 / 记 / 我（顺序固定，别再加第五个） */
   const DOCK_DEFAULT = [
-    { id: 'mood',     name: '他', icon: 'i-face',  page: 'mood' },
+    { id: 'mood',     name: '他', icon: 'i-face',  page: 'now', seg: 'status' },
     { id: 'chat',     name: '说', icon: 'i-chat',  page: 'chat' },
     { id: 'memory',   name: '记', icon: 'i-brain', page: 'memory' },
     { id: 'settings', name: '我', icon: 'i-gear',  page: 'settings' },
@@ -149,7 +149,7 @@
      打开某页时对应格亮；Home 是圆形凸起键，点它回主屏。
      data-app 保留，角标查询（.tile[data-app]）不用改。 */
   const DOCK_TABS = [
-    { id: 'mood',     name: '现在', icon: 'i-face',  page: 'mood' },
+    { id: 'now',     name: '现在', icon: 'i-face',  page: 'now', seg: 'status' },
     { id: 'memory',   name: '记',   icon: 'i-brain', page: 'memory' },
     { id: 'homeKey',  name: '',     icon: 'i-home',  page: null },
     { id: 'calendar', name: '日',   icon: 'i-cal',   page: 'calendar' },
@@ -190,6 +190,7 @@
     meta: 'hc.v1.meta',      // schema 版本
     chatUI: 'hc.v1.chatUI',  // 聊天界面专属设置（头像/备注/美化/输入）
     homeOrder: 'hc.v1.homeOrder', // 首屏卡片顺序（可拖，默认按规范那五块）
+    modSeg: 'hc.v1.modSeg',    // 容器页当前分段（{ now: 'status', ... }）
   };
 
   /* ============================================================
@@ -506,7 +507,7 @@
   const dim = document.querySelector('.home-dim');
   const pages = {
     chat: $('chat'),
-    mood: $('mood'),
+    now: $('now'),          // 容器页：状态 / 一天 / 设备
     memory: $('memory'),
     settings: $('settings'),
     todo: $('todo'),
@@ -514,8 +515,6 @@
     courses: $('courses'),
     countdown: $('countdown'),
     cards: $('cards'),
-    partnerday: $('partnerday'),
-    device: $('device'),
     album: $('album'),
     moments: $('moments'),
     calendar: $('calendar'),
@@ -540,9 +539,14 @@
 
   /* v42：页面切换只准淡入 180ms（.screen.page 的 CSS 过渡），
      不再滑轨、不再给主屏加 zoom 视差；手势里写过的 inline 值仍要清掉 */
-  function openPage(id) {
+  function openPage(id, seg) {
     const el = pages[id];
-    if (!el || currentPage === id) return;
+    if (!el) return;
+    if (currentPage === id) {
+      // 已在同一页：只切分段（抽屉/桌面图标重复点也走这条）
+      if (seg) switchSeg(id, seg);
+      return;
+    }
 
     resetHomeInline();
 
@@ -571,14 +575,16 @@
       applyChatUI();
       scrollDown(true);
     }
-    if (id === 'mood') renderMood();
+    // 容器页：落到指定分段 → 上次那段 → 第一段
+    if (el.classList.contains('mod-page')) {
+      const first = el.querySelector('.seg-btn');
+      switchSeg(id, seg || lastSeg(id) || (first ? first.dataset.seg : null));
+    }
     if (id === 'memory') renderMemoryPage();
     if (id === 'settings') syncSettingsForm();
     if (id === 'courses') renderCourses();
     if (id === 'countdown') renderCountdownPage();
     if (id === 'cards') renderCoupons();
-    if (id === 'partnerday') renderPartnerDay();
-    if (id === 'device') renderDevice();
     if (id === 'album') { renderAlbum(); renderAlbumCal(); }
     if (id === 'moments') renderMoments();
     if (id === 'theme') renderTheme();
@@ -603,6 +609,85 @@
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closePage();
+  });
+
+  /* ============================================================
+     v43 · 容器页分段（页面合并：15 页 → 8 页，旧页面内容搬进容器页）
+     · mod-page 顶部一排胶囊分段，选中实底 --accent
+     · 每个分段是一个 seg-pane，切换只换 hidden + 重渲染该段内容
+     · goModule(page, seg)：打开容器页并落到指定分段（桌面图标/抽屉/dock 都用它）
+     · 分段状态记在 tide.v1.modSeg，下次进来停在上次那段
+     ============================================================ */
+  function modSegCfg() {
+    const c = load(KEY.modSeg, null);
+    return c && typeof c === 'object' ? c : {};
+  }
+  function lastSeg(page) {
+    return modSegCfg()[page] || null;
+  }
+  function rememberSeg(page, seg) {
+    const c = modSegCfg();
+    c[page] = seg;
+    save(KEY.modSeg, c);
+  }
+
+  /* 每个分段渲染什么：分段 key → 渲染函数（now 页先接，其他容器页后续接） */
+  const SEG_RENDER = {
+    now: {
+      status: () => renderMood(),
+      day: () => renderPartnerDay(),
+      device: () => renderDevice(),
+    },
+  };
+
+  function switchSeg(page, seg) {
+    const box = pages[page];
+    if (!box || !box.classList.contains('mod-page')) return;
+    const bar = box.querySelector('.seg-bar');
+    const panes = box.querySelectorAll('.seg-pane');
+    let hit = null;
+    panes.forEach((p) => {
+      const on = p.dataset.seg === seg;
+      p.hidden = !on;
+      p.classList.toggle('on', on);
+      if (on) hit = p;
+    });
+    if (bar) {
+      bar.querySelectorAll('.seg-btn').forEach((b) => {
+        b.classList.toggle('on', b.dataset.seg === seg);
+      });
+    }
+    if (!hit) return;
+    rememberSeg(page, seg);
+    // 换段回到顶部，别留着上一段滚到一半的位置
+    const sc = box.querySelector('.page-scroll');
+    if (sc) sc.scrollTop = 0;
+    const fn = SEG_RENDER[page] && SEG_RENDER[page][seg];
+    if (fn) fn();
+  }
+
+  /** 打开容器页并切到指定分段；seg 空 = 用上次那段（没有就第一段） */
+  function goModule(page, seg) {
+    openPage(page, seg);
+  }
+
+  /** 某分段此刻是不是摊开着（页开着 + 该 pane 没 hidden）——定时刷新用它判断要不要重画 */
+  function segOn(page, seg) {
+    const box = pages[page];
+    if (!box || !box.classList.contains('mod-page')) return false;
+    const p = box.querySelector('.seg-pane[data-seg="' + seg + '"]');
+    return !!p && !p.hidden;
+  }
+
+  /* 分段胶囊点击（事件委托：每个容器页的 seg-bar 一套） */
+  document.querySelectorAll('.mod-page .seg-bar').forEach((bar) => {
+    const page = bar.closest('.mod-page').id;
+    bar.querySelectorAll('.seg-btn').forEach((b) => {
+      b.addEventListener('click', () => {
+        if (currentPage === page) switchSeg(page, b.dataset.seg);
+        else goModule(page, b.dataset.seg);
+      });
+    });
   });
 
   /* ---- 右滑返回（跟手） ---- */
@@ -690,7 +775,7 @@
 
   function openApp(app) {
     if (!app) return;
-    if (app.page) { openPage(app.page); return; }
+    if (app.page) { openPage(app.page, app.seg); return; }
     // 占位：把这个功能的设想写在页面上，之后照着填
     setTxt('todoTitle', app.name);
     setTxt('todoName', app.name);
@@ -826,7 +911,7 @@
         (t.name ? '<span class="tile-name">' + t.name + '</span>' : '<span class="tile-name" aria-hidden="true"></span>');
       b.addEventListener('click', () => {
         if (t.page === null) closePage();
-        else openPage(t.page);
+        else openPage(t.page, t.seg);
       });
       dock.appendChild(b);
     });
@@ -1175,11 +1260,11 @@
      卡片内容用下面的 GRID_HTML；能不能收由美化页的开关决定
      ============================================================ */
   const DT_CARDS = {
-    days:    { page: 0, size: 'g-4x2', name: '在一起多少天', go: 'mood' },
+    days:    { page: 0, size: 'g-4x2', name: '在一起多少天', go: 'now', seg: 'status' },
     between: { page: 0, size: 'g-4x1', name: '之间', go: 'cards' },
     music:   { page: 0, size: 'g-4x1', name: '一起听', go: null },
-    status:  { page: 1, size: 'g-2x2', name: '他的状态', go: 'mood' },
-    device:  { page: 1, size: 'g-2x2', name: '他的设备', go: 'device' },
+    status:  { page: 1, size: 'g-2x2', name: '他的状态', go: 'now', seg: 'status' },
+    device:  { page: 1, size: 'g-2x2', name: '他的设备', go: 'now', seg: 'device' },
     album:   { page: 1, size: 'g-2x2', name: '相册', go: 'album' },
     week:    { page: 1, size: 'g-2x2', name: '这一周', go: null },
     quote:   { page: 2, size: 'g-4x1', name: '一句话', go: null },
@@ -1220,7 +1305,7 @@
     el.innerHTML = GRID_HTML[id]();
     if (c.go) {
       el.classList.add('tap');
-      el.addEventListener('click', () => { if (!editing) openPage(c.go); });
+      el.addEventListener('click', () => { if (!editing) openPage(c.go, c.seg); });
     }
     if (id === 'music') {
       // 音乐播放键：只切视觉状态（这首歌还没有真的播放器）
@@ -2098,7 +2183,7 @@
           save(KEY.life, S.life);
           // 只重渲染行，不能再调 collectDevice——否则 getBattery→renderDevice→collectDevice
           // 会形成微任务无限递归，把主线程饿死（设备页整个冻住）
-          if (currentPage === 'device') { renderDeviceRows(); setTxt('deviceLine', deviceLine()); }
+          if (segOn('now', 'device')) { renderDeviceRows(); setTxt('deviceLine', deviceLine()); }
           renderDeviceCard();
           if (typeof updateGrid === 'function') updateGrid();   // 主屏设备格的电量
         }).catch(() => {});
@@ -2962,7 +3047,7 @@
     log.push({ ts: ts || Date.now(), text: text, kind: kind || 'idle', inferred: !!inferred });
     if (log.length > 300) S.life.dayLog = log.slice(-240);
     save(KEY.life, S.life);
-    if (currentPage === 'partnerday') renderPartnerDay();
+    if (segOn('now', 'day')) renderPartnerDay();
   }
 
   /** 页面关着的那段：按状态演化的时间差推演他大概怎么过的 */
@@ -4679,7 +4764,7 @@
 
     const mainCard = $('mainCard');
     if (mainCard) {
-      mainCard.addEventListener('click', () => openPage('mood'));
+      mainCard.addEventListener('click', () => openPage('now', 'status'));
       mainCard.style.cursor = 'pointer';
     }
 
