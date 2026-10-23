@@ -149,10 +149,11 @@
      打开某页时对应格亮；Home 是圆形凸起键，点它回主屏。
      data-app 保留，角标查询（.tile[data-app]）不用改。 */
   const DOCK_TABS = [
-    { id: 'now',     name: '现在', icon: 'i-face',  page: 'now', seg: 'status' },
+    { id: 'homeKey',  name: '桌面', icon: 'i-home',  page: null },
+    { id: 'now',      name: '现在', icon: 'i-face',  page: 'now', seg: 'status' },
     { id: 'memory',   name: '记',   icon: 'i-brain', page: 'records', seg: 'memory' },
-    { id: 'homeKey',  name: '',     icon: 'i-home',  page: null },
     { id: 'calendar', name: '日',   icon: 'i-cal',   page: 'calendar' },
+    { id: 'between',  name: '之间', icon: 'i-heart', page: 'cards' },
     { id: 'settings', name: '我',   icon: 'i-gear',  page: 'settings' },
   ];
 
@@ -894,7 +895,7 @@
       b.type = 'button';
       b.className = 'tile' + (t.page === null ? ' t-home' : '');
       b.dataset.app = t.id;
-      b.dataset.tab = t.id;
+      b.dataset.tab = t.page === null ? 'homeKey' : t.page;
       b.setAttribute('aria-label', t.name || '回主屏');
       b.innerHTML =
         '<span class="tile-ic"><svg><use href="#' + t.icon + '"/></svg></span>' +
@@ -4766,6 +4767,8 @@
     /* 顶栏聊天入口 / 日历页翻月 */
     const tbChat = $('tbChatBtn');
     if (tbChat) tbChat.addEventListener('click', () => openPage('chat'));
+    const findMe = $('findMe');
+    if (findMe) findMe.addEventListener('click', () => openPage('chat'));
     const calPrev = $('calPrev'), calNext = $('calNext');
     if (calPrev) calPrev.addEventListener('click', () => shiftCalPage(-1));
     if (calNext) calNext.addEventListener('click', () => shiftCalPage(1));

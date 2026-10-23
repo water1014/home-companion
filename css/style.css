@@ -4959,3 +4959,114 @@ html[data-theme="light"] .c-days .days-num{
   filter: none !important;
 }
 html[data-theme="light"] .c-days .days-num::before{ color: var(--text-3) !important; }
+
+/* ============================================================
+   V4 · 银黑（Silver / Ink）—— 替换 V3 紫调
+   黑压着、银勾边、兜里揣一点粉。粉只一处（我来找你）。
+   ============================================================ */
+:root{
+  --pink-accent:#E88CA2;                 /* 全站唯一粉点缀 */
+  --bg:#EDEEF0;
+  --card:rgba(255,255,255,0.72);
+  --line:rgba(0,0,0,0.08);
+  --text:#16161A;
+  --text-2:#6D6D75;
+  --text-3:rgba(109,109,117,0.62);
+  --accent:#3A3A44;                       /* 近黑 */
+  --accent-ink:#F5F6F8;
+  --accent-soft:rgba(58,58,68,0.10);
+  --pink:var(--accent);
+  --pink-deep:var(--accent);
+  --pink-soft:rgba(58,58,68,0.10);
+  --panel:rgba(255,255,255,0.72);
+  --panel-line:rgba(0,0,0,0.06);
+  --panel-2:rgba(0,0,0,0.04);
+  --surface-line:rgba(0,0,0,0.08);
+}
+html[data-theme="dark"]{
+  --bg:#0E0E12;
+  --card:rgba(255,255,255,0.055);
+  --line:rgba(255,255,255,0.10);
+  --text:#F2F2F4;
+  --text-2:#9A9AA2;
+  --text-3:rgba(154,154,162,0.58);
+  --accent:#C8CBD2;                       /* 冷银 */
+  --accent-ink:#0E0E12;
+  --accent-soft:rgba(200,203,210,0.14);
+  --pink:var(--accent);
+  --pink-deep:var(--accent);
+  --pink-soft:rgba(200,203,210,0.14);
+  --panel:rgba(255,255,255,0.055);
+  --panel-line:rgba(255,255,255,0.10);
+  --panel-2:rgba(255,255,255,0.045);
+  --surface-line:rgba(255,255,255,0.10);
+  --glow-op:0;
+}
+
+/* 背景：去掉紫，回到「黑压着」+ 极淡冷光 */
+html[data-theme="dark"] .bg{ background:#0E0E12 !important; background-image:none !important; }
+html[data-theme="dark"] .bg::before{
+  background: radial-gradient(120% 70% at 50% -16%, rgba(255,255,255,.06), transparent 60%) !important;
+}
+html[data-theme="dark"] .bg-blob{ display:none !important; }
+html[data-theme="dark"] .screen.page, html[data-theme="dark"] .screen.page.open{ background:#0E0E12 !important; }
+
+/* 银勾边：卡片零投影、发丝线 */
+html .glass, html .card, html .list-card, html .bento .card{
+  background: var(--panel) !important;
+  border: 1px solid var(--panel-line) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+html .msg.partner .bubble, html .quick .chip, html .think-card{
+  background: var(--panel-2) !important; border: 1px solid var(--line) !important; color: var(--text-2) !important; box-shadow:none !important;
+}
+html .msg.me .bubble{ background: var(--accent-soft) !important; color: var(--text) !important; border: 1px solid var(--line) !important; }
+
+/* 选中：银，不是粉 */
+html .dock .tile.on .tile-ic{ background: var(--accent-soft) !important; color: var(--accent) !important; }
+html .dock .tile.on .tile-name{ color: var(--accent) !important; }
+html .row-ic, html .row:nth-child(odd) .row-ic{ background: var(--accent-soft) !important; stroke: var(--accent) !important; }
+html .list-head{ color: var(--accent) !important; }
+html .btn, html .composer .send, html #editDone{ background: var(--accent) !important; color: var(--accent-ink) !important; }
+html .seg button.on, html .seg button[aria-pressed="true"], html .seg-btn.on, html .cat-pill.on{ background: var(--accent) !important; color: var(--accent-ink) !important; border-color: transparent !important; }
+html .switch[aria-checked="true"]{ background: var(--accent) !important; }
+
+/* DAY 主视觉：白→冷银，去紫辉光 */
+html .c-days .days-num{
+  background: linear-gradient(180deg, #FFFFFF 0%, #C8CBD2 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 6px 22px rgba(255,255,255,.10)) !important;
+}
+html .c-days .days-num::before{ color: var(--text-3) !important; }
+html[data-theme="light"] .c-days .days-num{
+  background: none !important; -webkit-text-fill-color: currentColor !important; color: var(--text) !important; filter: none !important;
+}
+
+/* 顶栏 / tab 栏：银边，dock 六格 */
+html .topbar{ background: rgba(10,10,14,.84) !important; border-bottom: 1px solid var(--line) !important; }
+html .dock{ background: rgba(12,12,17,.88) !important; border-top: 1px solid var(--line) !important; grid-template-columns: repeat(6,1fr) !important; }
+html[data-theme="light"] .topbar{ background: rgba(237,238,240,.92) !important; }
+html[data-theme="light"] .dock{ background: rgba(255,255,255,.88) !important; }
+
+/* 去掉侧栏（抽屉 + 汉堡） */
+html .drawer, html .drawer-mask, html #tbHamBtn{ display: none !important; }
+
+/* 我来找你：常驻胶囊，银边 + 唯一粉点 */
+html .find-me{
+  position: absolute; right: 16px; bottom: calc(72px + var(--safe-b)); z-index: 24;
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 38px; padding: 0 15px 0 13px; border-radius: 999px;
+  border: 1px solid var(--line); background: rgba(18,18,24,.82);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  color: var(--text); font-family: inherit; font-size: 12.5px; letter-spacing: .02em;
+  cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  transition: transform .16s var(--ease);
+}
+html .find-me svg{ width: 15px; height: 15px; fill:none; stroke: var(--text-2); stroke-width:1.6; }
+html .find-me .fm-dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--pink-accent); box-shadow: 0 0 8px rgba(232,140,162,.65); }
+html .find-me:active{ transform: scale(.96); }
+html[data-theme="light"] .find-me{ background: rgba(255,255,255,.86); box-shadow: 0 8px 24px rgba(0,0,0,.10); }
+body:has(#chat.open) .find-me{ display: none !important; }
