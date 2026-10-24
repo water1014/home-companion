@@ -141,7 +141,8 @@
       </header>
 
       <!-- ② OUR DAYS：双头像 + 心电波 + 大数字 + 谁 with 谁 -->
-      <section class="mn-days" id="mnDaysCard" aria-label="在一起的日子">
+      <section class="mn-days deco-host" id="mnDaysCard" aria-label="在一起的日子">
+        <i class="deco d-mn-crescent" aria-hidden="true"></i>
         <p class="mn-label"><em>OUR DAYS</em></p>
         <div class="mn-pair">
           <span class="mn-ava" id="mnAvaPartner" aria-hidden="true">淼</span>
@@ -161,6 +162,7 @@
 
       <!-- ③ FROM HIM · TODAY：一句今日碎碎念 -->
       <section class="mn-say-card" aria-label="今日">
+        <i class="deco d-mn-pearl" aria-hidden="true"></i>
         <p class="mn-label"><em>FROM HIM · TODAY</em></p>
         <p class="mn-say" id="mnSay">—</p>
       </section>
@@ -182,7 +184,8 @@
       </div>
 
       <!-- ⑥ 此刻：波形 + 两个数值 -->
-      <section class="mn-now" id="moonNow" aria-label="此刻">
+      <section class="mn-now deco-host" id="moonNow" aria-label="此刻">
+        <i class="deco d-mn-bird" aria-hidden="true"></i>
         <div class="mn-wave" aria-hidden="true">
           <svg viewBox="0 0 480 40" preserveAspectRatio="none"><path id="mnWave" d=""/></svg>
         </div>
@@ -224,7 +227,9 @@
 
   <div class="stream" id="stream" role="log" aria-live="polite"></div>
 
-  <div class="composer-wrap">
+  <div class="composer-wrap deco-host">
+    <i class="deco d-chat-cloud" aria-hidden="true"></i>
+    <i class="deco d-chat-sprig" aria-hidden="true"></i>
     <div class="quick" id="quick"></div>
     <form class="composer" id="composer" autocomplete="off">
       <label class="sr-only" for="input">对他说点什么</label>
@@ -358,7 +363,8 @@
   </nav>
   <div class="page-scroll">
     <div class="seg-pane on" data-seg="status">
-      <section class="glass mood-main">
+      <section class="glass mood-main deco-host">
+        <i class="deco d-now-teacup" aria-hidden="true"></i>
         <div class="pair-ava big partner"><span id="moodAvaPartner">满</span></div>
         <p class="mood-word" id="moodWord">平静</p>
         <p class="mood-sub" id="moodSub">像一杯放凉了的茶</p>
@@ -427,7 +433,8 @@
 <section class="screen page more-page" id="more" aria-label="更多">
   <div class="page-scroll">
     <!-- 更多 ≠ 设置：这里只放「没地方放的小东西」和去设置的入口 -->
-    <section class="glass list-card">
+    <section class="glass list-card deco-host">
+      <i class="deco d-more-bow" aria-hidden="true"></i>
       <button class="row nav" type="button" data-go="settings"><svg class="row-ic"><use href="#i-gear"/></svg><span class="row-name">设置<small>外观 · 接入 · 主动 · 全部应用</small></span></button>
       <button class="row nav" type="button" data-go="cards"><svg class="row-ic"><use href="#i-mail"/></svg><span class="row-name">收件箱<small>未读信 · 留言 · 欠账</small></span></button>
       <button class="row nav" type="button" data-go="records"><svg class="row-ic"><use href="#i-menu"/></svg><span class="row-name">搜索<small>记忆 · 相册 · 日记</small></span></button>
@@ -446,7 +453,8 @@
 <section class="screen page set-page" id="settings" aria-label="我的">
 
   <div class="page-scroll">
-    <section class="glass profile-card">
+    <section class="glass profile-card deco-host">
+      <i class="deco d-set-seal" aria-hidden="true"></i>
       <div class="pair-ava big me"><span id="setAvaMe">我</span></div>
       <div class="profile-mid">
         <p class="profile-name" id="setUserLabel">我</p>
@@ -560,7 +568,8 @@
 <!-- ============ FLOWER · 花：日记 / 信 / 待办 ============ -->
 <section class="screen page mod-page fl-page" id="records" aria-label="花">
   <!-- 头图：今日大日期 + 分类胶囊 + 拍立得预览（参考杂志排版） -->
-  <header class="fl-hero">
+  <header class="fl-hero deco-host">
+    <i class="deco d-fl-lily" aria-hidden="true"></i>
     <div class="fl-hero-top">
       <div class="fl-hero-date">
         <b id="flHeroDay">—</b>
@@ -591,7 +600,10 @@
     <div class="seg-pane on" data-seg="all">
       <p class="fl-stat"><b id="flStatDiary">0</b><i>DIARY</i><b id="flStatLetter">0</b><i>LETTERS</i><b id="flStatTask">0</b><i>TASKS</i></p>
       <ul class="fl-list" id="flAll"></ul>
-      <p class="fl-empty" id="flAllEmpty" hidden>还没写下什么。今天也算一天。</p>
+      <p class="fl-empty deco-host" id="flAllEmpty" hidden>
+        <i class="deco d-fl-wreath" aria-hidden="true"></i>
+        <span>还没写下什么。今天也算一天。</span>
+      </p>
     </div>
 
     <!-- 日记 -->
@@ -604,7 +616,10 @@
         </div>
       </div>
       <ul class="fl-list" id="flDiary"></ul>
-      <p class="fl-empty" id="flDiaryEmpty" hidden>空着也没关系，想起来再写。</p>
+      <p class="fl-empty deco-host" id="flDiaryEmpty" hidden>
+        <i class="deco d-fl-sprig" aria-hidden="true"></i>
+        <span>空着也没关系，想起来再写。</span>
+      </p>
     </div>
 
     <!-- 信 -->
@@ -649,7 +664,9 @@
         <div class="acal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
         <div class="acal-days" id="acalDays"></div>
       </section>
-      <div class="album-grid" id="albumGrid"></div>
+      <div class="album-grid deco-host" id="albumGrid">
+        <i class="deco d-mi-film" aria-hidden="true"></i>
+      </div>
       <input type="file" id="photoFile" accept="image/*" hidden>
 
       <p class="mi-sub">MOMENTS · 碎片</p>
@@ -679,7 +696,8 @@
 
     <!-- 记忆 -->
     <div class="seg-pane" data-seg="memory" hidden>
-      <section class="mem-main">
+      <section class="mem-main deco-host">
+        <i class="deco d-mi-feather" aria-hidden="true"></i>
         <div class="mem-ring" aria-hidden="true">
           <svg viewBox="0 0 64 64">
             <circle class="mr-track" cx="32" cy="32" r="26"></circle>
@@ -726,7 +744,9 @@
 </section>
 <section class="screen page" id="courses" aria-label="课程">
   <div class="page-scroll">
-    <p class="hint">填好之后他会知道你今天有没有课、什么时候下课。</p>
+    <p class="hint deco-host">填好之后他会知道你今天有没有课、什么时候下课。
+      <i class="deco d-course-book" aria-hidden="true"></i>
+    </p>
     <section class="glass list-card" id="courseList"></section>
     <section class="glass" id="courseForm" hidden>
       <div class="form-row"><label>星期</label>
@@ -766,7 +786,9 @@
 <!-- ============ 卡券 ============ -->
 <section class="screen page" id="cards" aria-label="卡券">
   <div class="page-scroll">
-    <p class="hint">想让他哄你，用一张；想让他催你睡，用一张。用掉一张，记一笔。<br>他也能用——他用了会记在下面。</p>
+    <p class="hint deco-host">想让他哄你，用一张；想让他催你睡，用一张。用掉一张，记一笔。<br>他也能用——他用了会记在下面。
+      <i class="deco d-cards-tape" aria-hidden="true"></i>
+    </p>
     <section class="glass list-card" id="cardList"></section>
     <section class="glass" id="cardForm" hidden>
       <div class="form-row"><label>名字</label><input type="text" id="cdName2" placeholder="哄我" maxlength="12" /></div>
@@ -783,7 +805,9 @@
 <!-- ============ 美化 ============ -->
 <section class="screen page" id="theme" aria-label="美化">
   <div class="page-scroll">
-    <p class="hint">桌面太满就关掉几个卡片。应用的顺序在桌面长按拖动，卡片位置固定。</p>
+    <p class="hint deco-host">桌面太满就关掉几个卡片。应用的顺序在桌面长按拖动，卡片位置固定。
+      <i class="deco d-theme-star" aria-hidden="true"></i>
+    </p>
 
     <section class="glass list-card">
       <p class="list-head">壁纸</p>
@@ -871,7 +895,8 @@
 <!-- ============ 日历（占位骨架，完整样式第 5 步） ============ -->
 <section class="screen page cal-page" id="calendar" aria-label="日历">
   <div class="page-scroll">
-    <div class="cal-head2">
+    <div class="cal-head2 deco-host">
+      <i class="deco d-cal-moon" aria-hidden="true"></i>
       <button type="button" id="calPrev" aria-label="上个月">&#8249;</button>
       <h2 id="calPageTitle">&#183;</h2>
       <button type="button" id="calNext" aria-label="下个月">&#8250;</button>

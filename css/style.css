@@ -10459,3 +10459,188 @@ html #mirror .mi-sub {
   color: rgba(255, 255, 255, 0.42) !important;
 }
 html[data-theme="light"] #mirror .mi-sub { border-bottom-color: rgba(22, 22, 26, 0.1) !important; color: var(--k-ink3) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   v64 · 素材点缀层
+   浅色主题用「白版」（原色水彩），深色主题用「黑版」（纯白描边）。
+   粉色版只用在极小面积的一处点缀上。
+   装饰统一绝对定位、不占布局、z-index 低于卡片内容。
+   ══════════════════════════════════════════════════════════════ */
+html .deco-host { position: relative !important; }
+html .deco-host > *:not(.deco) { position: relative; z-index: 1; }
+
+html .deco {
+  position: absolute;
+  display: block;
+  margin: 0; padding: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-image: var(--deco-ink);
+  opacity: .78;
+}
+html[data-theme="dark"] .deco {
+  background-image: var(--deco-dark);
+  opacity: .5;
+  filter: none;
+}
+
+/* ── MOON · 月 ─────────────────────────────────────────── */
+html .d-mn-crescent {
+  --deco-ink: url(../assets/stickers/made-moon-ink.webp);
+  --deco: url(../assets/stickers/made-moon.webp);
+  --deco-dark: url(../assets/stickers/made-moon-dark.webp);
+  right: 8px; top: 6px;
+  width: 34px; height: 34px;
+  opacity: .8;
+}
+html .d-mn-pearl {
+  --deco-ink: url(../assets/stickers/s1-pearl-bracelet-ink.webp);
+  --deco: url(../assets/stickers/s1-pearl-bracelet.webp);
+  --deco-dark: url(../assets/stickers/s1-pearl-bracelet-dark.webp);
+  right: 4px; bottom: 2px;
+  width: 60px; height: 60px;
+  opacity: .62;
+}
+html .d-mn-bird {
+  --deco-ink: url(../assets/stickers/s3-33-little-bird-ink.webp);
+  --deco: url(../assets/stickers/s3-33-little-bird.webp);
+  --deco-dark: url(../assets/stickers/s3-33-little-bird-dark.webp);
+  right: 8px; top: 10px;
+  width: 40px; height: 40px;
+  opacity: .6;
+}
+
+/* ── FLOWER · 花 ───────────────────────────────────────── */
+html .d-fl-lily {
+  --deco-ink: url(../assets/stickers/s1-white-lily-ink.webp);
+  --deco: url(../assets/stickers/s1-white-lily.webp);
+  --deco-dark: url(../assets/stickers/s1-white-lily-dark.webp);
+  right: -10px; top: 88px;
+  width: 76px; height: 76px;
+  opacity: .5;
+}
+html .d-fl-sprig {
+  --deco-ink: url(../assets/stickers/made-sprig-ink.webp);
+  --deco: url(../assets/stickers/made-sprig.webp);
+  --deco-dark: url(../assets/stickers/made-sprig-dark.webp);
+  right: 4px; top: -12px;
+  width: 38px; height: 38px;
+  opacity: .7;
+}
+html .d-fl-wreath {
+  --deco-ink: url(../assets/stickers/s5-wreath-oval-ink.webp);
+  --deco: url(../assets/stickers/s5-wreath-oval.webp);
+  --deco-dark: url(../assets/stickers/s5-wreath-oval-dark.webp);
+  left: 50%; top: 50%;
+  transform: translate(-50%, -54%);
+  width: 116px; height: 116px;
+  opacity: .44;
+}
+
+/* ── MIRROR · 镜 ───────────────────────────────────────── */
+html .d-mi-film {
+  --deco-ink: url(../assets/stickers/s5-film-strip-ink.webp);
+  --deco: url(../assets/stickers/s5-film-strip.webp);
+  --deco-dark: url(../assets/stickers/s5-film-strip-dark.webp);
+  right: -6px; top: -16px;
+  width: 92px; height: 92px;
+  opacity: .5;
+}
+html .d-mi-feather {
+  --deco-ink: url(../assets/stickers/made-feather-ink.webp);
+  --deco: url(../assets/stickers/made-feather.webp);
+  --deco-dark: url(../assets/stickers/made-feather-dark.webp);
+  right: 6px; bottom: -6px;
+  width: 46px; height: 46px;
+  opacity: .64;
+}
+
+/* ── WATER · 水边（聊天）──────────────────────────────── */
+html .d-chat-cloud {
+  --deco-ink: url(../assets/stickers/s3-13-cloud-ink.webp);
+  --deco: url(../assets/stickers/s3-13-cloud.webp);
+  --deco-dark: url(../assets/stickers/s3-13-cloud-dark.webp);
+  left: 6px; top: -22px;
+  width: 62px; height: 62px;
+  opacity: .5;
+}
+html .d-chat-sprig {
+  --deco-ink: url(../assets/stickers/made-sprig-ink.webp);
+  --deco: url(../assets/stickers/made-sprig.webp);
+  --deco-dark: url(../assets/stickers/made-sprig-dark.webp);
+  right: 2px; top: -18px;
+  width: 40px; height: 40px;
+  opacity: .58;
+}
+
+/* ── NOW · 现在 ────────────────────────────────────────── */
+html .d-now-teacup {
+  --deco-ink: url(../assets/stickers/s3-28-teacup-ink.webp);
+  --deco: url(../assets/stickers/s3-28-teacup.webp);
+  --deco-dark: url(../assets/stickers/s3-28-teacup-dark.webp);
+  right: 8px; bottom: 6px;
+  width: 58px; height: 58px;
+  opacity: .5;
+}
+html .d-now-star {
+  --deco-ink: url(../assets/stickers/made-star-ink.webp);
+  --deco: url(../assets/stickers/made-star.webp);
+  --deco-dark: url(../assets/stickers/made-star-dark.webp);
+  right: 10px; top: -14px;
+  width: 32px; height: 32px;
+  opacity: .66;
+}
+
+/* ── 其余页：小角落点缀 ───────────────────────────────── */
+html .d-set-seal {
+  --deco-ink: url(../assets/stickers/made-wax-rose-ink.webp);
+  --deco: url(../assets/stickers/made-wax-rose.webp);
+  --deco-dark: url(../assets/stickers/made-wax-rose-dark.webp);
+  right: 6px; bottom: 2px;
+  width: 30px; height: 30px;
+  opacity: .8;
+}
+html .d-more-bow {
+  --deco-ink: url(../assets/stickers/s1-silk-bow-ink.webp);
+  --deco: url(../assets/stickers/s1-silk-bow.webp);
+  --deco-dark: url(../assets/stickers/s1-silk-bow-dark.webp);
+  right: -6px; top: 4px;
+  width: 52px; height: 52px;
+  opacity: .42;
+}
+html .d-cards-tape {
+  --deco-ink: url(../assets/stickers/made-tape-ink.webp);
+  --deco: url(../assets/stickers/made-tape.webp);
+  --deco-dark: url(../assets/stickers/made-tape-dark.webp);
+  right: 4px; top: 2px;
+  width: 62px; height: 62px;
+  opacity: .5;
+}
+html .d-cal-moon {
+  --deco-ink: url(../assets/stickers/made-moon-ink.webp);
+  --deco: url(../assets/stickers/made-moon.webp);
+  --deco-dark: url(../assets/stickers/made-moon-dark.webp);
+  right: 4px; top: -8px;
+  width: 34px; height: 34px;
+  opacity: .55;
+}
+html .d-course-book {
+  --deco-ink: url(../assets/stickers/s3-17-open-book-ink.webp);
+  --deco: url(../assets/stickers/s3-17-open-book.webp);
+  --deco-dark: url(../assets/stickers/s3-17-open-book-dark.webp);
+  right: -6px; top: 2px;
+  width: 58px; height: 58px;
+  opacity: .42;
+}
+html .d-theme-star {
+  --deco-ink: url(../assets/stickers/made-star-ink.webp);
+  --deco: url(../assets/stickers/made-star.webp);
+  --deco-dark: url(../assets/stickers/made-star-dark.webp);
+  right: 6px; top: -6px;
+  width: 26px; height: 26px;
+  opacity: .6;
+}
