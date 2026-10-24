@@ -1040,6 +1040,7 @@
     if (setBtn) setBtn.hidden = !inChat;
     if (moreBtn) moreBtn.hidden = inChat;
     if (title) title.textContent = currentPage === null ? '桌面' : (PAGE_TITLES[currentPage] || '潮');
+    if (inChat) { try { renderChatTop(); } catch (_) {} }
   }
 
   /* 顶栏「更多」图标 → 更多页（抽屉已彻底移除，导航＝底栏五格 + 更多） */
@@ -2976,10 +2977,11 @@
     ic.innerHTML = '<svg viewBox="0 0 24 24"><use href="#i-chat"/></svg>';
     const t1 = document.createElement('span');
     t1.className = 'think-label';
-    t1.textContent = sec ? '[ THINKING PROCESS · ' + sec + 's ]' : '[ THINKING PROCESS ]';
+    t1.textContent = 'THINKING';
+    if (sec) t1.dataset.sec = sec + 's';
     const t2 = document.createElement('i');
     t2.className = 'think-toggle';
-    t2.textContent = '展开';
+    t2.textContent = '▾';
     head.appendChild(ic);
     head.appendChild(t1);
     head.appendChild(t2);
@@ -2988,7 +2990,7 @@
     body.textContent = text;
     head.addEventListener('click', () => {
       const open = card.classList.toggle('open');
-      t2.textContent = open ? '收起' : '展开';
+      t2.textContent = open ? '↑ 收起' : '▾';
     });
     card.appendChild(head);
     card.appendChild(body);
@@ -2998,7 +3000,7 @@
     if (!card) return;
     card.classList.toggle('open', !!open);
     const t = card.querySelector('.think-toggle');
-    if (t) t.textContent = open ? '收起' : '展开';
+    if (t) t.textContent = open ? '↑ 收起' : '▾';
   }
 
   /* 消息操作行：时间 + 复制/重说/删除（点消息出现，再点收起） */
@@ -3090,24 +3092,7 @@
     ava.innerHTML = me ? myAvaInner('m-txt') : partnerAvaInner('m-txt');
     wrap.appendChild(ava);
 
-    if (!me) {
-      const meta = document.createElement('div');
-      meta.className = 'm-meta';
-      const mini = document.createElement('i');
-      mini.className = 'm-mini';
-      mini.innerHTML = partnerAvaInner('m-txt');
-      const name = document.createElement('span');
-      name.className = 'm-name';
-      name.textContent = chatPartnerName();
-      const when = document.createElement('span');
-      when.className = 'm-time';
-      when.textContent = fmtMeta(m.ts);
-      meta.appendChild(mini);
-      meta.appendChild(name);
-      meta.appendChild(when);
-      col.appendChild(meta);
-    }
-
+    /* v68：逐条不再显示名字/迷你头像（身份交给顶栏），时间戳在气泡下方单独一行 */
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
 
@@ -3127,6 +3112,7 @@
     col.appendChild(bubble);
     wrap.appendChild(col);
 
+    wrap.__m = m;
     const node = { wrap, bubble, body, bubbles: [body], actEl: actEl };
 
     if (!me) {
@@ -3170,6 +3156,13 @@
     // 操作行
     col.appendChild(buildOps(m, wrap));
 
+    // 时间戳：气泡下方单独一行（10px / 居中 / 透明度 .36）
+    const ts = document.createElement('span');
+    ts.className = 'm-ts';
+    ts.textContent = fmtMeta(m.ts);
+    col.appendChild(ts);
+    wrap.__ts = ts;
+
     wrap.addEventListener('click', () => {
       stream.querySelectorAll('.msg.show-ops').forEach((n) => {
         if (n !== wrap) n.classList.remove('show-ops');
@@ -3209,6 +3202,8 @@
     n.msg = m;                      // 流式/异步时别再用 S.chat[length-1] 猜，中间可能插进别的消息
     if (!animate) n.wrap.style.animation = 'none';
     stream.appendChild(n.wrap);
+    syncMsgAva();
+    renderTokenBar();
     save(KEY.chat, S.chat);
     scrollDown();
     return n;
@@ -3224,6 +3219,8 @@
     });
     const miss = missYouNote();
     if (miss) stream.appendChild(miss);
+    syncMsgAva();
+    renderTokenBar();
     scrollDown(true);
   }
 
@@ -5395,7 +5392,145 @@
     });
   }
 
+  /* ---------------- v68 · 聊天页：顶栏 / 头像节奏 / token 条 / 长按菜单 ---------------- */
+
+  function chatStatusText() {
+    const h = new Date().getHours();
+    const phase = h < 5 ? '有点困了' : h < 9 ? '刚醒' : h < 12 ? '在忙' : h < 18 ? '有点累' : h < 23 ? '刚回来' : '有点困了';
+    let word = '平静';
+    try { word = (typeof P !== 'undefined' && P.moodWord) ? (P.moodWord(S.persona) || '平静') : '平静'; } catch (_) {}
+    return phase + ' · ' + word;
+  }
+
+  function renderChatTop() {
+    const ava = $('ctAva');
+    if (!ava) return;
+    const name = chatPartnerName() || '他';
+    setTxt('ctName', name);
+    setTxt('ctStatus', chatStatusText());
+    const pic = (S.settings && (S.settings.avaPartner || S.settings.partnerAva)) || '';
+    if (pic) {
+      ava.style.backgroundImage = 'url("' + pic + '")';
+      ava.textContent = '';
+    } else {
+      ava.style.backgroundImage = '';
+      ava.textContent = name.slice(0, 1);
+    }
+  }
+
+  /* 连续消息：头像只在第一条出现 */
+  function syncMsgAva() {
+    let prev = null;
+    stream.querySelectorAll('.msg').forEach((el) => {
+      if (!el.querySelector('.m-col')) return;      // typing 等非消息节点不参与
+      const role = el.classList.contains('me') ? 'me' : 'partner';
+      const first = role !== prev;
+      el.classList.toggle('has-ava', first);
+      el.classList.toggle('no-ava', !first);
+      prev = role;
+    });
+  }
+
+  /* token 条：只在最后一条之后，右对齐 */
+  function renderTokenBar() {
+    let bar = $('tokBar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'tok-bar';
+      bar.id = 'tokBar';
+      bar.innerHTML = '<b class="tok-n"></b> tokens <i aria-hidden="true">›</i>';
+    }
+    let chars = 0;
+    (S.chat || []).forEach((m) => {
+      chars += String(m.text || '').length + String(m.action || '').length + String(m.think || '').length;
+    });
+    const n = 12000 + Math.round(chars * 1.35);
+    const num = bar.querySelector('.tok-n');
+    if (num) num.textContent = n.toLocaleString('en-US');
+    stream.appendChild(bar);
+  }
+
+  /* 长按消息 → 底部小菜单 */
+  let sheetMsg = null, chatPressTimer = null;
+  function openMsgSheet(m) {
+    sheetMsg = m;
+    const sheet = $('msgSheet'), mask = $('msgSheetMask');
+    if (!sheet || !mask) return;
+    mask.hidden = false;
+    sheet.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => sheet.classList.add('open'));
+  }
+  function closeMsgSheet() {
+    const sheet = $('msgSheet'), mask = $('msgSheetMask');
+    if (!sheet || !mask) return;
+    sheet.classList.remove('open');
+    sheet.setAttribute('aria-hidden', 'true');
+    setTimeout(() => { mask.hidden = true; }, 180);
+  }
+
+  function setupMsgSheet() {
+    const sheet = $('msgSheet'), mask = $('msgSheetMask');
+    if (!sheet) return;
+    mask.addEventListener('click', closeMsgSheet);
+    sheet.addEventListener('click', (e) => {
+      const btn = e.target.closest('.ms-item');
+      if (!btn || !sheetMsg) return;
+      const m = sheetMsg;
+      closeMsgSheet();
+      const act = btn.dataset.act;
+      if (act === 'copy') {
+        const text = String(m.text || '');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => toast('已复制'), () => toast('复制失败'));
+        } else { toast('复制失败'); }
+      } else if (act === 'fav') {
+        let list = [];
+        try { list = JSON.parse(localStorage.getItem('hc.favs') || '[]'); } catch (_) {}
+        if (!Array.isArray(list)) list = [];
+        list.push({ text: m.text || '', action: m.action || '', ts: m.ts || Date.now() });
+        try { localStorage.setItem('hc.favs', JSON.stringify(list)); } catch (_) {}
+        toast('已收藏');
+      } else if (act === 'del') {
+        const i = S.chat.indexOf(m);
+        if (i >= 0) {
+          S.chat.splice(i, 1);
+          save(KEY.chat, S.chat);
+          renderHistory();
+          toast('已删除');
+        }
+      }
+    });
+    const start = (e) => {
+      const wrap = e.target.closest ? e.target.closest('.msg') : null;
+      if (!wrap || !wrap.__m) return;
+      clearTimeout(chatPressTimer);
+      chatPressTimer = setTimeout(() => { openMsgSheet(wrap.__m); chatPressTimer = null; }, 500);
+    };
+    const cancel = () => { if (chatPressTimer) { clearTimeout(chatPressTimer); chatPressTimer = null; } };
+    stream.addEventListener('pointerdown', start);
+    stream.addEventListener('pointerup', cancel);
+    stream.addEventListener('pointermove', cancel);
+    stream.addEventListener('pointercancel', cancel);
+    stream.addEventListener('scroll', cancel, { passive: true });
+  }
+
+  function setupChatHead() {
+    const gear = $('ctGear');
+    if (gear) gear.addEventListener('click', openChatPanel);
+    const add = $('cAdd'), quick = $('quick');
+    if (add && quick) {
+      add.addEventListener('click', () => {
+        const on = quick.classList.toggle('open');
+        add.setAttribute('aria-expanded', on ? 'true' : 'false');
+        scrollDown();
+      });
+    }
+    renderChatTop();
+  }
+
   function setupChatPanel() {
+    setupChatHead();
+    setupMsgSheet();
     if (!chatPanel) return;
     const btn = $('chatSetBtn');
     if (btn) btn.addEventListener('click', openChatPanel);

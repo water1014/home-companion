@@ -221,7 +221,19 @@
 
 <!-- ============ 聊天 ============ -->
 <section class="screen page chat-page" id="chat" aria-label="聊天">
-  
+
+  <!-- 聊天顶栏：头像 28 + 竖线 + 名字 15 + 状态 11 / 右齿轮 22 -->
+  <header class="chat-top">
+    <div class="ct-left">
+      <span class="ct-ava" id="ctAva" aria-hidden="true">宋</span>
+      <i class="ct-bar" aria-hidden="true"></i>
+      <span class="ct-name" id="ctName">—</span>
+      <span class="ct-status" id="ctStatus">—</span>
+    </div>
+    <button class="ct-gear" id="ctGear" type="button" aria-label="聊天设置">
+      <svg viewBox="0 0 24 24"><use href="#i-gear"/></svg>
+    </button>
+  </header>
 
   <div class="stream" id="stream" role="log" aria-live="polite"></div>
 
@@ -229,13 +241,25 @@
     <i class="deco d-chat-cloud" aria-hidden="true"></i>
     <i class="deco d-chat-sprig" aria-hidden="true"></i>
     <div class="quick" id="quick"></div>
+    <p class="c-tip">Enter 追加，按钮发送</p>
     <form class="composer" id="composer" autocomplete="off">
+      <button class="c-add" id="cAdd" type="button" aria-label="快捷短语" aria-expanded="false">
+        <svg viewBox="0 0 24 24"><path d="M12 5.4v13.2M5.4 12h13.2"/></svg>
+      </button>
       <label class="sr-only" for="input">对他说点什么</label>
       <textarea id="input" rows="1" placeholder="说点什么…" maxlength="1200"></textarea>
       <button type="submit" class="send" id="send" aria-label="发送">
         <svg viewBox="0 0 24 24"><path d="M12 19V5.5M5.8 11.2 12 5l6.2 6.2"/></svg>
       </button>
     </form>
+  </div>
+
+  <!-- 长按消息：底部小菜单 -->
+  <div class="msg-sheet-mask" id="msgSheetMask" hidden></div>
+  <div class="msg-sheet" id="msgSheet" role="menu" aria-hidden="true">
+    <button class="ms-item" type="button" data-act="copy" role="menuitem">复制</button>
+    <button class="ms-item" type="button" data-act="fav" role="menuitem">收藏</button>
+    <button class="ms-item danger" type="button" data-act="del" role="menuitem">删除</button>
   </div>
 
   <!-- 聊天设置右栏 -->
