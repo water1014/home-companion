@@ -985,7 +985,9 @@
     const dock = $('dock');
     if (!dock) return;
     dock.innerHTML = '';
-    DOCK_TABS.forEach((t) => {
+    DOCK_TABS.forEach((t, i) => {
+      /* 五格胶囊：中间（第 3 格）插一颗凸起圆 —— 此刻 · NOW */
+      if (i === 2) dock.appendChild(makeCoreTile());
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'tile';
@@ -1002,6 +1004,19 @@
       dock.appendChild(b);
     });
     syncDock();
+  }
+
+  /* 胶囊中间的凸起圆键：此刻（NOW 页）——56px、上移 14px，样式见 CSS v65 */
+  function makeCoreTile() {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tile tile-core';
+    b.dataset.app = 'now';
+    b.dataset.tab = 'now';
+    b.setAttribute('aria-label', '此刻 NOW');
+    b.innerHTML = '<span class="core-ic"><svg><use href="#i-wave"/></svg></span>';
+    b.addEventListener('click', () => openPage('now', 'status'));
+    return b;
   }
 
   /* dock 点亮：主屏（currentPage 为 null）→ Home；打开某页 → 对应格 */
@@ -1840,23 +1855,23 @@
     path.setAttribute('d', d);
   }
 
-  /* 心电波：OUR DAYS 卡里横跨两个头像的那条线 */
+  /* 心电波：OUR DAYS 卡里横跨两个头像的那条线（viewBox 120×24，宽 72-96px） */
   function buildMoonEcg() {
     const path = $('mnEcg');
     if (!path) return;
-    const W = 240, H = 44;
+    const W = 120, H = 24;
     let d = 'M0 ' + (H / 2);
-    /* 中段一组心电波峰，两端留白 */
+    /* 中段两组心电波峰，两端留白 */
     const peaks = [
-      [70, 1], [88, 1], [96, -7], [104, 11], [112, -7], [120, 1],
-      [150, 1], [168, 1], [176, -6], [184, 9], [192, -6], [200, 1]
+      [35, 1], [44, 1], [48, -7], [52, 11], [56, -7], [60, 1],
+      [75, 1], [84, 1], [88, -6], [92, 9], [96, -6], [100, 1]
     ];
     peaks.forEach(([x, dy]) => {
-      d += ' L' + (x - 5) + ' ' + (H / 2) +
-           ' L' + (x - 1) + ' ' + (H / 2 + dy * 0.5) +
+      d += ' L' + (x - 2.5) + ' ' + (H / 2) +
+           ' L' + (x - 0.5) + ' ' + (H / 2 + dy * 0.5) +
            ' L' + x + ' ' + (H / 2 + dy) +
-           ' L' + (x + 3) + ' ' + (H / 2 - dy * 0.4) +
-           ' L' + (x + 5) + ' ' + (H / 2);
+           ' L' + (x + 1.5) + ' ' + (H / 2 - dy * 0.4) +
+           ' L' + (x + 2.5) + ' ' + (H / 2);
     });
     d += ' L' + W + ' ' + (H / 2);
     path.setAttribute('d', d);
@@ -1887,17 +1902,16 @@
     setTxt('mnEnergy', Math.round(p.energy === undefined ? 60 : p.energy) + '%');
     setTxt('mnSay', P.moodSub(S.persona));
 
-    /* 双列小卡：他留的话 / 没拆的信 */
+    /* 双列小卡：他留的话 / 没拆的信（条数 + 一句说明） */
     const said = S.life.said || {};
-    setTxt('mnSaidTitle', said.text || '还没有留话');
-    setTxt('mnSaidSub', said.date ? said.date.replace(/-/g, '.') + ' · 他说的' : '他还没说过什么');
+    setTxt('mnSaidNum', said.text ? '1' : '0');
+    setTxt('mnSaidNote', said.text ? ((said.date || '').replace(/-/g, '.') + ' · 他说的') : '他还没说过什么');
     const mails = (S.life.mails || []).filter((m) => String(m.from || '') !== 'me');
-    setTxt('mnMailCount', String(mails.length));
-    setTxt('mnMailTitle', mails.length ? (mails[mails.length - 1].text || '').slice(0, 24) : '没有没拆的信');
-    setTxt('mnMailSub', mails.length ? '有信还没看' : '都拆完了');
+    setTxt('mnMailNum', String(mails.length));
+    setTxt('mnMailNote', mails.length ? '有信还没看' : '都拆完了');
 
-    /* 昼夜胶囊：跟着小时走，白天 DAY、晚上 NIGHT */
-    const night = now.getHours() >= 19 || now.getHours() < 6;
+    /* 昼夜胶囊：跟主题走（DAY=浅色 / NIGHT=深色），点一下整体切换 */
+    const night = document.documentElement.dataset.theme !== 'light';
     setTxt('mnPhaseTxt', night ? 'NIGHT' : 'DAY');
     const ph = $('mnPhase');
     if (ph) ph.classList.toggle('is-night', night);
@@ -1907,26 +1921,35 @@
     setTxt('mnMuArtist', song ? (song.artist || '') : '');
   }
 
-  /* 回首页时重播开场：天数浮起 + 淡入 */
+  /* 回首页时重播开场：fade-rise 70ms 阶梯 + 心电波重描 */
   function replayMoon() {
-    const head = $('moonHead'), now = $('moonNow'), acts = $('moonActs');
+    const head = $('moonHead');
     if (!head) return;
-    [head, now, acts].forEach((el) => { if (el) el.classList.remove('is-in'); });
+    const chain = [head, $('mnDaysCard'), $('mnSayCard'), $('mnDuo'), $('moonNow'), $('moonActs'), $('moonMusic')];
+    chain.forEach((el) => { if (el) el.classList.remove('is-in'); });
+    const ecg = $('mnEcg');
+    if (ecg) { ecg.style.animation = 'none'; void ecg.getBoundingClientRect(); ecg.style.animation = ''; }
     void head.offsetWidth;
     requestAnimationFrame(() => {
-      if (head) head.classList.add('is-in');
-      if (now) now.classList.add('is-in');
-      if (acts) acts.classList.add('is-in');
+      chain.forEach((el) => { if (el) el.classList.add('is-in'); });
     });
   }
 
-  /* MOON 的交互：两个文字入口 + 音乐条（只是视觉播放态，歌单没有真实音源） */
+  /* MOON 的交互：两个文字入口 + 两张小卡（整卡可点）+ 音乐条（视觉播放态） */
   function setupMoon() {
-    const acts = $('moonActs');
-    if (acts) {
-      acts.addEventListener('click', (e) => {
+    /* [data-moon-go] 统一委派：快捷入口 + 双列小卡，整卡可点、键盘可入 */
+    const pager = $('homePager');
+    if (pager) {
+      pager.addEventListener('click', (e) => {
         const b = e.target.closest('[data-moon-go]');
         if (b) openPage(b.dataset.moonGo);
+      });
+      pager.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const b = e.target.closest('[data-moon-go]');
+        if (!b) return;
+        e.preventDefault();
+        openPage(b.dataset.moonGo);
       });
     }
     /* NOW · 此刻 → 完整的「状态 / 一天 / 设备」（now 容器页）。
@@ -1955,6 +1978,11 @@
       phase.addEventListener('click', () => {
         const cur = document.documentElement.dataset.theme;
         patchAppearance({ theme: cur === 'light' ? 'dark' : 'light' });
+        /* 胶囊文字/圆点即时跟随，不等下一次 renderMoon */
+        const night = document.documentElement.dataset.theme !== 'light';
+        setTxt('mnPhaseTxt', night ? 'NIGHT' : 'DAY');
+        const ph2 = $('mnPhase');
+        if (ph2) ph2.classList.toggle('is-night', night);
       });
     }
   }
@@ -2009,11 +2037,11 @@
 
   /* ================= 长按拖拽换位（应用 + dock） =================
      手感对齐真机：
-     · 按住不动 0.42s → 进编辑态，手指不用抬起来，直接挪就是拖动
+     · 按住不动 0.5s → 进编辑态，手指不用抬起来，直接挪就是拖动
      · 在那之前横滑 → 翻页（从组件/图标上开始也能翻，JS 跟手）
      · 拖动过程中绝不重建 DOM（浏览器会因此发 pointercancel，拖拽当场断掉），
        只挪一个跟手 ghost；松手才提交新顺序，并用 FLIP 动画滑到位          */
-  const LONGPRESS_MS = 420;
+  const LONGPRESS_MS = 500;
   const SWIPE_SLOP = 10;   // 超过这个位移就算翻页手势
 
   let editing = false;

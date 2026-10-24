@@ -146,8 +146,8 @@
         <p class="mn-label"><em>OUR DAYS</em></p>
         <div class="mn-pair">
           <span class="mn-ava" id="mnAvaPartner" aria-hidden="true">淼</span>
-          <svg class="mn-ecg" viewBox="0 0 240 44" preserveAspectRatio="none" aria-hidden="true">
-            <path id="mnEcg" d=""/>
+          <svg class="mn-ecg" viewBox="0 0 120 24" preserveAspectRatio="none" aria-hidden="true">
+            <path id="mnEcg" d="" pathLength="100"/>
           </svg>
           <span class="mn-ava" id="mnAvaMe" aria-hidden="true">满</span>
         </div>
@@ -160,26 +160,24 @@
         <p class="mn-since" id="mnSince">—</p>
       </section>
 
-      <!-- ③ FROM HIM · TODAY：一句今日碎碎念 -->
-      <section class="mn-say-card" aria-label="今日">
+      <!-- ③ FROM COVE · TODAY：一句今日碎碎念（无卡底，浮在背景上） -->
+      <section class="mn-say-card" id="mnSayCard" aria-label="今日">
         <i class="deco d-mn-pearl" aria-hidden="true"></i>
-        <p class="mn-label"><em>FROM HIM · TODAY</em></p>
+        <p class="mn-label"><em>FROM COVE · TODAY</em></p>
         <p class="mn-say" id="mnSay">—</p>
       </section>
 
-      <!-- ⑤ 双列小卡：留言 / 未拆的信 -->
-      <div class="mn-duo">
-        <section class="mn-duo-card" id="mnSaidCard">
-          <p class="mn-duo-head"><em>SAID</em><span>他留的话</span></p>
-          <p class="mn-duo-title" id="mnSaidTitle">—</p>
-          <p class="mn-duo-sub" id="mnSaidSub">—</p>
-          <button type="button" class="mn-duo-btn" data-moon-go="chat">坐一会儿</button>
+      <!-- ⑤ 双列小卡：他留的话 / 没拆的信（48%/132px/三行式/错落 translateY） -->
+      <div class="mn-duo" id="mnDuo">
+        <section class="mn-duo-card mn-petal-l" id="mnSaidCard" data-moon-go="chat" role="button" tabindex="0" aria-label="他留的话，去聊天">
+          <p class="mn-duo-t">他留的话</p>
+          <p class="mn-duo-num"><b id="mnSaidNum">0</b><i>条</i></p>
+          <p class="mn-duo-note" id="mnSaidNote">他还没说过什么</p>
         </section>
-        <section class="mn-duo-card" id="mnMailCard">
-          <p class="mn-duo-head"><em>LETTERS</em><span>没拆的信</span><i id="mnMailCount">0</i></p>
-          <p class="mn-duo-title" id="mnMailTitle">—</p>
-          <p class="mn-duo-sub" id="mnMailSub">—</p>
-          <button type="button" class="mn-duo-btn" data-moon-go="records">去拆信</button>
+        <section class="mn-duo-card mn-petal-r" id="mnMailCard" data-moon-go="records" role="button" tabindex="0" aria-label="没拆的信，去拆信">
+          <p class="mn-duo-t">没拆的信</p>
+          <p class="mn-duo-num"><b id="mnMailNum">0</b><i>封</i></p>
+          <p class="mn-duo-note" id="mnMailNote">都拆完了</p>
         </section>
       </div>
 

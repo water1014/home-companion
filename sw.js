@@ -1,4 +1,4 @@
-const CACHE = 'xiaoman-v64';
+const CACHE = 'xiaoman-v65';
 const ASSETS = [
   './',
   './index.html',
@@ -10,7 +10,7 @@ const ASSETS = [
   './seed.json',
   './manifest.webmanifest',
   './icons/icon.svg',
-  './icons/wall.jpg',
+  './icons/wall.webp',
   './icons/wall-soft.jpg',
 ];
 
