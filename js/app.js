@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v61';
+  window.__TIDE_MARK = 'LOCAL-v62';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -721,6 +721,15 @@
         b.classList.toggle('on', b.dataset.seg === seg);
       });
       moveSegInk(bar);
+    }
+    /* 花：顶部胶囊与下方细线 Tab 保持同一状态 */
+    if (page === 'records') {
+      const tags = $('flHeroTags');
+      if (tags) {
+        tags.querySelectorAll('.fl-tag').forEach((b) => {
+          b.classList.toggle('on', b.dataset.flseg === seg);
+        });
+      }
     }
     if (!hit) return;
     rememberSeg(page, seg);
@@ -1831,6 +1840,28 @@
     path.setAttribute('d', d);
   }
 
+  /* 心电波：OUR DAYS 卡里横跨两个头像的那条线 */
+  function buildMoonEcg() {
+    const path = $('mnEcg');
+    if (!path) return;
+    const W = 240, H = 44;
+    let d = 'M0 ' + (H / 2);
+    /* 中段一组心电波峰，两端留白 */
+    const peaks = [
+      [70, 1], [88, 1], [96, -7], [104, 11], [112, -7], [120, 1],
+      [150, 1], [168, 1], [176, -6], [184, 9], [192, -6], [200, 1]
+    ];
+    peaks.forEach(([x, dy]) => {
+      d += ' L' + (x - 5) + ' ' + (H / 2) +
+           ' L' + (x - 1) + ' ' + (H / 2 + dy * 0.5) +
+           ' L' + x + ' ' + (H / 2 + dy) +
+           ' L' + (x + 3) + ' ' + (H / 2 - dy * 0.4) +
+           ' L' + (x + 5) + ' ' + (H / 2);
+    });
+    d += ' L' + W + ' ' + (H / 2);
+    path.setAttribute('d', d);
+  }
+
   function renderMoon() {
     if (!$('mnDate')) return;
     const now = new Date();
@@ -1839,12 +1870,37 @@
     setTxt('mnDate', MOON_DOW[now.getDay()] + ', ' + MOON_MON[now.getMonth()] + ' ' + now.getDate());
     setTxt('mnTime', hh + ':' + mm);
     setTxt('mnDays', String(daysSince()));
+    /* 次级大数字：写过的信 / 存下的照片 */
+    setTxt('mnDaysMail', String((S.life.mails || []).length));
+    setTxt('mnDaysPhoto', String((S.life.photos || []).length));
     setTxt('mnNames', partnerName() + ' with ' + (S.memory.userName || '我'));
+    /* 起始日期：2026.10.21 起，一直数到今天 */
+    const sd = (S.memory.startDate || todayStr()).replace(/-/g, '.');
+    setTxt('mnSince', '从 ' + sd + ' 开始，一直数到今天。');
+
+    /* 双头像 */
+    setHTML('mnAvaPartner', partnerAvaInner('mn-ava-t'));
+    setHTML('mnAvaMe', myAvaInner('mn-ava-t'));
 
     const p = S.persona || {};
     setTxt('mnMood', Math.round(p.mood === undefined ? 58 : p.mood) + '%');
     setTxt('mnEnergy', Math.round(p.energy === undefined ? 60 : p.energy) + '%');
     setTxt('mnSay', P.moodSub(S.persona));
+
+    /* 双列小卡：他留的话 / 没拆的信 */
+    const said = S.life.said || {};
+    setTxt('mnSaidTitle', said.text || '还没有留话');
+    setTxt('mnSaidSub', said.date ? said.date.replace(/-/g, '.') + ' · 他说的' : '他还没说过什么');
+    const mails = (S.life.mails || []).filter((m) => String(m.from || '') !== 'me');
+    setTxt('mnMailCount', String(mails.length));
+    setTxt('mnMailTitle', mails.length ? (mails[mails.length - 1].text || '').slice(0, 24) : '没有没拆的信');
+    setTxt('mnMailSub', mails.length ? '有信还没看' : '都拆完了');
+
+    /* 昼夜胶囊：跟着小时走，白天 DAY、晚上 NIGHT */
+    const night = now.getHours() >= 19 || now.getHours() < 6;
+    setTxt('mnPhaseTxt', night ? 'NIGHT' : 'DAY');
+    const ph = $('mnPhase');
+    if (ph) ph.classList.toggle('is-night', night);
 
     const song = (S.life.music || [])[0];
     setTxt('mnMuTitle', song ? song.title : '想听什么，放给我');
@@ -1890,7 +1946,17 @@
       });
     }
     buildMoonWave();
+    buildMoonEcg();
     replayMoon();
+
+    /* 昼夜胶囊：点一下切换浅色/深色（和设置页的「明暗」是同一个开关） */
+    const phase = $('mnPhase');
+    if (phase) {
+      phase.addEventListener('click', () => {
+        const cur = document.documentElement.dataset.theme;
+        patchAppearance({ theme: cur === 'light' ? 'dark' : 'light' });
+      });
+    }
   }
 
   function renderEdHead() {
@@ -4773,6 +4839,67 @@
     fillFl('flAll', rows);
     const em = $('flAllEmpty');
     if (em) em.hidden = rows.length > 0;
+    renderFlowerHero();
+  }
+
+  /* 头图：今日大日期 + 拍立得预览 + 一句今日注脚 */
+  function renderFlowerHero() {
+    const dayEl = $('flHeroDay');
+    if (!dayEl) return;
+    /* 顶部胶囊 = 分段快捷入口：点了直接落到对应分段 */
+    const tagBox = $('flHeroTags');
+    if (tagBox && !tagBox.__wired) {
+      tagBox.__wired = true;
+      tagBox.addEventListener('click', (e) => {
+        const b = e.target.closest('.fl-tag');
+        if (!b) return;
+        switchSeg('records', b.dataset.flseg);
+      });
+    }
+    const now = new Date();
+    setTxt('flHeroDay', String(now.getDate()));
+    setTxt('flHeroMonth', (now.getMonth() + 1) + '月 · ' + MOON_DOW[now.getDay()]);
+
+    /* 拍立得预览：最近三张有照片的日子 */
+    const shots = $('flHeroShots');
+    if (shots) {
+      shots.innerHTML = '';
+      const photos = (S.life.photos || []).filter((p) => p.img).slice(0, 3);
+      if (!photos.length) {
+        ['还没有照片', '去 MIRROR 翻旧照', '一起拍一张'].forEach((t) => {
+          const ph = document.createElement('div');
+          ph.className = 'fl-shot empty';
+          ph.textContent = t;
+          shots.appendChild(ph);
+        });
+      } else {
+        photos.forEach((p, i) => {
+          const fig = document.createElement('figure');
+          fig.className = 'fl-shot';
+          const img = document.createElement('img');
+          img.src = p.img;
+          img.alt = p.cap || '';
+          const cap = document.createElement('figcaption');
+          cap.textContent = p.cap || flDay(p.ts);
+          fig.appendChild(img);
+          fig.appendChild(cap);
+          shots.appendChild(fig);
+        });
+      }
+    }
+
+    /* 今日注脚：今天写了多少、留了多少 */
+    const diary = lifeList('diary');
+    const mails = S.life.mails || [];
+    const todos = lifeList('todos').filter((t) => !t.done);
+    const k = todayStr();
+    const todayDiary = diary.filter((d) => String(d.ts || '').slice(0, 10) === k ||
+      new Date(d.ts || 0).toDateString() === now.toDateString()).length;
+    const parts = [];
+    if (todayDiary) parts.push('今天写了 ' + todayDiary + ' 篇');
+    if (mails.length) parts.push('有 ' + mails.length + ' 封信没拆');
+    if (todos.length) parts.push(todos.length + ' 件事还挂着');
+    setTxt('flHeroNote', parts.length ? parts.join(' · ') : '空着也没关系，想起来再写。');
   }
 
   /* 足迹：最近 30 天，按当天聊天条数分三档 */

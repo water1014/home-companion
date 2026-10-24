@@ -9301,3 +9301,686 @@ html .fl-page .fl-empty {
   color: rgba(255, 255, 255, 0.55) !important;
 }
 html[data-theme="light"] .fl-page .fl-empty { color: var(--k-ink3) !important; }
+
+/* ============================================================
+   v62 · MOON 首页重排：参考「OUR DAYS + 双头像心电波 + 杂志大字」
+   —— 左上大字时间 + 右上昼夜胶囊 / 双头像夹一条心电波 / 双列小卡
+   ============================================================ */
+
+/* ---------- 网格骨架：单列长页，不再是 Bento 方块 ---------- */
+html .home-page[data-page="0"] {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  padding: 30px 18px 124px !important;
+}
+
+/* ---------- ① 顶部：日期 + 大字时间（左），昼夜胶囊（右） ---------- */
+html .moon-head {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  padding: 0 0 4px !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-theme="light"] .moon-head {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html .mn-head-main { display: flex !important; flex-direction: column !important; gap: 2px !important; }
+html .mn-tag {
+  display: block !important;
+  margin: 0 0 4px !important;
+  font-size: 9.5px !important;
+  letter-spacing: 0.24em !important;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+html[data-theme="light"] .mn-tag { color: var(--k-ink3) !important; }
+html .mn-time {
+  font-family: var(--k-display) !important;
+  font-size: clamp(68px, 21vw, 104px) !important;
+  font-weight: 200 !important;
+  letter-spacing: -0.055em !important;
+  line-height: 0.88 !important;
+  margin: 0 !important;
+  color: #fff !important;
+  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5) !important;
+}
+html[data-theme="light"] .mn-time {
+  color: var(--text) !important;
+  text-shadow: 0 2px 26px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 昼夜胶囊：一个小圆点 + DAY/NIGHT */
+html .mn-phase {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  margin: 6px 0 0 !important;
+  padding: 7px 14px 7px 11px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  transition: transform 260ms var(--ease), background 260ms var(--ease);
+}
+html .mn-phase:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.14) !important; }
+html .mn-phase:active { transform: translateY(0); }
+html .mn-phase em {
+  font-style: normal;
+  font-size: 9px !important;
+  letter-spacing: 0.24em !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+html .mn-phase-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ffd479;
+  box-shadow: 0 0 10px rgba(255, 212, 121, 0.8);
+  animation: mnPulse 3.2s ease-in-out infinite;
+}
+html .mn-phase.is-night .mn-phase-dot {
+  background: #b9c6ff;
+  box-shadow: 0 0 10px rgba(185, 198, 255, 0.7);
+}
+html[data-theme="light"] .mn-phase {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border-color: rgba(0, 0, 0, .07) !important;
+}
+html[data-theme="light"] .mn-phase em { color: var(--text-2) !important; }
+
+/* ---------- 通用小标签 ---------- */
+html .mn-label {
+  display: block !important;
+  margin: 0 0 12px !important;
+}
+html .mn-label em {
+  font-style: normal;
+  font-size: 9px !important;
+  letter-spacing: 0.26em !important;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+html[data-theme="light"] .mn-label em { color: var(--k-ink3) !important; }
+
+/* ---------- ② OUR DAYS：双头像 + 心电波 + 大数字 ---------- */
+html .mn-days {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 20px 20px 24px !important;
+  margin: 0 !important;
+  border-radius: 26px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 8px rgba(0, 0, 0, 0.14),
+    0 18px 48px rgba(0, 0, 0, 0.24) !important;
+  transition: transform 320ms var(--ease), box-shadow 320ms var(--ease);
+}
+html[data-theme="light"] .mn-days {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.78) !important;
+}
+html .mn-days:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 4px 12px rgba(0, 0, 0, 0.16),
+    0 24px 56px rgba(0, 0, 0, 0.3) !important;
+}
+/* 双头像 + 中间心电波 */
+html .mn-pair {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  margin: 2px 0 4px !important;
+}
+html .mn-ava {
+  flex: 0 0 auto !important;
+  width: 42px !important; height: 42px !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden;
+  font-size: 13px !important;
+  font-weight: 300 !important;
+  color: #fff !important;
+  background: linear-gradient(145deg, #f6c6d3, #cf8fa4) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24) !important;
+}
+html .mn-ava img { width: 100%; height: 100%; object-fit: cover; }
+html #mnAvaMe { background: linear-gradient(145deg, #e2e8f2, #a8b8d0) !important; }
+html .mn-ecg {
+  flex: 1 1 auto !important;
+  height: 34px !important;
+  min-width: 0;
+  overflow: visible;
+}
+html .mn-ecg path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.8) !important;
+  stroke-width: 1.2 !important;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+html[data-theme="light"] .mn-ecg path { stroke: var(--accent) !important; opacity: 0.62; }
+/* 大数字 */
+html .mn-days-line {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  margin: 0 !important;
+}
+html .mn-days b {
+  font-family: var(--k-display) !important;
+  font-size: clamp(76px, 22vw, 112px) !important;
+  font-weight: 200 !important;
+  letter-spacing: -0.05em !important;
+  line-height: 0.92 !important;
+  color: #fff !important;
+  text-shadow: 0 4px 36px rgba(0, 0, 0, 0.34);
+}
+html[data-theme="light"] .mn-days b { color: var(--text) !important; text-shadow: none; }
+/* 谁 with 谁：斜体衬线，像签名 */
+html .mn-names {
+  margin: 2px 0 0 !important;
+  font-family: var(--k-display) !important;
+  font-style: italic !important;
+  font-size: 15px !important;
+  letter-spacing: 0.04em !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+html[data-theme="light"] .mn-names { color: var(--text-2) !important; }
+html .mn-names::before { display: none !important; }
+/* 起始日期 */
+html .mn-since {
+  margin: 8px 0 0 !important;
+  font-size: 10.5px !important;
+  letter-spacing: 0.08em !important;
+  color: rgba(255, 255, 255, 0.56) !important;
+}
+html[data-theme="light"] .mn-since { color: var(--k-ink3) !important; }
+
+/* ---------- ③ FROM HIM · TODAY：今日一句 ---------- */
+html .mn-say-card {
+  padding: 18px 20px 20px !important;
+  border-radius: 22px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    0 14px 38px rgba(0, 0, 0, 0.2) !important;
+  transition: transform 320ms var(--ease);
+}
+html[data-theme="light"] .mn-say-card {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.75) !important;
+}
+html .mn-say-card:hover { transform: translateY(-4px); }
+html .mn-say {
+  margin: 0 !important;
+  font-size: 15px !important;
+  font-weight: 300 !important;
+  line-height: 1.95 !important;
+  letter-spacing: 0.03em !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+html[data-theme="light"] .mn-say { color: var(--text) !important; }
+
+/* ---------- ④ 此刻：波形 + 数值 ---------- */
+html .mn-now {
+  margin: 0 !important;
+  padding: 14px 20px 16px !important;
+  border-radius: 20px !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  backdrop-filter: blur(16px) saturate(135%);
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 1px 4px rgba(0, 0, 0, 0.10),
+    0 12px 30px rgba(0, 0, 0, 0.16) !important;
+  transform: rotate(-0.4deg) !important;
+  transition: transform 320ms var(--ease);
+}
+html[data-theme="light"] .mn-now {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
+}
+html .mn-now:hover { transform: rotate(0deg) translateY(-3px) !important; }
+html .mn-wave {
+  height: 34px !important;
+  margin: 0 0 6px !important;
+  transform-origin: 50% 50%;
+  animation: mnBreathe 7.5s ease-in-out infinite;
+}
+html .mn-wave path {
+  stroke: rgba(255, 255, 255, 0.8) !important;
+  stroke-width: 1.1 !important;
+  opacity: 0.78 !important;
+}
+html[data-theme="light"] .mn-wave path { stroke: var(--accent) !important; opacity: 0.55 !important; }
+html .mn-nums {
+  display: flex !important;
+  gap: 22px !important;
+  margin: 0 !important;
+}
+html .mn-nums span { display: flex !important; align-items: baseline !important; gap: 6px !important; }
+html .mn-nums b {
+  font-family: var(--k-display) !important;
+  font-size: 24px !important;
+  font-weight: 200 !important;
+  letter-spacing: -0.03em !important;
+  color: #fff !important;
+}
+html[data-theme="light"] .mn-nums b { color: var(--text) !important; }
+html .mn-nums i {
+  font-style: normal;
+  font-size: 9px !important;
+  letter-spacing: 0.2em !important;
+  opacity: 0.5 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+html[data-theme="light"] .mn-nums i { color: var(--k-ink3) !important; }
+
+/* ---------- ⑤ 双列小卡：留言 / 没拆的信 ---------- */
+html .mn-duo {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+html .mn-duo-card {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  padding: 16px 15px 15px !important;
+  border-radius: 20px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  backdrop-filter: blur(16px) saturate(135%);
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 1px 4px rgba(0, 0, 0, 0.10),
+    0 12px 30px rgba(0, 0, 0, 0.16) !important;
+  transition: transform 320ms var(--ease), box-shadow 320ms var(--ease);
+}
+html[data-theme="light"] .mn-duo-card {
+  background: rgba(255, 255, 255, 0.52) !important;
+  border-color: rgba(255, 255, 255, 0.72) !important;
+}
+/* 两张卡一高一低，像散落的纸 */
+html #mnSaidCard { transform: translateY(-4px) rotate(-0.6deg); }
+html #mnMailCard { transform: translateY(8px) rotate(0.7deg); }
+html .mn-duo-card:hover {
+  transform: translateY(-4px) rotate(0deg) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 3px 10px rgba(0, 0, 0, 0.14),
+    0 22px 48px rgba(0, 0, 0, 0.26) !important;
+}
+html .mn-duo-head {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 7px !important;
+  margin: 0 0 6px !important;
+}
+html .mn-duo-head em {
+  font-style: normal;
+  font-size: 9px !important;
+  letter-spacing: 0.24em !important;
+  color: rgba(255, 255, 255, 0.58) !important;
+}
+html .mn-duo-head span {
+  font-size: 10px !important;
+  letter-spacing: 0.12em !important;
+  color: rgba(255, 255, 255, 0.42) !important;
+}
+html .mn-duo-head i {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 11px !important;
+  font-family: var(--k-display) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+html[data-theme="light"] .mn-duo-head em { color: var(--k-ink3) !important; }
+html[data-theme="light"] .mn-duo-head span { color: var(--k-ink3) !important; opacity: .7; }
+html[data-theme="light"] .mn-duo-head i { color: var(--text-2) !important; }
+html .mn-duo-title {
+  margin: 0 !important;
+  font-family: var(--k-display) !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  letter-spacing: 0.01em !important;
+  color: #fff !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+html[data-theme="light"] .mn-duo-title { color: var(--text) !important; }
+html .mn-duo-sub {
+  margin: 0 0 10px !important;
+  font-size: 11px !important;
+  font-weight: 300 !important;
+  line-height: 1.7 !important;
+  color: rgba(255, 255, 255, 0.58) !important;
+}
+html[data-theme="light"] .mn-duo-sub { color: var(--k-ink3) !important; }
+/* 小胶囊按钮 */
+html .mn-duo-btn {
+  align-self: flex-start !important;
+  margin-top: auto !important;
+  padding: 6px 14px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 11.5px !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.1em !important;
+  cursor: pointer;
+  transition: transform 260ms var(--ease), background 260ms var(--ease);
+}
+html .mn-duo-btn:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.16) !important; }
+html .mn-duo-btn:active { transform: translateY(0); }
+html[data-theme="light"] .mn-duo-btn {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border-color: rgba(0, 0, 0, .07) !important;
+  color: var(--text-2) !important;
+}
+
+/* ============================================================
+   v62.1 · FLOWER 头图：杂志式「大日期 + 分类胶囊 + 拍立得预览」
+   ============================================================ */
+
+html .fl-page .fl-hero {
+  padding: 26px 24px 8px !important;
+  margin: 0 !important;
+}
+html .fl-hero-top {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  margin: 0 0 16px !important;
+}
+/* 大日期数字 */
+html .fl-hero-date {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 10px !important;
+}
+html .fl-hero-date b {
+  font-family: var(--k-display) !important;
+  font-size: clamp(58px, 17vw, 82px) !important;
+  font-weight: 200 !important;
+  letter-spacing: -0.05em !important;
+  line-height: 0.9 !important;
+  color: #fff !important;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+}
+html[data-theme="light"] .fl-hero-date b { color: var(--text) !important; text-shadow: none; }
+html .fl-hero-date i {
+  font-style: normal;
+  font-size: 10px !important;
+  letter-spacing: 0.2em !important;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62) !important;
+}
+html[data-theme="light"] .fl-hero-date i { color: var(--k-ink3) !important; }
+
+/* 分类胶囊 */
+html .fl-hero-tags {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+  justify-content: flex-end !important;
+  padding-bottom: 6px !important;
+}
+html .fl-tag {
+  padding: 6px 13px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.2em !important;
+  font-family: var(--k-display) !important;
+  cursor: pointer;
+  transition: transform 260ms var(--ease), background 260ms var(--ease), color 260ms var(--ease);
+}
+html .fl-tag:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.14) !important; }
+html .fl-tag.on {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #14141a !important;
+  border-color: transparent !important;
+}
+html[data-theme="light"] .fl-tag {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(0, 0, 0, .06) !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="light"] .fl-tag.on {
+  background: var(--text) !important;
+  color: #fff !important;
+}
+
+/* 拍立得预览：横向散落 */
+html .fl-hero-shots {
+  display: flex !important;
+  gap: 12px !important;
+  align-items: flex-start !important;
+  margin: 0 0 14px !important;
+}
+html .fl-shot {
+  position: relative;
+  flex: 0 0 auto !important;
+  width: 92px !important;
+  margin: 0 !important;
+  padding: 0 0 22px !important;
+  background: #fff !important;
+  border-radius: 3px !important;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 12px 26px rgba(0, 0, 0, 0.26) !important;
+  transition: transform 320ms var(--ease), box-shadow 320ms var(--ease);
+}
+html .fl-shot:nth-child(1) { transform: rotate(-3.2deg); }
+html .fl-shot:nth-child(2) { transform: rotate(1.6deg) translateY(8px); }
+html .fl-shot:nth-child(3) { transform: rotate(-1.1deg) translateY(-3px); }
+html .fl-shot:hover {
+  transform: rotate(0deg) translateY(-6px) scale(1.03) !important;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.2),
+    0 22px 44px rgba(0, 0, 0, 0.34) !important;
+  z-index: 2;
+}
+html .fl-shot img {
+  width: 100% !important;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+html .fl-shot figcaption {
+  position: absolute !important;
+  left: 0; right: 0; bottom: 5px;
+  text-align: center;
+  font-size: 9px !important;
+  letter-spacing: 0.04em !important;
+  color: #66666e !important;
+  line-height: 1 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 6px !important;
+}
+html .fl-shot.empty {
+  display: grid !important;
+  place-items: center !important;
+  height: 92px !important;
+  padding: 0 !important;
+  font-size: 10.5px !important;
+  letter-spacing: 0.1em !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.22) !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] .fl-shot.empty {
+  background: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(0, 0, 0, .12) !important;
+  color: var(--k-ink3) !important;
+}
+
+/* 今日注脚 */
+html .fl-hero-note {
+  margin: 0 !important;
+  padding: 10px 0 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  font-size: 11.5px !important;
+  font-weight: 300 !important;
+  line-height: 1.8 !important;
+  letter-spacing: 0.06em !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+html[data-theme="light"] .fl-hero-note {
+  border-top-color: rgba(22, 22, 26, 0.1) !important;
+  color: var(--k-ink3) !important;
+}
+
+/* ============================================================
+   v62.2 · 参考图精修：OUR DAYS 次级大数字 / FLOWER 头图排版对齐
+   ============================================================ */
+
+/* ---------- OUR DAYS：主数字 + 两个次级大数字 ---------- */
+html .mn-days-nums {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  gap: 26px !important;
+  margin: 0 !important;
+}
+html .mn-days-nums > b {
+  font-family: var(--k-display) !important;
+  font-size: clamp(74px, 21vw, 106px) !important;
+  font-weight: 200 !important;
+  letter-spacing: -0.05em !important;
+  line-height: 0.86 !important;
+  color: #fff !important;
+  text-shadow: 0 4px 36px rgba(0, 0, 0, 0.34);
+}
+html[data-theme="light"] .mn-days-nums > b { color: var(--text) !important; text-shadow: none !important; }
+html .mn-mini {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 3px !important;
+  padding-bottom: 10px !important;
+}
+html .mn-mini b {
+  font-family: var(--k-display) !important;
+  font-size: 26px !important;
+  font-weight: 300 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1 !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+html[data-theme="light"] .mn-mini b { color: var(--text-2) !important; }
+html .mn-mini i {
+  font-style: normal;
+  font-size: 8px !important;
+  letter-spacing: 0.2em !important;
+  color: rgba(255, 255, 255, 0.42) !important;
+}
+html[data-theme="light"] .mn-mini i { color: var(--k-ink3) !important; }
+
+/* ---------- FLOWER 头图：日期不换行 / 胶囊一行排下 ---------- */
+html .fl-hero-date i { white-space: nowrap !important; }
+html .fl-hero-date {
+  gap: 8px !important;
+  align-items: baseline !important;
+}
+html .fl-hero-tags {
+  max-width: 168px !important;
+  justify-content: flex-end !important;
+}
+html .fl-tag {
+  padding: 5px 11px !important;
+  font-size: 8.5px !important;
+  letter-spacing: 0.16em !important;
+}
+
+/* ---------- FLOWER 头图胶囊：一行放下三个 ---------- */
+html .fl-hero-tags {
+  max-width: 214px !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+}
+html .fl-tag {
+  padding: 5px 9px !important;
+  font-size: 8.5px !important;
+  letter-spacing: 0.14em !important;
+  white-space: nowrap !important;
+}
+html .fl-hero-date b { font-size: clamp(52px, 15vw, 72px) !important; }
+
+/* ---------- OUR DAYS：三个数字横排（参考图 38 / 111 / 447） ---------- */
+html .mn-days-nums {
+  gap: 30px !important;
+  align-items: flex-end !important;
+}
+html .mn-days-nums > b {
+  font-size: clamp(52px, 15vw, 76px) !important;
+  line-height: 0.9 !important;
+}
+html .mn-mini b { font-size: clamp(34px, 10vw, 48px) !important; }
+html .mn-mini { padding-bottom: 6px !important; }
+html .mn-mini i { font-size: 8.5px !important; letter-spacing: 0.18em !important; }
+
+/* ---------- FLOWER：注脚移到搜索框下方，头图更干净 ---------- */
+html .fl-hero-note {
+  margin: 0 24px !important;
+  padding: 0 0 12px !important;
+  border-top: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  font-size: 11px !important;
+}
+html[data-theme="light"] .fl-hero-note { border-bottom-color: rgba(22, 22, 26, 0.1) !important; }
+html .fl-page .rec-search { padding: 14px 24px 6px !important; }
+
+/* ---------- FLOWER：空态拍立得更小，三张错落 ---------- */
+html .fl-shot.empty {
+  width: 82px !important;
+  height: 82px !important;
+  font-size: 9.5px !important;
+  line-height: 1.5 !important;
+  padding: 0 8px !important;
+  text-align: center !important;
+}
+html .fl-shot.empty:nth-child(2) { transform: rotate(1.6deg) translateY(8px); }
+html .fl-shot.empty:nth-child(3) { transform: rotate(-1.1deg) translateY(-3px); }

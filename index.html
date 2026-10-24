@@ -122,24 +122,67 @@
 <main class="screen home" id="home" aria-label="主屏">
   <div class="home-dim" aria-hidden="true"></div>
 
-  <!-- ══════ MOON · 月 —— 极简仪表盘：只看，不操作 ══════
-       时间 / 日期 → 纪念日天数 → NOW 此刻（波形 + 碎碎念）→ WRITE / TALK → 音乐细条
-       相册、日历、日记、设置全部移出（归 FLOWER / MIRROR） -->
+  <!-- ══════ MOON · 月 —— 首页：时间 → 相伴天数 → 今日 → 此刻 → 双列小卡 → 入口 ══════
+       参考排版：左上大字时间、右上昼夜胶囊、OUR DAYS 用「双头像 + 心电波 + 大数字」、
+       下方一栏双列小卡（留言 / 信件），底部是悬浮胶囊导航 -->
   <div class="home-pager" id="homePager">
     <section class="home-page active" data-page="0" aria-label="月">
-      <!-- 时间：裸放在壁纸上（无框），只留 TODAY 标签 -->
+
+      <!-- ① 顶部：日期 + 大字时间（左）/ 昼夜胶囊（右） -->
       <header class="moon-head" id="moonHead">
-        <p class="mn-tag"><em>TODAY</em><span id="mnDate">—</span></p>
-        <p class="mn-time" id="mnTime">—</p>
+        <div class="mn-head-main">
+          <p class="mn-tag"><em id="mnDate">—</em></p>
+          <p class="mn-time" id="mnTime">—</p>
+        </div>
+        <button type="button" class="mn-phase" id="mnPhase" aria-label="切换昼夜">
+          <span class="mn-phase-dot" aria-hidden="true"></span>
+          <em id="mnPhaseTxt">DAY</em>
+        </button>
       </header>
-      <!-- 天数卡：天数 + DAYS TOGETHER + 「谁 with 谁」都归在这一张卡里 -->
-      <section class="mn-days" id="mnDaysCard">
-        <p class="mn-days-line"><b id="mnDays">—</b><i>DAYS TOGETHER</i></p>
+
+      <!-- ② OUR DAYS：双头像 + 心电波 + 大数字 + 谁 with 谁 -->
+      <section class="mn-days" id="mnDaysCard" aria-label="在一起的日子">
+        <p class="mn-label"><em>OUR DAYS</em></p>
+        <div class="mn-pair">
+          <span class="mn-ava" id="mnAvaPartner" aria-hidden="true">淼</span>
+          <svg class="mn-ecg" viewBox="0 0 240 44" preserveAspectRatio="none" aria-hidden="true">
+            <path id="mnEcg" d=""/>
+          </svg>
+          <span class="mn-ava" id="mnAvaMe" aria-hidden="true">满</span>
+        </div>
+        <div class="mn-days-nums">
+          <b id="mnDays">—</b>
+          <span class="mn-mini"><b id="mnDaysMail">—</b><i>LETTERS</i></span>
+          <span class="mn-mini"><b id="mnDaysPhoto">—</b><i>PHOTOS</i></span>
+        </div>
         <p class="mn-names" id="mnNames">—</p>
+        <p class="mn-since" id="mnSince">—</p>
       </section>
 
+      <!-- ③ FROM HIM · TODAY：一句今日碎碎念 -->
+      <section class="mn-say-card" aria-label="今日">
+        <p class="mn-label"><em>FROM HIM · TODAY</em></p>
+        <p class="mn-say" id="mnSay">—</p>
+      </section>
+
+      <!-- ⑤ 双列小卡：留言 / 未拆的信 -->
+      <div class="mn-duo">
+        <section class="mn-duo-card" id="mnSaidCard">
+          <p class="mn-duo-head"><em>SAID</em><span>他留的话</span></p>
+          <p class="mn-duo-title" id="mnSaidTitle">—</p>
+          <p class="mn-duo-sub" id="mnSaidSub">—</p>
+          <button type="button" class="mn-duo-btn" data-moon-go="chat">坐一会儿</button>
+        </section>
+        <section class="mn-duo-card" id="mnMailCard">
+          <p class="mn-duo-head"><em>LETTERS</em><span>没拆的信</span><i id="mnMailCount">0</i></p>
+          <p class="mn-duo-title" id="mnMailTitle">—</p>
+          <p class="mn-duo-sub" id="mnMailSub">—</p>
+          <button type="button" class="mn-duo-btn" data-moon-go="records">去拆信</button>
+        </section>
+      </div>
+
+      <!-- ⑥ 此刻：波形 + 两个数值 -->
       <section class="mn-now" id="moonNow" aria-label="此刻">
-        <p class="mn-label"><em>NOW</em><span>此刻</span></p>
         <div class="mn-wave" aria-hidden="true">
           <svg viewBox="0 0 480 40" preserveAspectRatio="none"><path id="mnWave" d=""/></svg>
         </div>
@@ -147,7 +190,6 @@
           <span><b id="mnMood">—</b><i>心情</i></span>
           <span><b id="mnEnergy">—</b><i>精力</i></span>
         </div>
-        <p class="mn-say" id="mnSay">—</p>
       </section>
 
       <nav class="mn-acts" id="moonActs" aria-label="快捷入口">
@@ -166,12 +208,13 @@
         </span>
         <button type="button" class="mn-mu-play" id="mnMuPlay" aria-label="播放">
           <svg class="ic-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19.5 12z"/></svg>
-          <svg class="ic-pause" viewBox="0 0 24 24"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>
+          <svg class="ic-pause" viewBox="0 0 24 24"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.6z"/></svg>
         </button>
         <span class="mn-mu-time" id="mnMuTime">--:--</span>
         <i class="mn-mu-track" aria-hidden="true"></i>
       </div>
     </section>
+  </div>
   </div>
 </main>
 
@@ -516,9 +559,26 @@
 <!-- ============ 记忆库 ============ -->
 <!-- ============ FLOWER · 花：日记 / 信 / 待办 ============ -->
 <section class="screen page mod-page fl-page" id="records" aria-label="花">
+  <!-- 头图：今日大日期 + 分类胶囊 + 拍立得预览（参考杂志排版） -->
+  <header class="fl-hero">
+    <div class="fl-hero-top">
+      <div class="fl-hero-date">
+        <b id="flHeroDay">—</b>
+        <i id="flHeroMonth">—</i>
+      </div>
+      <div class="fl-hero-tags" id="flHeroTags">
+        <button type="button" class="fl-tag on" data-flseg="diary">JOURNAL</button>
+        <button type="button" class="fl-tag" data-flseg="letters">LETTERS</button>
+        <button type="button" class="fl-tag" data-flseg="tasks">TASKS</button>
+      </div>
+    </div>
+    <div class="fl-hero-shots" id="flHeroShots"></div>
+  </header>
+
   <div class="rec-search">
     <input type="search" id="recSearch" class="rec-search-input" placeholder="搜索 日记 / 信 / 待办…" aria-label="搜索" />
   </div>
+  <p class="fl-hero-note" id="flHeroNote">—</p>
   <nav class="seg-bar" id="recordsSegBar" aria-label="分段">
     <button type="button" class="seg-btn on" data-seg="all">ALL · 全部</button>
     <button type="button" class="seg-btn" data-seg="diary">DIARY · 日记</button>
