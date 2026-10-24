@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  window.__TIDE_MARK = 'LOCAL-v62';
+  window.__TIDE_MARK = 'LOCAL-v63';
 
   const P = window.Persona;
   const LLM = window.LLM;
@@ -2948,7 +2948,7 @@
     ic.innerHTML = '<svg viewBox="0 0 24 24"><use href="#i-chat"/></svg>';
     const t1 = document.createElement('span');
     t1.className = 'think-label';
-    t1.textContent = sec ? '思考了 ' + sec + ' 秒' : '思考过程';
+    t1.textContent = sec ? '[ THINKING PROCESS · ' + sec + 's ]' : '[ THINKING PROCESS ]';
     const t2 = document.createElement('i');
     t2.className = 'think-toggle';
     t2.textContent = '展开';
@@ -3083,11 +3083,13 @@
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
 
+    let actEl = null;
     if (m.action) {
-      const em = document.createElement('em');
-      em.className = 'act';            // 斜体动作描写：作为前缀先浮现，正文再逐字打出
-      em.textContent = m.action;
-      bubble.appendChild(em);
+      /* v63：动作描写不再裹在气泡框里 —— 提到气泡上方，斜体浅灰一行 */
+      actEl = document.createElement('em');
+      actEl.className = 'act';
+      actEl.textContent = m.action;
+      col.appendChild(actEl);
     }
 
     const body = document.createElement('span');
@@ -3097,7 +3099,7 @@
     col.appendChild(bubble);
     wrap.appendChild(col);
 
-    const node = { wrap, bubble, body, bubbles: [body] };
+    const node = { wrap, bubble, body, bubbles: [body], actEl: actEl };
 
     if (!me) {
       // 正文 setter：按 \n 把连发短句拆成多个磨砂小泡
@@ -3687,14 +3689,16 @@
             node.msg.text = parsed.text;
             node.msg.action = parsed.action;
             node.body = parsed.text;
-            let em = node.bubble.querySelector('em');
+            let em = node.actEl;
             if (parsed.action) {
               if (!em) {
                 em = document.createElement('em');
-                node.bubble.insertBefore(em, node.bubble.firstChild);
+                em.className = 'act';
+                node.bubble.parentNode.insertBefore(em, node.bubble);
+                node.actEl = em;
               }
               em.textContent = parsed.action;
-            } else if (em) em.remove();
+            } else if (em) { em.remove(); node.actEl = null; }
             scrollDown();
           },
         });

@@ -9984,3 +9984,478 @@ html .fl-shot.empty {
 }
 html .fl-shot.empty:nth-child(2) { transform: rotate(1.6deg) translateY(8px); }
 html .fl-shot.empty:nth-child(3) { transform: rotate(-1.1deg) translateY(-3px); }
+
+/* ============================================================
+   v63 · WATER 去气泡化 + MIRROR 拍立得墙 / 细线列表
+   —— 动作描写脱离气泡框、思考面板极细线框、MEMORY 细分隔线夹小字
+   —— 相册墙真拍立得（随机倾斜、可轻微遮挡）、设置项双排细线下划线
+   ============================================================ */
+
+/* ---------- ① 动作描写：从气泡里拿出来，斜体浅灰独立一行 ---------- */
+html .msg .m-col > em.act {
+  display: block !important;
+  font-style: italic !important;
+  font-family: var(--k-display) !important;
+  font-size: 12.5px !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.7 !important;
+  color: rgba(255, 255, 255, 0.42) !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 0 3px 2px !important;
+  margin: 0 0 5px !important;
+  animation: wActIn 0.52s var(--ease) both;
+}
+html[data-theme="light"] .msg .m-col > em.act { color: var(--k-ink3) !important; }
+html .msg.me .m-col > em.act { text-align: right; padding: 0 2px 3px 0 !important; }
+
+/* ---------- ② 思考面板：极细线框 + 淡字 ---------- */
+html .think-card {
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 8px 2px !important;
+  margin: 6px 0 2px !important;
+}
+html[data-theme="light"] .think-card {
+  border-top-color: rgba(22, 22, 26, 0.1) !important;
+  border-bottom-color: rgba(22, 22, 26, 0.1) !important;
+}
+html .think-head {
+  font-size: 8.5px !important;
+  letter-spacing: 0.22em !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  text-transform: uppercase;
+}
+html[data-theme="light"] .think-head { color: var(--k-ink3) !important; }
+html .think-head::before { content: '' !important; margin: 0 !important; }
+html .think-label { font-family: var(--k-display) !important; font-weight: 300 !important; }
+html .think-toggle {
+  font-size: 8.5px !important;
+  letter-spacing: 0.2em !important;
+  color: rgba(255, 255, 255, 0.34) !important;
+}
+html[data-theme="light"] .think-toggle { color: var(--k-ink3) !important; }
+html .think-body {
+  font-size: 12px !important;
+  font-weight: 300 !important;
+  line-height: 1.85 !important;
+  letter-spacing: 0.02em !important;
+  color: rgba(255, 255, 255, 0.44) !important;
+  border-top: 0 !important;
+  padding-top: 9px !important;
+}
+html[data-theme="light"] .think-body { color: var(--k-ink3) !important; }
+html .think-card.open .think-body {
+  max-height: 340px !important;
+  border-top-color: transparent !important;
+}
+
+/* ---------- ③ MEMORY 收录提示：极细分隔线夹小字 ---------- */
+html .sys-note.mem-pill {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.11) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  padding: 11px 2px !important;
+  margin: 10px 0 !important;
+}
+html[data-theme="light"] .sys-note.mem-pill {
+  border-top-color: rgba(22, 22, 26, 0.09) !important;
+  border-bottom-color: rgba(22, 22, 26, 0.09) !important;
+}
+html .mem-pill .mn-ic {
+  font-size: 11px !important;
+  filter: grayscale(1);
+  opacity: 0.5 !important;
+  line-height: 1.6 !important;
+}
+html .mem-pill .mn-t b {
+  display: block !important;
+  font-size: 9px !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.56) !important;
+  font-weight: 400 !important;
+}
+html[data-theme="light"] .mem-pill .mn-t b { color: var(--k-ink3) !important; }
+html .mem-pill .mn-meta {
+  display: block !important;
+  margin-top: 3px !important;
+  font-size: 11.5px !important;
+  font-weight: 300 !important;
+  line-height: 1.7 !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+html[data-theme="light"] .mem-pill .mn-meta { color: var(--k-ink2) !important; }
+
+/* ---------- ④ MIRROR 相册墙：真拍立得，随机倾斜、可轻微遮挡 ---------- */
+html #mirror .album-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 26px 10px !important;
+  padding: 14px 2px 20px !important;
+  perspective: 1200px !important;
+}
+html #mirror .album-cell {
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  filter: none !important;
+}
+html #mirror .album-cell .photo-frame {
+  background: #fff !important;
+  border: 7px solid #fff !important;
+  border-radius: 2px !important;
+  padding: 0 0 26px !important;     /* 底边留厚：真拍立得 */
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.16),
+    0 10px 22px rgba(0, 0, 0, 0.22),
+    0 26px 54px rgba(0, 0, 0, 0.2) !important;
+  transition: transform 360ms var(--ease), box-shadow 360ms var(--ease);
+}
+/* 横向随机倾斜：8 个一循环，每档角度都不一样 */
+html #mirror .album-cell:nth-child(8n+1) .photo-frame { transform: rotate(-3.4deg) translateY(6px); }
+html #mirror .album-cell:nth-child(8n+2) .photo-frame { transform: rotate(1.9deg) translateY(-8px); }
+html #mirror .album-cell:nth-child(8n+3) .photo-frame { transform: rotate(-1.2deg) translateY(12px); }
+html #mirror .album-cell:nth-child(8n+4) .photo-frame { transform: rotate(3.1deg) translateY(-4px); }
+html #mirror .album-cell:nth-child(8n+5) .photo-frame { transform: rotate(-2.3deg) translateY(2px); }
+html #mirror .album-cell:nth-child(8n+6) .photo-frame { transform: rotate(2.6deg) translateY(10px); }
+html #mirror .album-cell:nth-child(8n+7) .photo-frame { transform: rotate(-3.8deg) translateY(-2px); }
+html #mirror .album-cell:nth-child(8n+8) .photo-frame { transform: rotate(0.9deg) translateY(8px); }
+/* 轻微遮挡：后一张压住前一张的角 */
+html #mirror .album-cell:nth-child(even) { margin-left: -12px !important; z-index: 2; }
+html #mirror .album-cell:nth-child(odd) { z-index: 1; }
+html #mirror .album-cell:hover,
+html #mirror .album-cell:active,
+html #mirror .album-cell.show-ops {
+  z-index: 6 !important;
+}
+html #mirror .album-cell:hover .photo-frame,
+html #mirror .album-cell:active .photo-frame,
+html #mirror .album-cell.show-ops .photo-frame {
+  transform: rotate(0deg) translateY(-6px) scale(1.04) !important;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.18),
+    0 20px 44px rgba(0, 0, 0, 0.32) !important;
+}
+html #mirror .album-cell img { border-radius: 0 !important; aspect-ratio: 1 / 1; }
+html #mirror .album-cell figcaption {
+  color: #5c5c66 !important;
+  font-size: 10px !important;
+  letter-spacing: 0.04em !important;
+  padding: 9px 2px 0 !important;
+  text-align: center !important;
+}
+
+/* ---------- ⑤ MIRROR 底座：极细下划线列表，中英双排 + 极简箭头 ---------- */
+html #mirror .mi-menu {
+  list-style: none !important;
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+}
+html #mirror .mi-menu li {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+html[data-theme="light"] #mirror .mi-menu li { border-bottom-color: rgba(22, 22, 26, 0.09) !important; }
+html #mirror .mi-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 18px !important;
+  width: 100% !important;
+  padding: 15px 2px 14px !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-align: left !important;
+  cursor: pointer;
+  transition: opacity 260ms var(--ease), padding-left 260ms var(--ease);
+}
+html #mirror .mi-row:hover { opacity: 0.72 !important; padding-left: 6px !important; }
+html #mirror .mi-row:active { opacity: 0.55 !important; }
+html #mirror .mi-row-txt {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+}
+html #mirror .mi-row-txt b {
+  font-family: var(--k-display) !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.04em !important;
+  color: #fff !important;
+  line-height: 1.2 !important;
+}
+html[data-theme="light"] #mirror .mi-row-txt b { color: var(--text) !important; }
+html #mirror .mi-row-txt em {
+  font-style: normal !important;
+  font-size: 8.5px !important;
+  letter-spacing: 0.24em !important;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42) !important;
+  line-height: 1 !important;
+}
+html[data-theme="light"] #mirror .mi-row-txt em { color: var(--k-ink3) !important; }
+html #mirror .mi-row-txt small {
+  font-size: 11px !important;
+  font-weight: 300 !important;
+  line-height: 1.6 !important;
+  letter-spacing: 0.04em !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  margin-top: 2px !important;
+}
+html[data-theme="light"] #mirror .mi-row-txt small { color: var(--k-ink3) !important; }
+html #mirror .mi-row-arrow {
+  flex: 0 0 auto !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  transition: transform 300ms var(--ease), color 300ms var(--ease);
+}
+html #mirror .mi-row:hover .mi-row-arrow { transform: translateX(3px); color: rgba(255, 255, 255, 0.6) !important; }
+html[data-theme="light"] #mirror .mi-row-arrow { color: rgba(22, 22, 26, 0.3) !important; }
+html[data-theme="light"] #mirror .mi-row:hover .mi-row-arrow { color: rgba(22, 22, 26, 0.55) !important; }
+
+/* ---------- ⑥ MIRROR 记忆：条目标题也走细线 ---------- */
+html #mirror .mem-card {
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 16px 2px 0 !important;
+}
+html[data-theme="light"] #mirror .mem-card { border-top-color: rgba(22, 22, 26, 0.09) !important; }
+html #mirror .mem-main {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ---------- ⑦ MIRROR 底座：小节标签 + 更清晰的分隔线与箭头 ---------- */
+html #mirror .mi-sect-label {
+  margin: 4px 0 2px !important;
+  padding: 0 0 8px !important;
+  font-size: 9px !important;
+  letter-spacing: 0.26em !important;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42) !important;
+}
+html[data-theme="light"] #mirror .mi-sect-label { color: var(--k-ink3) !important; }
+html #mirror .mi-menu li { border-bottom-color: rgba(255, 255, 255, 0.14) !important; }
+html[data-theme="light"] #mirror .mi-menu li { border-bottom-color: rgba(22, 22, 26, 0.12) !important; }
+html #mirror .mi-row-arrow { color: rgba(255, 255, 255, 0.45) !important; }
+html[data-theme="light"] #mirror .mi-row-arrow { color: rgba(22, 22, 26, 0.42) !important; }
+
+/* ---------- ⑧ WATER：想你卡与系统提示也收成极细线 ---------- */
+html #chat .miss-you {
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 12px 2px !important;
+}
+html[data-theme="light"] #chat .miss-you {
+  border-top-color: rgba(22, 22, 26, 0.1) !important;
+  border-bottom-color: rgba(22, 22, 26, 0.1) !important;
+}
+html #chat .sys-note {
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 10px 2px !important;
+}
+html[data-theme="light"] #chat .sys-note { border-top-color: rgba(22, 22, 26, 0.09) !important; }
+html #chat .sys-note { text-align: center !important; }
+
+/* ---------- ⑨ WATER：想你卡内的 emoji 换行 + 细线排版 ---------- */
+html #chat .miss-you {
+  align-items: center !important;
+  gap: 12px !important;
+}
+html #chat .miss-you .my-face {
+  flex: 0 0 auto !important;
+  font-size: 17px !important;
+  line-height: 1 !important;
+  filter: grayscale(0.15);
+}
+html #chat .miss-you .my-body {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  align-items: flex-start !important;
+}
+html #chat .miss-you .my-body b {
+  font-family: var(--k-display) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.04em !important;
+  color: #fff !important;
+}
+html[data-theme="light"] #chat .miss-you .my-body b { color: var(--text) !important; }
+html #chat .miss-you .my-body span {
+  font-size: 11.5px !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.04em !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+html[data-theme="light"] #chat .miss-you .my-body span { color: var(--k-ink3) !important; }
+
+/* ---------- ⑩ WATER：气泡本体更薄（少一点方框感） ---------- */
+html #chat .msg .bubble {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+html[data-theme="light"] #chat .msg .bubble {
+  background: rgba(255, 255, 255, 0.62) !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+}
+html #chat .msg.me .bubble {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+html[data-theme="light"] #chat .msg.me .bubble {
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ============================================================
+   v63.1 · 微交互：消息入场 scale 0.95→1 + 弹性、Tab 淡入上滑、卡片按下沉
+   ============================================================ */
+
+/* ---------- 消息入场：轻微放大回弹 ---------- */
+html #chat .msg {
+  animation: msgPop 0.46s cubic-bezier(.2, .9, .28, 1.08) both !important;
+}
+@keyframes msgPop {
+  0%   { opacity: 0; transform: scale(.95) translateY(10px); }
+  60%  { opacity: 1; transform: scale(1.008) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html #chat .msg { animation: none !important; }
+}
+
+/* ---------- 气泡 hover 上浮 / 按下沉 ---------- */
+html #chat .msg .bubble {
+  transition: transform 300ms var(--ease), background 300ms var(--ease), border-color 300ms var(--ease) !important;
+}
+html #chat .msg.partner .bubble:hover { transform: translateY(-2px) !important; }
+html #chat .msg.me .bubble:active { transform: translateY(1px) scale(.995) !important; }
+
+/* ---------- Tab 切换：淡入 + 上滑 ---------- */
+html .seg-pane.on {
+  animation: segIn 340ms cubic-bezier(.22, .61, .36, 1) both !important;
+}
+@keyframes segIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html .seg-pane.on { animation: none !important; }
+}
+
+/* ---------- ⑪ MIRROR 相册：亮色下白拍立得补一道描边，底部留够 dock ---------- */
+html[data-theme="light"] #mirror .album-cell .photo-frame {
+  box-shadow:
+    0 0 0 1px rgba(22, 22, 26, 0.09),
+    0 1px 1px rgba(0, 0, 0, 0.1),
+    0 12px 26px rgba(28, 28, 40, 0.14),
+    0 26px 54px rgba(28, 28, 40, 0.1) !important;
+}
+html[data-theme="light"] #mirror .album-cell figcaption { color: #4a4a52 !important; }
+html #mirror .page-scroll { padding-bottom: 128px !important; }
+
+/* 分类药丸也走细线语言 */
+html #mirror .album-cats { gap: 16px !important; }
+html #mirror .cat-pill {
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0 !important;
+  padding: 5px 0 7px !important;
+  font-size: 10px !important;
+  letter-spacing: 0.12em !important;
+  color: rgba(255, 255, 255, 0.44) !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] #mirror .cat-pill { border-bottom-color: rgba(22, 22, 26, 0.1) !important; color: var(--k-ink3) !important; }
+html #mirror .cat-pill.on {
+  color: #fff !important;
+  border-bottom-color: #fff !important;
+}
+html[data-theme="light"] #mirror .cat-pill.on { color: var(--text) !important; border-bottom-color: var(--text) !important; }
+
+/* ---------- ⑫ MIRROR：碎片发布区不吸底，避免压住相册墙 ---------- */
+html #mirror .moment-composer {
+  position: static !important;
+  margin: 18px 0 0 !important;
+  padding: 14px 0 0 !important;
+  background: transparent !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-theme="light"] #mirror .moment-composer { border-top-color: rgba(22, 22, 26, 0.1) !important; }
+html #mirror .moment-composer textarea {
+  font-size: 13.5px !important;
+  font-weight: 300 !important;
+  line-height: 1.8 !important;
+  letter-spacing: 0.02em !important;
+  min-height: 44px !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--text) !important;
+}
+html #mirror .moment-btn {
+  font-size: 11px !important;
+  letter-spacing: 0.1em !important;
+  color: rgba(255, 255, 255, 0.46) !important;
+}
+html[data-theme="light"] #mirror .moment-btn { color: var(--k-ink3) !important; }
+html #mirror .moment-send {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+  border-radius: 999px !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  font-size: 11.5px !important;
+  letter-spacing: 0.1em !important;
+  padding: 6px 16px !important;
+}
+html[data-theme="light"] #mirror .moment-send {
+  border-color: rgba(22, 22, 26, 0.12) !important;
+  color: var(--text-2) !important;
+}
+html #mirror .mi-sub {
+  margin: 26px 0 6px !important;
+  padding: 0 0 8px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.26em !important;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42) !important;
+}
+html[data-theme="light"] #mirror .mi-sub { border-bottom-color: rgba(22, 22, 26, 0.1) !important; color: var(--k-ink3) !important; }
