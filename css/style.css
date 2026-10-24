@@ -2600,3 +2600,7 @@ html[data-theme="light"] #chat .msg.me .bubble {
   border-color: rgba(22,22,26,.06) !important;
   color: rgba(22,22,26,.95) !important;
 }
+
+/* v68.9 · 收起态不再重复第二个 ▾：右下只在展开时出现「↑ 收起」 */
+html #chat .think-card.closed .think-toggle {display: none !important}
+html #chat .think-card.closed {padding-bottom: 9px !important}
