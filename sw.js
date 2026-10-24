@@ -1,4 +1,4 @@
-const CACHE = 'xiaoman-v66';
+const CACHE = 'xiaoman-v67';
 const ASSETS = [
   './',
   './index.html',
