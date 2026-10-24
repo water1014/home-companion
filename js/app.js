@@ -1014,7 +1014,7 @@
     b.dataset.app = 'now';
     b.dataset.tab = 'now';
     b.setAttribute('aria-label', '此刻 NOW');
-    b.innerHTML = '<span class="core-ic"><svg><use href="#i-wave"/></svg></span>';
+    b.innerHTML = '<span class="core-ic"><svg><use href="#i-hourglass"/></svg></span>';
     b.addEventListener('click', () => openPage('now', 'status'));
     return b;
   }

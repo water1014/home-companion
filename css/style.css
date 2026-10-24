@@ -2050,3 +2050,94 @@ html .find-me {bottom: calc(64px + var(--safe-b)) !important;z-index: 26 !import
   html .home-page[data-page="0"] > .mn-acts,
   html .home-page[data-page="0"] > .mn-music {opacity: 1 !important}
 }
+
+/* ============================================================
+   v66 · 布局校准（视觉走查修正）
+   ① 首屏节奏收紧：一屏放下「此刻」整卡，滚动区只留次要入口
+   ② 音乐条：补回 flex 布局，142px 方块 → 56px 细条
+   ③ 底部胶囊：格内图标+文字整体居中，不再贴底边
+   ④ 「我来找你」抬到胶囊上方 8px，不压 MIRROR
+   ⑤ 凸起圆图标改用 i-spark，避免与「此刻」波形重复
+   ============================================================ */
+
+/* ---------- ① 首屏节奏 ---------- */
+html .home-page[data-page="0"] {gap: 12px !important}
+html .mn-time {font-size: clamp(56px, 17vw, 88px) !important;line-height: .9 !important}
+html .mn-days {padding: 16px 18px 18px !important;gap: 2px !important}
+html .mn-pair {margin: 2px 0 2px !important}
+html .mn-days-nums > b {font-size: clamp(48px, 14vw, 64px) !important}
+html .mn-mini b {font-size: clamp(30px, 9vw, 42px) !important}
+html .mn-names {margin: 2px 0 0 !important}
+html .mn-since {margin: 6px 0 0 !important}
+html .mn-say-card {padding: 6px 2px 10px !important}
+html .mn-now {padding: 12px 16px !important}
+html .mn-wave {height: 30px !important;margin: 0 0 6px !important}
+html .mn-nums {gap: 20px !important}
+
+/* ---------- ② 音乐条：一行细条（标题/艺人 + 播放 + 底部进度） ---------- */
+html .mn-music {
+  display: flex !important;flex-direction: row !important;align-items: center !important;
+  gap: 12px !important;height: 56px !important;min-height: 0 !important;
+  padding: 0 16px !important;border-radius: var(--r-bubble) !important;
+  background: rgba(255,255,255,.07) !important;border: 1px solid rgba(255,255,255,.14) !important;
+  border-bottom: 1px solid rgba(255,255,255,.14) !important;
+  overflow: hidden;transform: none !important;
+}
+html[data-theme="light"] .mn-music {background: rgba(255,255,255,.5) !important;border-color: rgba(255,255,255,.72) !important}
+html .mn-mu-meta {flex: 1 1 auto !important;flex-direction: column !important;gap: 2px !important;justify-content: center !important;min-width: 0}
+html .mn-mu-meta b {font-size: var(--fs-sm) !important;line-height: 1.2 !important}
+html .mn-mu-meta i {font-size: 10px !important;line-height: 1.2 !important;letter-spacing: .06em !important}
+html .mn-mu-play {flex: 0 0 34px !important;width: 34px !important;height: 34px !important;align-self: center !important}
+html .mn-mu-track {
+  position: absolute !important;left: 16px !important;right: 16px !important;bottom: 7px !important;
+  width: auto !important;height: 2px !important;border-radius: 2px !important;
+  background: rgba(255,255,255,.18) !important;overflow: hidden;
+}
+html[data-theme="light"] .mn-mu-track {background: rgba(28,28,40,.12) !important}
+
+/* ---------- ③ 底部胶囊：格内整体居中 ---------- */
+html .dock .tile {padding: 0 0 3px !important;gap: 3px !important;justify-content: center !important}
+html .dock .tile .tile-ic {width: 22px !important;height: 22px !important}
+html .dock .tile .tile-ic svg {width: 20px !important;height: 20px !important}
+html .dock .tile-name {gap: 1px !important}
+html .dock .tile-name em {font-size: 9px !important;line-height: 1 !important;letter-spacing: .1em !important;text-indent: .1em;opacity: .5}
+html .dock .tile-name span {font-size: 10px !important;line-height: 1.1 !important;letter-spacing: .06em !important}
+html .dock .tile.on .tile-name em {opacity: .8}
+
+/* ---------- ④ 「我来找你」：贴在胶囊上方，不压任何一格 ---------- */
+html .find-me {bottom: calc(84px + var(--safe-b)) !important}
+
+/* ---------- ⑤ 胶囊内文字行距收紧后，凸起圆仍保持 56/上移 14 ---------- */
+html .tile-core .core-ic svg {width: 20px;height: 20px}
+
+/* v66.1 · 底部留白：滚到底时最后一条距胶囊 20px，不空也不顶 */
+html .home-page[data-page="0"] {padding-bottom: 48px !important}
+
+/* v66.2 · 首屏干净收尾：次要入口（WRITE/TALK + 音乐）整体落到滚动区
+   滚动容器底部用 flex 占位块留 96px，滚到底时音乐条距胶囊 20px */
+html .home-page[data-page="0"] {padding-bottom: 0 !important}
+html .mn-acts {margin-top: 40px !important}
+html .mn-music {margin-top: 12px !important}
+html .home-page[data-page="0"]::after {content: "";display: block;flex: 0 0 96px;width: 100%}
+
+/* v66.3 · 微调：凸起圆用沙漏（此刻/时间），按钮贴胶囊顶，底部长留白 */
+html .home-page[data-page="0"]::after {flex: 0 0 116px !important}
+html .find-me {bottom: calc(76px + var(--safe-b)) !important}
+html .tile-core .core-ic svg {width: 19px;height: 19px;stroke-width: 1.3}
+
+/* v66.4 · 小屏（<=800 高）再压一档，保证「此刻」整卡在胶囊之上 */
+@media (max-height: 800px) {
+  html .home-page[data-page="0"] {gap: 10px !important;padding-top: 24px !important}
+  html .mn-time {font-size: clamp(48px, 15vw, 72px) !important}
+  html .mn-days {padding: 12px 16px 14px !important}
+  html .mn-days-nums > b {font-size: clamp(40px, 12vw, 52px) !important}
+  html .mn-mini b {font-size: clamp(26px, 8vw, 34px) !important}
+  html .mn-names {margin: 0 !important}
+  html .mn-say-card {padding: 4px 2px 6px !important}
+  html .mn-say {font-size: 16px !important;line-height: 1.75 !important}
+  html .mn-now {padding: 10px 14px !important}
+  html .mn-wave {height: 24px !important;margin: 0 0 4px !important}
+  html .mn-nums b {font-size: var(--fs-md) !important}
+}
+/* 胶囊内图标+文字再上收 1.5px，视觉居中 */
+html .dock .tile {padding: 0 0 1px !important;gap: 2px !important}
