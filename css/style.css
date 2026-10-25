@@ -2604,3 +2604,220 @@ html[data-theme="light"] #chat .msg.me .bubble {
 /* v68.9 · 收起态不再重复第二个 ▾：右下只在展开时出现「↑ 收起」 */
 html #chat .think-card.closed .think-toggle {display: none !important}
 html #chat .think-card.closed {padding-bottom: 9px !important}
+
+/* ============================================================
+   v69 · 聊天页观感（克制：纸上的字，不是一堆盒子）
+   遮罩 .22 / 气泡无描边 + 方向圆角 / 留白 4·14·20
+   思考块轻 / 动作浮字 / 操作行五图标 / 输入区 64 胶囊
+   字号只有三档：15 · 13 · 10-11
+   ============================================================ */
+
+/* ---------- ① 背景透出来：一层 .22 遮罩 ---------- */
+html #chat {--accent-rgb: 44, 47, 54}
+html[data-theme="light"] #chat {--accent-rgb: 58, 58, 68}
+html #chat::after {background: rgba(0,0,0,.22) !important}
+html[data-theme="light"] #chat::after {background: rgba(255,255,255,.30) !important}
+
+/* ---------- ② 气泡：无描边，靠底色差分 ---------- */
+html #chat .msg .bubble {
+  border: 0 !important;
+  border-radius: 20px !important;
+  padding: 10px 14px !important;
+  font-size: 15px !important;
+  line-height: 1.75 !important;
+  letter-spacing: .01em !important;
+  max-width: 100%;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;backdrop-filter: none !important;
+}
+html #chat .msg.me .bubble {
+  background: rgba(var(--accent-rgb), .82) !important;
+  color: #fff !important;
+  border-radius: 20px 20px 6px 20px !important;
+}
+html #chat .msg.partner .bubble {
+  background: rgba(255,255,255,.14) !important;
+  -webkit-backdrop-filter: blur(12px) !important;backdrop-filter: blur(12px) !important;
+  color: #fff !important;
+  border-radius: 20px 20px 20px 6px !important;
+}
+html[data-theme="light"] #chat .msg.partner .bubble {
+  background: rgba(255,255,255,.62) !important;
+  color: rgba(22,22,26,.92) !important;
+}
+html[data-theme="light"] #chat .msg.me .bubble {color: #fff !important}
+html #chat .msg {max-width: 76% !important}
+
+/* ---------- ③ 留白：同人 4 / 换人 14 / 日期 20 ---------- */
+html #chat .stream {gap: 0 !important;padding: 16px 16px 96px !important}
+html #chat .msg {margin: 4px 0 0 !important}
+html #chat .msg.has-ava {margin-top: 14px !important}
+html #chat .msg:first-of-type {margin-top: 0 !important}
+html #chat .day-mark {margin: 20px 0 !important}
+html #chat .tok-bar {margin-top: 14px !important}
+
+/* ---------- ④ 思考块：虚线圈但很轻 ---------- */
+html #chat .think-card {
+  border: 1px dashed rgba(255,255,255,.22) !important;
+  border-radius: 16px !important;
+  padding: 10px 14px !important;
+  background: rgba(255,255,255,.04) !important;
+  margin-top: 6px !important;
+}
+html[data-theme="light"] #chat .think-card {border-color: rgba(22,22,26,.18) !important;background: rgba(255,255,255,.4) !important}
+html #chat .think-label {
+  font-size: 10px !important;letter-spacing: .2em !important;text-transform: uppercase;
+  color: rgba(255,255,255,.42) !important;
+}
+html #chat .think-label::before {content: "▸ ";letter-spacing: 0;opacity: .9}
+html[data-theme="light"] #chat .think-label {color: rgba(22,22,26,.42) !important}
+html #chat .think-body {
+  font-size: 13px !important;font-style: italic !important;line-height: 1.8 !important;
+  color: rgba(255,255,255,.62) !important;margin-top: 8px !important;
+}
+html[data-theme="light"] #chat .think-body {color: rgba(22,22,26,.6) !important}
+html #chat .think-card.closed {padding: 10px 14px !important}
+html #chat .think-card.open {padding: 10px 14px 22px !important}
+html #chat .think-toggle {
+  right: 12px !important;bottom: 5px !important;
+  font-size: 10px !important;letter-spacing: .04em !important;
+  color: rgba(255,255,255,.38) !important;
+}
+html[data-theme="light"] #chat .think-toggle {color: rgba(22,22,26,.38) !important}
+
+/* ---------- ⑤ 动作描写：斜体小字浮在背景上 ---------- */
+html #chat .msg .m-col > em.act {
+  font-size: 13px !important;font-style: italic !important;
+  color: rgba(255,255,255,.55) !important;
+  padding: 2px 6px !important;line-height: 1.8 !important;
+  background: none !important;border: 0 !important;
+  margin: 0 0 2px !important;
+}
+html[data-theme="light"] #chat .msg .m-col > em.act {color: rgba(22,22,26,.55) !important}
+
+/* ---------- ⑥ 消息操作行：五个图标，只在选中时出现 ---------- */
+html #chat .ops {
+  display: none !important;align-items: center;gap: 16px;
+  margin: 6px 0 0 !important;padding: 0 2px !important;animation: none !important;
+}
+html #chat .msg.sel .ops {display: flex !important}
+html #chat .ops-btn {
+  width: 16px;height: 16px;padding: 0;border: 0;background: none;cursor: pointer;
+  display: grid;place-items: center;
+  opacity: .3;-webkit-tap-highlight-color: transparent;
+}
+html #chat .ops-btn svg {
+  width: 16px;height: 16px;fill: none;stroke: currentColor;stroke-width: 1.4;
+  stroke-linecap: round;stroke-linejoin: round;
+}
+html #chat .ops-btn {color: #fff}
+html #chat .ops-btn:active {opacity: .6}
+html #chat .ops-btn.danger {color: #E05A6A}
+html[data-theme="light"] #chat .ops-btn {color: rgba(22,22,26,.9)}
+
+/* ---------- ⑦ token 条 ---------- */
+html #chat .tok-bar {height: 22px !important;font-size: 11px !important;color: rgba(255,255,255,.4) !important;background: rgba(255,255,255,.05) !important}
+html[data-theme="light"] #chat .tok-bar {color: rgba(22,22,26,.4) !important;background: rgba(22,22,26,.05) !important}
+
+/* ---------- ⑧ 头像：28 圆，换人才显示，1px 描边 ---------- */
+html #chat .msg.has-ava .m-ava {
+  width: 28px !important;height: 28px !important;flex: 0 0 28px !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+  background: rgba(255,255,255,.10) !important;
+}
+html #chat .msg.has-ava .m-ava .m-txt {font-size: 11px !important;color: rgba(255,255,255,.88) !important}
+html #chat .msg.has-ava .m-col {padding-top: 2px}
+html[data-theme="light"] #chat .msg.has-ava .m-ava {border-color: rgba(22,22,26,.16) !important;background: rgba(255,255,255,.6) !important}
+html[data-theme="light"] #chat .msg.has-ava .m-ava .m-txt {color: rgba(22,22,26,.75) !important}
+
+/* ---------- ⑨ 输入区：底栏 64，+ 36 / 胶囊 40 / 麦克风 36 / 发送 40 ---------- */
+html #chat .composer-wrap {
+  padding: 0 16px calc(12px + var(--safe-b)) !important;
+  min-height: 64px;
+}
+html #chat .c-tip {font-size: 10px !important;color: rgba(255,255,255,.3) !important;margin: 0 0 6px 4px !important}
+html[data-theme="light"] #chat .c-tip {color: rgba(22,22,26,.3) !important}
+html #chat .composer {
+  display: flex !important;align-items: center !important;gap: 8px !important;
+  height: 40px;padding: 0 !important;
+  background: none !important;border: 0 !important;border-radius: 0 !important;
+}
+html #chat .composer:focus-within {border: 0 !important}
+html #chat .c-add {
+  width: 36px !important;height: 36px !important;flex: 0 0 36px !important;
+  border-radius: 50% !important;background: rgba(255,255,255,.10) !important;
+  color: rgba(255,255,255,.62) !important;display: grid;place-items: center;border: 0;
+}
+html #chat .c-add svg {width: 17px !important;height: 17px !important}
+html[data-theme="light"] #chat .c-add {background: rgba(255,255,255,.7) !important;color: rgba(22,22,26,.55) !important}
+html #chat .composer textarea {
+  flex: 1 1 auto !important;min-width: 0;
+  height: 40px !important;max-height: 96px;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,.10) !important;
+  font-size: 15px !important;line-height: 40px !important;
+  color: #fff !important;resize: none;outline: none;border: 0 !important;
+}
+html[data-theme="light"] #chat .composer textarea {background: rgba(255,255,255,.7) !important;color: var(--text) !important}
+html #chat .composer textarea::placeholder {font-size: 13px !important;color: rgba(255,255,255,.35) !important}
+html[data-theme="light"] #chat .composer textarea::placeholder {color: rgba(22,22,26,.35) !important}
+html #chat .c-mic {
+  width: 36px !important;height: 36px !important;flex: 0 0 36px !important;
+  display: grid;place-items: center;border: 0;background: none;
+  color: rgba(255,255,255,.55);cursor: pointer;
+}
+html #chat .c-mic svg {width: 19px !important;height: 19px !important;fill: none;stroke: currentColor;stroke-width: 1.4;stroke-linecap: round}
+html #chat .c-mic.on {color: #E05A6A}
+html[data-theme="light"] #chat .c-mic {color: rgba(22,22,26,.5) !important}
+html #chat .send {
+  width: 40px !important;height: 40px !important;flex: 0 0 40px !important;
+  border-radius: 50% !important;margin: 0 !important;
+  background: rgba(var(--accent-rgb), .95) !important;
+}
+html #chat .send svg {width: 17px !important;height: 17px !important}
+
+/* ---------- ⑩ 顶栏：状态点 6 + 字 11，右两图标 22 ---------- */
+html #chat .chat-top {border-bottom: 1px solid rgba(255,255,255,.08) !important;padding: 0 16px 0 20px !important}
+html #chat .ct-left {gap: 10px !important}
+html #chat .ct-ava {width: 28px !important;height: 28px !important;flex: 0 0 28px !important;font-size: 11px !important}
+html #chat .ct-name {font-size: 15px !important}
+html #chat .ct-status {
+  display: flex !important;align-items: center !important;gap: 6px !important;
+  font-size: 11px !important;color: rgba(255,255,255,.45) !important;
+}
+html #chat .ct-status b {font-weight: 400;white-space: nowrap;overflow: hidden;text-overflow: ellipsis}
+html #chat .ct-dot {width: 6px;height: 6px;border-radius: 50%;background: rgba(255,255,255,.55);flex: 0 0 6px}
+html #chat .ct-right {display: flex;align-items: center;gap: 12px;flex: 0 0 auto}
+html #chat .ct-ico {
+  width: 22px;height: 22px;display: grid;place-items: center;
+  border: 0;background: none;color: rgba(255,255,255,.55);cursor: pointer;padding: 0;
+}
+html #chat .ct-ico svg {width: 22px;height: 22px;fill: none;stroke: currentColor;stroke-width: 1.25;stroke-linecap: round;stroke-linejoin: round}
+html[data-theme="light"] #chat .ct-ico {color: rgba(22,22,26,.5) !important}
+html[data-theme="light"] #chat .ct-dot {background: rgba(22,22,26,.4)}
+html[data-theme="light"] #chat .ct-status {color: rgba(22,22,26,.45) !important}
+html[data-theme="light"] #chat .chat-top {border-bottom-color: rgba(22,22,26,.08) !important}
+
+/* ---------- ⑪ 字号收敛：聊天页只留 15 / 13 / 10-11 ---------- */
+html #chat .msg .m-ts {font-size: 10px !important}
+html #chat .m-ts {margin-top: 6px !important}
+
+/* v69.1 · 修浅色我方气泡（被旧 color-mix 规则压住，白字看不清） */
+html[data-theme="light"] #chat .msg.me .bubble {
+  background: rgba(var(--accent-rgb), .86) !important;
+  color: #fff !important;
+  border-radius: 20px 20px 6px 20px !important;
+}
+/* 药丸秒数保持小写：标签不再整体 uppercase（JS 已输出大写 THINKING） */
+html #chat .think-label {text-transform: none !important}
+html #chat .think-label::first-line {letter-spacing: .2em}
+
+/* v69.2 · 连续消息与首条对齐（不缩进到屏幕边），整列像一段文字 */
+html #chat .msg.partner.no-ava {padding-left: 38px}
+html #chat .msg.me.no-ava {padding-right: 38px}
+html #chat .msg.has-ava .ops {margin-left: 0}
+
+/* v69.3 · 每组只在末尾显示一次时间戳（连续消息不再每行都挂时间） */
+html #chat .m-ts {display: none !important}
+html #chat .msg.grp-end .m-ts {display: block !important}

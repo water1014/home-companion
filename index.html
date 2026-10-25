@@ -226,13 +226,17 @@
   <header class="chat-top">
     <div class="ct-left">
       <span class="ct-ava" id="ctAva" aria-hidden="true">宋</span>
-      <i class="ct-bar" aria-hidden="true"></i>
       <span class="ct-name" id="ctName">—</span>
-      <span class="ct-status" id="ctStatus">—</span>
+      <span class="ct-status" id="ctStatus"><i class="ct-dot" aria-hidden="true"></i><b id="ctStatusTxt">—</b></span>
     </div>
-    <button class="ct-gear" id="ctGear" type="button" aria-label="聊天设置">
-      <svg viewBox="0 0 24 24"><use href="#i-gear"/></svg>
-    </button>
+    <div class="ct-right">
+      <button class="ct-ico" id="ctStar" type="button" aria-label="收藏">
+        <svg viewBox="0 0 24 24"><use href="#i-star"/></svg>
+      </button>
+      <button class="ct-ico" id="ctGear" type="button" aria-label="聊天设置">
+        <svg viewBox="0 0 24 24"><use href="#i-gear"/></svg>
+      </button>
+    </div>
   </header>
 
   <div class="stream" id="stream" role="log" aria-live="polite"></div>
@@ -248,6 +252,9 @@
       </button>
       <label class="sr-only" for="input">对他说点什么</label>
       <textarea id="input" rows="1" placeholder="说点什么…" maxlength="1200"></textarea>
+      <button class="c-mic" id="cMic" type="button" aria-label="语音输入">
+        <svg viewBox="0 0 24 24"><rect x="9.2" y="3.4" width="5.6" height="11" rx="2.8"/><path d="M5.6 11.2a6.4 6.4 0 0 0 12.8 0M12 17.6v3"/></svg>
+      </button>
       <button type="submit" class="send" id="send" aria-label="发送">
         <svg viewBox="0 0 24 24"><path d="M12 19V5.5M5.8 11.2 12 5l6.2 6.2"/></svg>
       </button>

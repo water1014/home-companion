@@ -2977,8 +2977,7 @@
     ic.innerHTML = '<svg viewBox="0 0 24 24"><use href="#i-chat"/></svg>';
     const t1 = document.createElement('span');
     t1.className = 'think-label';
-    t1.textContent = 'THINKING';
-    if (sec) t1.dataset.sec = sec + 's';
+    t1.textContent = sec ? ('THINKING ' + Number(sec).toFixed(1) + 's') : 'THINKING';
     const t2 = document.createElement('i');
     t2.className = 'think-toggle';
     t2.textContent = '▾';
@@ -3007,30 +3006,54 @@
   function buildOps(m, wrap) {
     const ops = document.createElement('div');
     ops.className = 'ops';
-    const time = document.createElement('span');
-    time.className = 'ops-time';
-    time.textContent = m.ts ? hhmm(m.ts) : '';
-    ops.appendChild(time);
-    const mk = (label, fn) => {
+    const mk = (name, path, fn, danger) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.textContent = label;
+      b.className = 'ops-btn' + (danger ? ' danger' : '');
+      b.dataset.act = name;
+      b.setAttribute('aria-label', name);
+      b.innerHTML = '<svg viewBox="0 0 24 24">' + path + '</svg>';
       b.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
       ops.appendChild(b);
     };
-    mk('复制', () => {
-      const t = (m.action ? m.action + '\n' : '') + (m.text || '');
+    const textOf = () => (m.action ? m.action + '\n' : '') + (m.text || '');
+
+    mk('复制', '<rect x="9" y="9.5" width="9.6" height="11.5" rx="2.4"/><path d="M15.6 6.6V5.6A2.6 2.6 0 0 0 13 3H6.6A2.6 2.6 0 0 0 4 5.6v9.2a2.6 2.6 0 0 0 2.6 2.6h1"/>', () => {
+      const t = textOf();
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(t).then(() => toast('复制好了'), () => toast('复制不了'));
-      } else toast('复制不了');
+        navigator.clipboard.writeText(t).then(() => toast('已复制'), () => toast('复制失败'));
+      } else toast('复制失败');
     });
-    if (!isMine(m)) mk('重说', () => regenPartner(m, wrap));
-    mk('删除', () => {
+    if (!isMine(m)) {
+      mk('重试', '<path d="M19.2 12a7.2 7.2 0 1 1-2.2-5.2M19.2 4.4v5.2h-5.2"/>', () => regenPartner(m, wrap));
+    }
+    mk('语音', '<path d="M4 9.6v4.8M8.4 6.6v10.8M12 4.4v15.2M15.6 8v8M20 10.4v3.2"/>', () => {
+      const t = String(m.text || '');
+      if (!t) { toast('这条没有文字'); return; }
+      if (!('speechSynthesis' in window)) { toast('这个环境不支持朗读'); return; }
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(t);
+        u.lang = 'zh-CN'; u.rate = 0.95;
+        speechSynthesis.speak(u);
+      } catch (_) { toast('朗读失败'); }
+    });
+    mk('收藏', '<path d="M12 4.6l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.6-4.8 2.6.9-5.4L4.2 10.3l5.4-.8Z"/>', () => {
+      let list = [];
+      try { list = JSON.parse(localStorage.getItem('hc.favs') || '[]'); } catch (_) {}
+      if (!Array.isArray(list)) list = [];
+      list.push({ text: m.text || '', action: m.action || '', ts: m.ts || Date.now() });
+      try { localStorage.setItem('hc.favs', JSON.stringify(list)); } catch (_) {}
+      toast('已收藏');
+    });
+    mk('删除', '<path d="M5 7.2h14M9.6 7.2V4.9h4.8v2.3M7.2 7.2l.9 12h7.8l.9-12"/>', () => {
       const i = S.chat.indexOf(m);
       if (i >= 0) { S.chat.splice(i, 1); save(KEY.chat, S.chat); }
       wrap.remove();
-      toast('删掉了');
-    });
+      syncMsgAva();
+      renderTokenBar();
+      toast('已删除');
+    }, true);
     return ops;
   }
 
@@ -3164,10 +3187,9 @@
     wrap.__ts = ts;
 
     wrap.addEventListener('click', () => {
-      stream.querySelectorAll('.msg.show-ops').forEach((n) => {
-        if (n !== wrap) n.classList.remove('show-ops');
-      });
-      wrap.classList.toggle('show-ops');
+      if (wrap.__suppressClick) { wrap.__suppressClick = false; return; }
+      if (wrap.classList.contains('sel')) return;      // 已选中就保持
+      selectMsg(null);
     });
 
     return node;
@@ -5407,7 +5429,7 @@
     if (!ava) return;
     const name = chatPartnerName() || '他';
     setTxt('ctName', name);
-    setTxt('ctStatus', chatStatusText());
+    setTxt('ctStatusTxt', chatStatusText());
     const pic = (S.settings && (S.settings.avaPartner || S.settings.partnerAva)) || '';
     if (pic) {
       ava.style.backgroundImage = 'url("' + pic + '")';
@@ -5418,15 +5440,18 @@
     }
   }
 
-  /* 连续消息：头像只在第一条出现 */
+  /* 连续消息：头像只在第一条出现，时间戳只在每组最后一条出现 */
   function syncMsgAva() {
+    const list = Array.from(stream.querySelectorAll('.msg')).filter((el) => el.querySelector('.m-col'));
     let prev = null;
-    stream.querySelectorAll('.msg').forEach((el) => {
-      if (!el.querySelector('.m-col')) return;      // typing 等非消息节点不参与
+    list.forEach((el, i) => {
       const role = el.classList.contains('me') ? 'me' : 'partner';
+      const next = list[i + 1];
+      const nextRole = next ? (next.classList.contains('me') ? 'me' : 'partner') : null;
       const first = role !== prev;
       el.classList.toggle('has-ava', first);
       el.classList.toggle('no-ava', !first);
+      el.classList.toggle('grp-end', nextRole !== role);
       prev = role;
     });
   }
@@ -5468,6 +5493,12 @@
     setTimeout(() => { mask.hidden = true; }, 180);
   }
 
+  let selWrap = null;
+  function selectMsg(wrap) {
+    if (selWrap && selWrap !== wrap) selWrap.classList.remove('sel');
+    selWrap = wrap || null;
+    if (selWrap) selWrap.classList.add('sel');
+  }
   function setupMsgSheet() {
     const sheet = $('msgSheet'), mask = $('msgSheetMask');
     if (!sheet) return;
@@ -5504,7 +5535,12 @@
       const wrap = e.target.closest ? e.target.closest('.msg') : null;
       if (!wrap || !wrap.__m) return;
       clearTimeout(chatPressTimer);
-      chatPressTimer = setTimeout(() => { openMsgSheet(wrap.__m); chatPressTimer = null; }, 500);
+      chatPressTimer = setTimeout(() => {
+        wrap.__suppressClick = true;
+        setTimeout(() => { wrap.__suppressClick = false; }, 500);
+        selectMsg(wrap);
+        chatPressTimer = null;
+      }, 420);
     };
     const cancel = () => { if (chatPressTimer) { clearTimeout(chatPressTimer); chatPressTimer = null; } };
     stream.addEventListener('pointerdown', start);
@@ -5517,6 +5553,30 @@
   function setupChatHead() {
     const gear = $('ctGear');
     if (gear) gear.addEventListener('click', openChatPanel);
+    const star = $('ctStar');
+    if (star) star.addEventListener('click', () => {
+      let list = [];
+      try { list = JSON.parse(localStorage.getItem('hc.favs') || '[]'); } catch (_) {}
+      const n = Array.isArray(list) ? list.length : 0;
+      toast(n ? ('收藏了 ' + n + ' 条') : '还没有收藏');
+    });
+    const mic = $('cMic');
+    if (mic) mic.addEventListener('click', () => {
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Rec) { toast('这个环境不支持语音输入'); return; }
+      try {
+        const rec = new Rec();
+        rec.lang = 'zh-CN'; rec.interimResults = false; rec.maxAlternatives = 1;
+        mic.classList.add('on');
+        rec.onresult = (e) => {
+          const t = e.results[0][0].transcript || '';
+          if (t) { input.value = (input.value ? input.value + ' ' : '') + t; autosize(); updateSendState(); }
+        };
+        rec.onerror = () => toast('没听清，再说一次');
+        rec.onend = () => mic.classList.remove('on');
+        rec.start();
+      } catch (_) { mic.classList.remove('on'); toast('语音输入打不开'); }
+    });
     const add = $('cAdd'), quick = $('quick');
     if (add && quick) {
       add.addEventListener('click', () => {
