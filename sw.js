@@ -1,10 +1,8 @@
-const CACHE = 'tide-editorial-v73';
+const CACHE = 'xiaoman-v70';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
-  './css/tide-refresh.css',
-  './css/tide-editorial.css',
   './js/persona.js',
   './js/llm.js',
   './js/app.js',
